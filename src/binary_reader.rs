@@ -4,11 +4,17 @@ pub struct BinaryReader {
 }
 
 impl BinaryReader {
-    pub fn new(path: &str) -> BinaryReader {
-        BinaryReader {
-            data: std::fs::read(path).unwrap(),
+    pub fn new(path: &str) -> Result<BinaryReader, std::io::Error> {
+        let data = std::fs::read(path);
+        let data = match data {
+            Ok(dat) => dat,
+            Err(error) => return Err(error),
+        };
+
+        Ok(BinaryReader {
+            data: data,
             position: 0
-        }
+        })
     }
 
     pub fn read_u8(&mut self) -> u8 {
@@ -36,11 +42,17 @@ impl BinaryReader {
     pub fn read_string(&mut self, num_chars: i32) -> String {
         let mut text = String::new();
 
-        for i in 0..num_chars {
+        for _i in 0..num_chars {
             text.push(self.data[self.position] as char);
             self.position += 1;
         }
 
         text
+    }
+
+    pub fn read_bytes(&mut self, num_bytes: usize) -> Vec<u8> {
+        let data = self.data[self.position..(self.position + num_bytes)].to_vec();
+        self.position += num_bytes;
+        data
     }
 }
