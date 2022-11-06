@@ -24,7 +24,7 @@ fn test_wav() {
         channels: None
     };
 
-    let mut system = mixr::system::AudioSystem::new(&mut format);
+    let mut system = mixr::system::AudioSystem::new(&mut format, 32);
 
     let pcm = mixr::loaders::PCM::load_wav("/home/ollie/Music/Laxity - A question of luck.wav").unwrap();
 
@@ -33,7 +33,7 @@ fn test_wav() {
 
     let buffer = system.create_buffer();
     system.update_buffer(&buffer, &pcm.data, &pcm.format);
-    system.play_buffer(&buffer, 1.0, 1.15);
+    system.play_buffer(0, &buffer, 1.0, 1.15);
 
     let sdl = sdl2::init().unwrap();
     let audio = sdl.audio().unwrap();
