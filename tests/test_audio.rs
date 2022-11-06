@@ -28,6 +28,9 @@ fn test_wav() {
 
     let pcm = mixr::loaders::PCM::load_wav("/home/ollie/Music/Always There.wav").unwrap();
 
+    let length = (&pcm).data.len();
+    let rate = (&pcm).format.sample_rate.unwrap();
+
     let buffer = system.create_buffer();
     system.update_buffer(&buffer, pcm.data, pcm.format);
 
@@ -48,5 +51,5 @@ fn test_wav() {
 
     device.resume();
 
-    std::thread::sleep(Duration::from_secs(30));
+    std::thread::sleep(Duration::from_secs((((length as i32) / 4 / rate) - 1) as u64));
 }
