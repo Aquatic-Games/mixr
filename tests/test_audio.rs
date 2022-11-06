@@ -20,28 +20,36 @@ impl<'a> AudioCallback for Audio<'a> {
 #[test]
 fn test_wav() {
     let mut format = mixr::AudioFormat {
-        sample_rate: None,
-        channels: None
+        sample_rate: Some(48000),
+        channels: None,
+        bits_per_sample: None
     };
 
     let mut system = mixr::system::AudioSystem::new(&mut format, 32);
 
-    let pcm = mixr::loaders::PCM::load_wav("/home/ollie/Music/Laxity - A question of luck.wav").unwrap();
+    let pcm1 = mixr::loaders::PCM::load_wav("/home/ollie/Music/Always There MONO.wav").unwrap();
+    let pcm2 = mixr::loaders::PCM::load_wav("/home/ollie/Music/Samples/LowRes/weirdy_intro.wav").unwrap();
 
-    let length = pcm.data.len();
-    let rate = pcm.format.sample_rate.unwrap();
+    let length = pcm1.data.len();
+    let rate = pcm1.format.sample_rate.unwrap();
 
-    let buffer = system.create_buffer();
-    system.update_buffer(&buffer, &pcm.data, &pcm.format);
-    system.play_buffer(0, &buffer, 1.0, 1.15);
+    let buffer1 = system.create_buffer();
+    system.update_buffer(&buffer1, &pcm1.data, &pcm1.format);
+
+    let buffer2 = system.create_buffer();
+    system.update_buffer(&buffer2, &pcm2.data, &pcm2.format);
+
+
+    system.play_buffer(0, &buffer2, 1.0, 1.0);
+    //system.play_buffer(3, &buffer2, 1.0, 1.45);
 
     let sdl = sdl2::init().unwrap();
     let audio = sdl.audio().unwrap();
 
     let desired_spec = AudioSpecDesired {
-        freq: Some(48000),
-        channels: Some(2),
-        samples: None
+        freq: Some(format.sample_rate.unwrap()),
+        channels: Some(format.channels.unwrap() as u8),
+        samples: Some(8192)
     };
 
     let device = audio.open_playback(None, &desired_spec, |_| {
