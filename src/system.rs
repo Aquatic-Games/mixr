@@ -10,7 +10,8 @@ struct Buffer {
     playing: bool,
     chunk: u64,
     position: f64,
-    speed: f64
+    speed: f64,
+    volume: f32
 }
 
 pub struct AudioBuffer {
@@ -33,7 +34,7 @@ impl AudioSystem {
     }
 
     pub fn create_buffer(&mut self) -> AudioBuffer {
-        let buffer = Buffer { has_data: false, data: None, format: None, playing: false, chunk: 0, position: 0.0, speed: 0.0 };
+        let buffer = Buffer { has_data: false, data: None, format: None, playing: false, chunk: 0, position: 0.0, speed: 0.0, volume: 0.0 };
         self.buffers.insert(self.current_handle, buffer);
         
         let p_buffer = AudioBuffer { handle: self.current_handle };
@@ -50,18 +51,19 @@ impl AudioSystem {
         i_buffer.has_data = true;
     }
 
-    pub fn play_buffer(&mut self, buffer: &AudioBuffer, speed: f64) {
+    pub fn play_buffer(&mut self, buffer: &AudioBuffer, volume: f32, speed: f64) {
         let mut i_buffer = self.buffers.get_mut(&buffer.handle).unwrap();
         i_buffer.chunk = 0;
         i_buffer.position = 0.0;
         i_buffer.speed = i_buffer.format.as_ref().unwrap().sample_rate.unwrap() as f64 / self.format.sample_rate.unwrap() as f64;
         i_buffer.speed *= speed;
+        i_buffer.volume = volume;
         i_buffer.playing = true;
         println!("{}", self.format.sample_rate.unwrap());
     }
 
     pub fn advance(&mut self) -> i16 {
-        let mut result = 0;
+        let mut result: i32 = 0;
 
         for (_, buffer) in self.buffers.iter_mut() {
             if !buffer.playing {
@@ -78,8 +80,10 @@ impl AudioSystem {
             let mut pos = (buffer.position + buffer.chunk as f64 * CHUNK_SIZE) as usize;
             pos *= 2;
             pos -= pos % 4;
-            result += data[pos] as i16 | ((data[pos + 1] as i16) << 8) as i16;
+            result += ((data[pos] as i16 | ((data[pos + 1] as i16) << 8) as i16) as f32 * buffer.volume) as i32;
         }
+
+        let result = i32::clamp(result, i16::MIN as i32, i16::MAX as i32) as i16;
 
         result
     }

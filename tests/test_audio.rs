@@ -33,7 +33,7 @@ fn test_wav() {
 
     let buffer = system.create_buffer();
     system.update_buffer(&buffer, &pcm.data, &pcm.format);
-    system.play_buffer(&buffer, 1.0);
+    system.play_buffer(&buffer, 1.0, 1.15);
 
     let sdl = sdl2::init().unwrap();
     let audio = sdl.audio().unwrap();
