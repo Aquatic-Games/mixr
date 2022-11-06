@@ -42,7 +42,7 @@ impl BinaryReader {
     pub fn read_string(&mut self, num_chars: i32) -> String {
         let mut text = String::new();
 
-        for _i in 0..num_chars {
+        for _ in 0..num_chars {
             text.push(self.data[self.position] as char);
             self.position += 1;
         }

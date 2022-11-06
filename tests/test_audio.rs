@@ -11,8 +11,7 @@ impl<'a> AudioCallback for Audio<'a> {
     type Channel = i16;
 
     fn callback(&mut self, out: &mut [Self::Channel]) {
-        for x in out.iter_mut()
-        {
+        for x in out.iter_mut() {
             *x = self.system.advance();
         }
     }
@@ -41,7 +40,7 @@ fn test_wav() {
         samples: None
     };
 
-    let device = audio.open_playback(None, &desired_spec, |spec| {
+    let device = audio.open_playback(None, &desired_spec, |_| {
         Audio {
             system: &mut system
         }
