@@ -26,19 +26,20 @@ fn test_wav() {
 
     let mut system = mixr::system::AudioSystem::new(&mut format);
 
-    let pcm = mixr::loaders::PCM::load_wav("/home/ollie/Music/Always There.wav").unwrap();
+    let pcm = mixr::loaders::PCM::load_wav("/home/ollie/Music/Laxity - A question of luck.wav").unwrap();
 
-    let length = (&pcm).data.len();
-    let rate = (&pcm).format.sample_rate.unwrap();
+    let length = pcm.data.len();
+    let rate = pcm.format.sample_rate.unwrap();
 
     let buffer = system.create_buffer();
-    system.update_buffer(&buffer, pcm.data, pcm.format);
+    system.update_buffer(&buffer, &pcm.data, &pcm.format);
+    system.play_buffer(&buffer, 1.0);
 
     let sdl = sdl2::init().unwrap();
     let audio = sdl.audio().unwrap();
 
     let desired_spec = AudioSpecDesired {
-        freq: Some(44100),
+        freq: Some(48000),
         channels: Some(2),
         samples: None
     };
