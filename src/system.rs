@@ -5,7 +5,10 @@ struct Buffer {
     has_data: bool,
 
     data: Option<Vec<u8>>,
-    format: Option<AudioFormat>
+    format: Option<AudioFormat>,
+
+    playing: bool,
+    position: usize
 }
 
 pub struct AudioBuffer {
@@ -28,7 +31,7 @@ impl AudioSystem {
     }
 
     pub fn create_buffer(&mut self) -> AudioBuffer {
-        let buffer = Buffer { has_data: false, data: None, format: None };
+        let buffer = Buffer { has_data: false, data: None, format: None, playing: false, position: 0 };
         self.buffers.insert(self.current_handle, buffer);
         
         let p_buffer = AudioBuffer { handle: self.current_handle };
@@ -45,7 +48,23 @@ impl AudioSystem {
         i_buffer.has_data = true;
     }
 
-    pub fn advance() -> i16 {
-        0
+    pub fn play_buffer(&mut self, buffer: &AudioBuffer) {
+        let mut i_buffer = self.buffers.get_mut(&buffer.handle).unwrap();
+        i_buffer.position = 0;
+        i_buffer.playing = true;
+    }
+
+    pub fn advance(&mut self) -> i16 {
+        let mut result = 0;
+
+        for (_, buffer) in self.buffers.iter_mut() {
+            let data = &buffer.data.as_mut().unwrap();
+            let pos = buffer.position;
+            result += data[pos] as i16 | ((data[pos + 1] as i16) << 8) as i16;
+
+            buffer.position += 2;
+        }
+
+        result
     }
 }
