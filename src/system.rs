@@ -17,10 +17,6 @@ struct Channel {
     volume: f32
 }
 
-pub struct AudioBuffer {
-    handle: i32
-}
-
 pub struct AudioSystem {
     pub format: AudioFormat,
     
@@ -51,26 +47,36 @@ impl AudioSystem {
         AudioSystem { format: format.clone(), buffers: HashMap::new(), channels: v_channels, current_handle: 0, current_sample: 0 }
     }
 
-    pub fn create_buffer(&mut self) -> AudioBuffer {
+    pub fn create_buffer(&mut self) -> i32 {
         let buffer = Buffer { has_data: false, data: None, format: None };
         self.buffers.insert(self.current_handle, buffer);
         
-        let p_buffer = AudioBuffer { handle: self.current_handle };
+        let p_buffer = self.current_handle;
         self.current_handle += 1;
 
         p_buffer
     }
 
-    pub fn update_buffer(&mut self, buffer: &AudioBuffer, data: &Vec<u8>, format: &AudioFormat) {
-        let mut i_buffer = self.buffers.get_mut(&buffer.handle).unwrap();
+    pub fn update_buffer(&mut self, buffer: i32, data: &Vec<u8>, format: &AudioFormat) {
+        //for (key, value) in &self.buffers {
+        //    println!("{}", *key);
+        //}
+
+        println!("{:#?}, {}", self.format, self.channels.len());
+
+        let mut i_buffer = self.buffers.get_mut(&buffer).unwrap();
+        println!("Got i buffer");
 
         i_buffer.data = Some(data.clone());
+        println!("Set data");
         i_buffer.format = Some(format.clone());
+        println!("Set format");
         i_buffer.has_data = true;
+        println!("Done");
     }
 
-    pub fn play_buffer(&mut self, channel: u16, buffer: &AudioBuffer, volume: f32, speed: f64) {
-        let i_buffer = self.buffers.get(&buffer.handle).unwrap();
+    pub fn play_buffer(&mut self, channel: u16, buffer: i32, volume: f32, speed: f64) {
+        let i_buffer = self.buffers.get(&buffer).unwrap();
         let i_channel = self.channels.get_mut(channel as usize).unwrap();
         i_channel.chunk = 0;
         i_channel.position = 0.0;
@@ -78,7 +84,7 @@ impl AudioSystem {
         i_channel.speed *= speed;
         i_channel.volume = volume;
         i_channel.playing = true;
-        i_channel.buffer = buffer.handle;
+        i_channel.buffer = buffer;
     }
 
     pub fn advance(&mut self) -> i16 {
@@ -118,7 +124,6 @@ impl AudioSystem {
                 result += (((((data[pos] as i32) << 8) as i32) - i16::MAX as i32) as f32 * channel.volume) as i32;
             }
 
-            //println!("{}, {}", self.current_sample, pos);
 
             if self.current_sample == 0 {
                 channel.position += channel.speed;   
