@@ -14,7 +14,8 @@ struct Channel {
     chunk: u64,
     position: f64,
     speed: f64,
-    volume: f32
+    volume: f64,
+    panning: f64
 }
 
 pub struct AudioSystem {
@@ -41,6 +42,7 @@ impl AudioSystem {
                 position: 0.0,
                 speed: 0.0,
                 volume: 0.0,
+                panning: 0.5
             });
         }
 
@@ -75,7 +77,7 @@ impl AudioSystem {
         println!("Done");
     }
 
-    pub fn play_buffer(&mut self, channel: u16, buffer: i32, volume: f32, speed: f64) {
+    pub fn play_buffer(&mut self, channel: u16, buffer: i32, volume: f64, speed: f64, panning: f64) {
         let i_buffer = self.buffers.get(&buffer).unwrap();
         let i_channel = self.channels.get_mut(channel as usize).unwrap();
         i_channel.chunk = 0;
@@ -83,6 +85,7 @@ impl AudioSystem {
         i_channel.speed = i_buffer.format.as_ref().unwrap().sample_rate.unwrap() as f64 / self.format.sample_rate.unwrap() as f64;
         i_channel.speed *= speed;
         i_channel.volume = volume;
+        i_channel.panning = panning;
         i_channel.playing = true;
         i_channel.buffer = buffer;
     }
@@ -117,11 +120,13 @@ impl AudioSystem {
                 continue;
             }
 
+            let pan = f64::clamp(if self.current_sample == 0 { (1.0 - channel.panning) * 2.0 } else { 1.0 - ((0.5 - channel.panning)) * 2.0 }, 0.0, 1.0);
+
             if fmt_bps == 16 {
-                result += ((data[pos] as i16 | ((data[pos + 1] as i16) << 8) as i16) as f32 * channel.volume) as i32;
+                result += ((data[pos] as i16 | ((data[pos + 1] as i16) << 8) as i16) as f64 * channel.volume * pan) as i32;
             }
             else if fmt_bps == 8 {
-                result += (((((data[pos] as i32) << 8) as i32) - i16::MAX as i32) as f32 * channel.volume) as i32;
+                result += (((((data[pos] as i32) << 8) as i32) - i16::MAX as i32) as f64 * channel.volume * pan) as i32;
             }
 
 
