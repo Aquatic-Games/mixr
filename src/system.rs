@@ -60,21 +60,12 @@ impl AudioSystem {
     }
 
     pub fn update_buffer(&mut self, buffer: i32, data: &Vec<u8>, format: &AudioFormat) {
-        //for (key, value) in &self.buffers {
-        //    println!("{}", *key);
-        //}
-
-        println!("{:#?}, {}", self.format, self.channels.len());
 
         let mut i_buffer = self.buffers.get_mut(&buffer).unwrap();
-        println!("Got i buffer");
 
         i_buffer.data = Some(data.clone());
-        println!("Set data");
         i_buffer.format = Some(format.clone());
-        println!("Set format");
         i_buffer.has_data = true;
-        println!("Done");
     }
 
     pub fn play_buffer(&mut self, channel: u16, buffer: i32, volume: f64, speed: f64, panning: f64) {

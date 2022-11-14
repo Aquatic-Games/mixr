@@ -1,6 +1,4 @@
-use std::{ffi::{c_void, CString, CStr}, mem::transmute};
-
-use crate::{system::{AudioSystem}, AudioFormat, loaders::PCM};
+use crate::{system::{AudioSystem}, AudioFormat};
 
 #[repr(C)]
 pub struct CAudioFormat {
@@ -9,12 +7,12 @@ pub struct CAudioFormat {
     pub bits_per_sample: u8
 }
 
-#[repr(C)]
+/*#[repr(C)]
 pub struct CPCM {
     pub data: *const u8,
     pub data_length: usize,
     pub format: CAudioFormat
-}
+}*/
 
 #[no_mangle]
 pub extern "C" fn mxCreateSystem(format: Option<&CAudioFormat>, channels: u16) -> *const AudioSystem {
@@ -42,9 +40,7 @@ pub extern "C" fn mxCreateBuffer(system: &mut AudioSystem) -> i32 {
 
 #[no_mangle]
 pub extern "C" fn mxUpdateBuffer(system: &mut AudioSystem, buffer: i32, data: *const u8, data_length: usize, format: &CAudioFormat) {
-    println!("Got system");
     let data = unsafe { std::slice::from_raw_parts(data, data_length).to_vec() };
-    println!("Got data");
 
     assert_eq!(data_length, data.len(), "data_length, {}, does not equal the converted data length, {}", data_length, data.len());
 
@@ -54,10 +50,7 @@ pub extern "C" fn mxUpdateBuffer(system: &mut AudioSystem, buffer: i32, data: *c
         bits_per_sample: Some(format.bits_per_sample)
     };
 
-    println!("Got format");
-
     system.update_buffer(buffer, &data, &format);
-    println!("Updated buffer");
 }
 
 #[no_mangle]
