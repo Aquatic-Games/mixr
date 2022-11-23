@@ -138,7 +138,8 @@ impl AudioSystem {
             if pos >= data.len() {
                 if properties.looping {
                     channel.chunk = 0;
-                    channel.position -= CHUNK_SIZE;
+                    let amount = channel.position - CHUNK_SIZE;
+                    channel.position = if amount > 0.0 { amount } else { 0.0 };
 
                     // todo: perhaps move this into its own function to stop duplicated code
                     // make sure to measure perf to make sure it's not changed though
