@@ -95,11 +95,11 @@ impl AudioSystem {
 
             const CHUNK_SIZE: f64 = 48000.0;
 
-            let buffer = self.buffers.get(&channel.buffer).unwrap();
+            let buffer = &self.buffers[&channel.buffer];
             let format = &buffer.format;
             let fmt_channels = format.channels;
             let fmt_bps = format.bits_per_sample;
-            let data = &*buffer.data;
+            let data = &buffer.data;
 
             let alignment = fmt_bps / 8;
 
@@ -129,7 +129,6 @@ impl AudioSystem {
                 }
 
             }
-
 
             if self.current_sample == 0 {
                 channel.position += channel.speed;   
