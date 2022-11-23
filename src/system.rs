@@ -13,6 +13,7 @@ struct Channel {
     playing: bool,
     chunk: u64,
     position: f64,
+    sample_rate: i32,
     speed: f64,
 
     properties: ChannelProperties
@@ -44,6 +45,7 @@ impl AudioSystem {
                 playing: false,
                 chunk: 0,
                 position: 0.0,
+                sample_rate: 0,
                 speed: 0.0,
                 properties: ChannelProperties::default()
             });
@@ -78,6 +80,7 @@ impl AudioSystem {
         i_channel.chunk = 0;
         i_channel.position = 0.0;
         i_channel.properties = properties;
+        i_channel.sample_rate = i_buffer.format.sample_rate;
         i_channel.speed = i_buffer.format.sample_rate as f64 / self.format.sample_rate as f64;
         i_channel.speed *= i_channel.properties.speed;
         i_channel.playing = true;
@@ -85,7 +88,10 @@ impl AudioSystem {
     }
 
     pub fn set_channel_properties(&mut self, channel: u16, properties: ChannelProperties) {
-        self.channels[channel as usize].properties = properties;
+        let mut channel = &mut self.channels[channel as usize];
+        channel.properties = properties;
+        channel.speed = self.buffers[&channel.buffer].format.sample_rate as f64 / self.format.sample_rate as f64;
+        channel.speed *= channel.properties.speed;
     }
 
     pub fn play(&mut self, channel: u16) {
