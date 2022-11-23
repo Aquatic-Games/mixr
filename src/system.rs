@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use crate::AudioFormat;
+use crate::{AudioFormat, ChannelProperties};
 
 struct Buffer {
     has_data: bool,
@@ -14,8 +14,8 @@ struct Channel {
     chunk: u64,
     position: f64,
     speed: f64,
-    volume: f64,
-    panning: f64
+
+    properties: ChannelProperties
 }
 
 pub struct AudioSystem {
@@ -45,8 +45,7 @@ impl AudioSystem {
                 chunk: 0,
                 position: 0.0,
                 speed: 0.0,
-                volume: 0.0,
-                panning: 0.5
+                properties: ChannelProperties::default()
             });
         }
 
@@ -72,17 +71,36 @@ impl AudioSystem {
         i_buffer.has_data = true;
     }
 
-    pub fn play_buffer(&mut self, channel: u16, buffer: i32, volume: f64, speed: f64, panning: f64) {
+    pub fn play_buffer(&mut self, buffer: i32, channel: u16, properties: ChannelProperties) {
         let i_buffer = self.buffers.get(&buffer).unwrap();
         let i_channel = self.channels.get_mut(channel as usize).unwrap();
+
         i_channel.chunk = 0;
         i_channel.position = 0.0;
+        i_channel.properties = properties;
         i_channel.speed = i_buffer.format.sample_rate as f64 / self.format.sample_rate as f64;
-        i_channel.speed *= speed;
-        i_channel.volume = volume;
-        i_channel.panning = panning;
+        i_channel.speed *= i_channel.properties.speed;
         i_channel.playing = true;
         i_channel.buffer = buffer;
+    }
+
+    pub fn set_channel_properties(&mut self, channel: u16, properties: ChannelProperties) {
+        self.channels[channel as usize].properties = properties;
+    }
+
+    pub fn play(&mut self, channel: u16) {
+        self.channels[channel as usize].playing = true;
+    }
+
+    pub fn pause(&mut self, channel: u16) {
+        self.channels[channel as usize].playing = false;
+    }
+
+    pub fn stop(&mut self, channel: u16) {
+        let mut channel = &mut self.channels[channel as usize];
+        channel.playing = false;
+        channel.position = 0.0;
+        channel.chunk = 0;
     }
 
     pub fn advance(&mut self) -> i16 {
@@ -97,6 +115,7 @@ impl AudioSystem {
 
             let buffer = &self.buffers[&channel.buffer];
             let format = &buffer.format;
+            let properties = &channel.properties;
             let fmt_channels = format.channels;
             let fmt_bps = format.bits_per_sample;
             let data = &buffer.data;
@@ -111,21 +130,31 @@ impl AudioSystem {
             //pos -= pos % 2 as usize;
 
             if pos >= data.len() {
-                channel.playing = false;
-                //channel.position = 0.0;
-                //channel.chunk = 0;
-                continue;
+                if properties.looping {
+                    channel.chunk = 0;
+                    channel.position -= CHUNK_SIZE;
+
+                    // todo: perhaps move this into its own function to stop duplicated code
+                    // make sure to measure perf to make sure it's not changed though
+                    pos = (channel.position + channel.chunk as f64 * CHUNK_SIZE) as usize;
+                    pos *= alignment as usize;
+                    pos += if fmt_channels == 2 { self.current_sample as usize } else { 0 };
+                    pos *= fmt_channels as usize;
+                    pos -= pos % alignment as usize;
+                } else {
+                    channel.playing = false;
+                }
             }
 
-            let pan = f64::clamp(if self.current_sample == 0 { (1.0 - channel.panning) * 2.0 } else { 1.0 - ((0.5 - channel.panning)) * 2.0 }, 0.0, 1.0);
+            let pan = f64::clamp(if self.current_sample == 0 { (1.0 - channel.properties.panning) * 2.0 } else { 1.0 - ((0.5 - channel.properties.panning)) * 2.0 }, 0.0, 1.0);
 
             unsafe {
 
                 if fmt_bps == 16 {
-                    result += ((*data.get_unchecked(pos) as i16 | ((*data.get_unchecked(pos + 1) as i16) << 8) as i16) as f64 * channel.volume * pan) as i32;
+                    result += ((*data.get_unchecked(pos) as i16 | ((*data.get_unchecked(pos + 1) as i16) << 8) as i16) as f64 * channel.properties.volume * pan) as i32;
                 }
                 else if fmt_bps == 8 {
-                    result += (((((*data.get_unchecked(pos) as i32) << 8) as i32) - i16::MAX as i32) as f64 * channel.volume * pan) as i32;
+                    result += (((((*data.get_unchecked(pos) as i32) << 8) as i32) - i16::MAX as i32) as f64 * channel.properties.volume * pan) as i32;
                 }
 
             }

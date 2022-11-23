@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use mixr::{self, system::AudioSystem, AudioFormat};
+use mixr::{self, system::AudioSystem, AudioFormat, ChannelProperties};
 use sdl2::audio::{AudioSpecDesired, AudioCallback};
 
 struct Audio<'a> {
@@ -21,9 +21,9 @@ impl<'a> AudioCallback for Audio<'a> {
 fn test_wav() {
     let mut format: Option<AudioFormat> = None;
 
-    let mut system = mixr::system::AudioSystem::new(format, 1024);
+    let mut system = mixr::system::AudioSystem::new(format, 2);
 
-    let pcm1 = mixr::loaders::PCM::load_wav("/home/ollie/Music/Laxity - A question of luck.wav").unwrap();
+    let pcm1 = mixr::loaders::PCM::load_wav("/home/ollie/Music/dr6.wav").unwrap();
     let pcm2 = mixr::loaders::PCM::load_wav("/home/ollie/Music/Samples/LowRes/Always There-8khz.wav").unwrap();
 
     let length = pcm1.data.len();
@@ -35,11 +35,7 @@ fn test_wav() {
     let buffer2 = system.create_buffer();
     system.update_buffer(buffer2, &pcm2.data, pcm2.format);
 
-
-    //system.play_buffer(0, buffer1, 1000.0, 0.15, 0.0);
-    for i in 0..1024 {
-        system.play_buffer(i, buffer1, 1.0, 0.45, 0.5);
-    }
+    system.play_buffer(buffer1, 0, ChannelProperties { volume: 1.0, speed: 10.15, panning: 0.5, looping: true  });
 
     let sdl = sdl2::init().unwrap();
     let audio = sdl.audio().unwrap();

@@ -1,4 +1,4 @@
-use crate::{system::{AudioSystem}, AudioFormat};
+use crate::{system::{AudioSystem}, AudioFormat, ChannelProperties};
 
 /*#[repr(C)]
 pub struct CPCM {
@@ -33,8 +33,28 @@ pub extern "C" fn mxUpdateBuffer(system: &mut AudioSystem, buffer: i32, data: *c
 }
 
 #[no_mangle]
-pub extern "C" fn mxPlayBuffer(system: &mut AudioSystem, channel: u16, buffer: i32, volume: f64, speed: f64, panning: f64) {
-    system.play_buffer(channel, buffer, volume, speed, panning);
+pub extern "C" fn mxPlayBuffer(system: &mut AudioSystem, buffer: i32, channel: u16, properties: ChannelProperties) {
+    system.play_buffer(buffer, channel, properties);
+}
+
+#[no_mangle]
+pub extern "C" fn mxSetChannelProperties(system: &mut AudioSystem, channel: u16, properties: ChannelProperties) {
+    system.set_channel_properties(channel, properties);
+}
+
+#[no_mangle]
+pub extern "C" fn mxPlay(system: &mut AudioSystem, channel: u16) {
+    system.play(channel);
+}
+
+#[no_mangle]
+pub extern "C" fn mxPause(system: &mut AudioSystem, channel: u16) {
+    system.pause(channel);
+}
+
+#[no_mangle]
+pub extern "C" fn mxStop(system: &mut AudioSystem, channel: u16) {
+    system.stop(channel);
 }
 
 #[no_mangle]
