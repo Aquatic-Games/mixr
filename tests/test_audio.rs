@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use mixr::{self, system::AudioSystem};
+use mixr::{self, system::AudioSystem, AudioFormat};
 use sdl2::audio::{AudioSpecDesired, AudioCallback};
 
 struct Audio<'a> {
@@ -19,36 +19,34 @@ impl<'a> AudioCallback for Audio<'a> {
 
 #[test]
 fn test_wav() {
-    let mut format = mixr::AudioFormat {
-        sample_rate: Some(48000),
-        channels: None,
-        bits_per_sample: None
-    };
+    let mut format: Option<AudioFormat> = None;
 
-    let mut system = mixr::system::AudioSystem::new(&mut format, 32);
+    let mut system = mixr::system::AudioSystem::new(format, 1024);
 
     let pcm1 = mixr::loaders::PCM::load_wav("/home/ollie/Music/Laxity - A question of luck.wav").unwrap();
     let pcm2 = mixr::loaders::PCM::load_wav("/home/ollie/Music/Samples/LowRes/Always There-8khz.wav").unwrap();
 
     let length = pcm1.data.len();
-    let rate = pcm1.format.sample_rate.unwrap();
+    let rate = pcm1.format.sample_rate;
 
     let buffer1 = system.create_buffer();
-    system.update_buffer(buffer1, &pcm1.data, &pcm1.format);
+    system.update_buffer(buffer1, &pcm1.data, pcm1.format);
 
     let buffer2 = system.create_buffer();
-    system.update_buffer(buffer2, &pcm2.data, &pcm2.format);
+    system.update_buffer(buffer2, &pcm2.data, pcm2.format);
 
 
-    system.play_buffer(0, buffer1, 1.0, 1.15, 0.5);
-    //system.play_buffer(3, &buffer2, 1.0, 1.45);
+    //system.play_buffer(0, buffer1, 1000.0, 0.15, 0.0);
+    for i in 0..1024 {
+        system.play_buffer(i, buffer1, 1.0, 0.45, 0.5);
+    }
 
     let sdl = sdl2::init().unwrap();
     let audio = sdl.audio().unwrap();
 
     let desired_spec = AudioSpecDesired {
-        freq: Some(format.sample_rate.unwrap()),
-        channels: Some(format.channels.unwrap() as u8),
+        freq: Some(48000),
+        channels: Some(2 as u8),
         samples: Some(8192)
     };
 

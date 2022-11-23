@@ -4,8 +4,8 @@ use crate::AudioFormat;
 struct Buffer {
     has_data: bool,
 
-    data: Option<Vec<u8>>,
-    format: Option<AudioFormat>,
+    data: Vec<u8>,
+    format: AudioFormat,
 }
 
 struct Channel {
@@ -28,10 +28,14 @@ pub struct AudioSystem {
 }
 
 impl AudioSystem {
-    pub fn new(format: &mut AudioFormat, channels: u16) -> AudioSystem {
-        format.channels.get_or_insert(2);
-        format.sample_rate.get_or_insert(48000);
-        format.bits_per_sample.get_or_insert(16);
+    pub fn new(format: Option<AudioFormat>, channels: u16) -> AudioSystem {
+        let i_fmt = if format.is_none() {
+            AudioFormat {
+                channels: 2,
+                sample_rate: 48000,
+                bits_per_sample: 16
+            }
+        } else { format.unwrap() };
 
         let mut v_channels = Vec::with_capacity(channels as usize);
         for _ in 0..channels {
@@ -46,11 +50,11 @@ impl AudioSystem {
             });
         }
 
-        AudioSystem { format: format.clone(), buffers: HashMap::new(), channels: v_channels, current_handle: 0, current_sample: 0 }
+        AudioSystem { format: i_fmt, buffers: HashMap::new(), channels: v_channels, current_handle: 0, current_sample: 0 }
     }
 
     pub fn create_buffer(&mut self) -> i32 {
-        let buffer = Buffer { has_data: false, data: None, format: None };
+        let buffer = Buffer { has_data: false, data: Vec::new(), format: AudioFormat { channels: 0, sample_rate: 0, bits_per_sample: 0 } };
         self.buffers.insert(self.current_handle, buffer);
         
         let p_buffer = self.current_handle;
@@ -59,12 +63,12 @@ impl AudioSystem {
         p_buffer
     }
 
-    pub fn update_buffer(&mut self, buffer: i32, data: &Vec<u8>, format: &AudioFormat) {
+    pub fn update_buffer(&mut self, buffer: i32, data: &Vec<u8>, format: AudioFormat) {
 
         let mut i_buffer = self.buffers.get_mut(&buffer).unwrap();
 
-        i_buffer.data = Some(data.clone());
-        i_buffer.format = Some(format.clone());
+        i_buffer.data = data.clone();
+        i_buffer.format = format;
         i_buffer.has_data = true;
     }
 
@@ -73,7 +77,7 @@ impl AudioSystem {
         let i_channel = self.channels.get_mut(channel as usize).unwrap();
         i_channel.chunk = 0;
         i_channel.position = 0.0;
-        i_channel.speed = i_buffer.format.as_ref().unwrap().sample_rate.unwrap() as f64 / self.format.sample_rate.unwrap() as f64;
+        i_channel.speed = i_buffer.format.sample_rate as f64 / self.format.sample_rate as f64;
         i_channel.speed *= speed;
         i_channel.volume = volume;
         i_channel.panning = panning;
@@ -89,11 +93,13 @@ impl AudioSystem {
                 continue;
             }
 
+            const CHUNK_SIZE: f64 = 48000.0;
+
             let buffer = self.buffers.get(&channel.buffer).unwrap();
-            let format = buffer.format.as_ref().unwrap();
-            let fmt_channels = format.channels.unwrap();
-            let fmt_bps = format.bits_per_sample.unwrap();
-            let data = buffer.data.as_ref().unwrap();
+            let format = &buffer.format;
+            let fmt_channels = format.channels;
+            let fmt_bps = format.bits_per_sample;
+            let data = &*buffer.data;
 
             let alignment = fmt_bps / 8;
 
@@ -105,27 +111,29 @@ impl AudioSystem {
             //pos -= pos % 2 as usize;
 
             if pos >= data.len() {
-                //channel.playing = false;
-                channel.position = 0.0;
-                channel.chunk = 0;
+                channel.playing = false;
+                //channel.position = 0.0;
+                //channel.chunk = 0;
                 continue;
             }
 
             let pan = f64::clamp(if self.current_sample == 0 { (1.0 - channel.panning) * 2.0 } else { 1.0 - ((0.5 - channel.panning)) * 2.0 }, 0.0, 1.0);
 
-            if fmt_bps == 16 {
-                result += ((data[pos] as i16 | ((data[pos + 1] as i16) << 8) as i16) as f64 * channel.volume * pan) as i32;
-            }
-            else if fmt_bps == 8 {
-                result += (((((data[pos] as i32) << 8) as i32) - i16::MAX as i32) as f64 * channel.volume * pan) as i32;
+            unsafe {
+
+                if fmt_bps == 16 {
+                    result += ((*data.get_unchecked(pos) as i16 | ((*data.get_unchecked(pos + 1) as i16) << 8) as i16) as f64 * channel.volume * pan) as i32;
+                }
+                else if fmt_bps == 8 {
+                    result += (((((*data.get_unchecked(pos) as i32) << 8) as i32) - i16::MAX as i32) as f64 * channel.volume * pan) as i32;
+                }
+
             }
 
 
             if self.current_sample == 0 {
                 channel.position += channel.speed;   
             }
-
-            const CHUNK_SIZE: f64 = 48000.0;
 
             if channel.position >= CHUNK_SIZE {
                 channel.chunk += 1;

@@ -60,9 +60,9 @@ impl PCM {
         let bits_per_sample = reader.read_i16();
 
         let format = AudioFormat {
-            channels: Some(channels as u8),
-            sample_rate: Some(sample_rate),
-            bits_per_sample: Some(bits_per_sample as u8)
+            channels: channels as u8,
+            sample_rate: sample_rate,
+            bits_per_sample: bits_per_sample as u8
         };
 
         if reader.read_string(4) != "data" {
