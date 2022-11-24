@@ -126,18 +126,16 @@ impl AudioSystem {
             let fmt_bps = format.bits_per_sample;
             let data = &buffer.data;
 
-            let alignment = fmt_bps / 8;
+            let alignment = (fmt_bps / 8) as usize;
 
-            let mut pos_f64 = channel.position + channel.chunk as f64 * CHUNK_SIZE;
-            let actual_pos = pos_f64 as usize;
-            let mut pos = actual_pos;
-            pos *= alignment as usize;
-            pos += if fmt_channels == 2 { self.current_sample as usize } else { 0 };
-            pos *= fmt_channels as usize;
-            pos -= pos % alignment as usize;
-            //pos -= pos % 2 as usize;
+            let mut pos_f64 = channel.position + channel.chunk as f64 * CHUNK_SIZE as f64;
+            let mut pos = pos_f64 as usize;
 
-            if pos >= data.len() {
+            let mut get_pos = pos * alignment * buffer.format.channels as usize;
+            get_pos += self.current_sample as usize * alignment * (buffer.format.channels - 1) as usize;
+            get_pos -= get_pos % alignment;
+
+            if get_pos >= data.len() {
                 if properties.looping {
                     channel.chunk = 0;
                     let amount = channel.position - CHUNK_SIZE;
@@ -145,12 +143,13 @@ impl AudioSystem {
 
                     // todo: perhaps move this into its own function to stop duplicated code
                     // make sure to measure perf to make sure it's not changed though
-                    pos_f64 = channel.position + channel.chunk as f64 * CHUNK_SIZE;
+                    pos_f64 = channel.position + channel.chunk as f64 * CHUNK_SIZE as f64;
                     pos = pos_f64 as usize;
-                    pos *= alignment as usize;
-                    pos += if fmt_channels == 2 { self.current_sample as usize } else { 0 };
-                    pos *= fmt_channels as usize;
-                    pos -= pos % alignment as usize;
+
+                    let mut get_pos = pos * alignment * buffer.format.channels as usize;
+                    get_pos += self.current_sample as usize * alignment * (buffer.format.channels - 1) as usize;
+                    get_pos -= get_pos % alignment;
+
                 } else {
                     channel.playing = false;
                 }
@@ -159,20 +158,15 @@ impl AudioSystem {
             let pan = f64::clamp(if self.current_sample == 0 { (1.0 - channel.properties.panning) * 2.0 } else { 1.0 - ((0.5 - channel.properties.panning)) * 2.0 }, 0.0, 1.0);
 
             unsafe {
-                let mut value = Self::get_sample(data, pos, fmt_bps);
-                let mut next_pos = if channel.speed < 1.0 { pos + (((1 * alignment as usize) + (if fmt_channels == 2 { self.current_sample as usize } else { 0 })) * fmt_channels as usize)} else { pos };
+                let mut next_pos = if channel.speed < 1.0 { pos + 1 } else { 0 };
+                let mut get_next_pos = next_pos * alignment * buffer.format.channels as usize;
+                get_next_pos += self.current_sample as usize * alignment * (buffer.format.channels - 1) as usize;
+                get_next_pos -= get_next_pos % alignment;
 
-                next_pos -= next_pos % alignment as usize;
+                let mut value = Self::get_sample(data, get_pos, fmt_bps);
+                let mut value_next = Self::get_sample(data, get_next_pos, fmt_bps);
 
-                //next_pos *= alignment as usize;
-                //next_pos += if fmt_channels == 2 { self.current_sample as usize } else { 0 };
-                //next_pos *= fmt_channels as usize;
-
-                let value_next = Self::get_sample(data, next_pos, fmt_bps);
-
-                value = Self::lerp(value, value_next, pos_f64 - actual_pos as f64);
-
-                println!("{}", pos_f64 - actual_pos as f64);
+                value = Self::lerp(value, value_next, pos_f64 - pos as f64);
 
                 value *= channel.properties.volume * pan;
                 result += value as i32;
