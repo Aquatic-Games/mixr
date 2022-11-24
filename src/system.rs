@@ -158,7 +158,8 @@ impl AudioSystem {
             let pan = f64::clamp(if self.current_sample == 0 { (1.0 - channel.properties.panning) * 2.0 } else { 1.0 - ((0.5 - channel.properties.panning)) * 2.0 }, 0.0, 1.0);
 
             unsafe {
-                let next_pos = if channel.speed < 1.0 { pos + 1 } else { 0 };
+                let next_pos = if channel.speed < 1.0 { pos + 1 } else { pos };
+
                 let mut get_next_pos = next_pos * alignment * fmt_channels as usize;
                 get_next_pos += self.current_sample as usize * alignment * (fmt_channels - 1) as usize;
                 get_next_pos -= get_next_pos % alignment;
