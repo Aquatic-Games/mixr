@@ -24,7 +24,7 @@ fn test_wav() {
     let mut system = mixr::system::AudioSystem::new(format, 2);
 
     let pcm1 = mixr::loaders::PCM::load_wav("/home/ollie/Music/dr6.wav").unwrap();
-    let pcm2 = mixr::loaders::PCM::load_wav("/home/ollie/Music/Always There-8khz.wav").unwrap();
+    let pcm2 = mixr::loaders::PCM::load_wav("/home/ollie/Music/sucs.wav").unwrap();
 
     let length = pcm1.data.len();
     let rate = pcm1.format.sample_rate;

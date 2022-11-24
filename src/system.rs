@@ -131,8 +131,8 @@ impl AudioSystem {
             let mut pos_f64 = channel.position + channel.chunk as f64 * CHUNK_SIZE as f64;
             let mut pos = pos_f64 as usize;
 
-            let mut get_pos = pos * alignment * buffer.format.channels as usize;
-            get_pos += self.current_sample as usize * alignment * (buffer.format.channels - 1) as usize;
+            let mut get_pos = pos * alignment * fmt_channels as usize;
+            get_pos += self.current_sample as usize * alignment * (fmt_channels - 1) as usize;
             get_pos -= get_pos % alignment;
 
             if get_pos >= data.len() {
@@ -146,8 +146,8 @@ impl AudioSystem {
                     pos_f64 = channel.position + channel.chunk as f64 * CHUNK_SIZE as f64;
                     pos = pos_f64 as usize;
 
-                    let mut get_pos = pos * alignment * buffer.format.channels as usize;
-                    get_pos += self.current_sample as usize * alignment * (buffer.format.channels - 1) as usize;
+                    get_pos = pos * alignment * fmt_channels as usize;
+                    get_pos += self.current_sample as usize * alignment * (fmt_channels - 1) as usize;
                     get_pos -= get_pos % alignment;
 
                 } else {
@@ -158,13 +158,13 @@ impl AudioSystem {
             let pan = f64::clamp(if self.current_sample == 0 { (1.0 - channel.properties.panning) * 2.0 } else { 1.0 - ((0.5 - channel.properties.panning)) * 2.0 }, 0.0, 1.0);
 
             unsafe {
-                let mut next_pos = if channel.speed < 1.0 { pos + 1 } else { 0 };
-                let mut get_next_pos = next_pos * alignment * buffer.format.channels as usize;
-                get_next_pos += self.current_sample as usize * alignment * (buffer.format.channels - 1) as usize;
+                let next_pos = if channel.speed < 1.0 { pos + 1 } else { 0 };
+                let mut get_next_pos = next_pos * alignment * fmt_channels as usize;
+                get_next_pos += self.current_sample as usize * alignment * (fmt_channels - 1) as usize;
                 get_next_pos -= get_next_pos % alignment;
 
                 let mut value = Self::get_sample(data, get_pos, fmt_bps);
-                let mut value_next = Self::get_sample(data, get_next_pos, fmt_bps);
+                let value_next = Self::get_sample(data, get_next_pos, fmt_bps);
 
                 value = Self::lerp(value, value_next, pos_f64 - pos as f64);
 
