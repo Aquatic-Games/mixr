@@ -25,7 +25,7 @@ pub extern "C" fn mxCreateBuffer(system: &mut AudioSystem) -> i32 {
 
 #[no_mangle]
 pub extern "C" fn mxUpdateBuffer(system: &mut AudioSystem, buffer: i32, data: *const u8, data_length: usize, format: AudioFormat) {
-    let data = unsafe { std::slice::from_raw_parts(data, data_length).to_vec() };
+    let data = unsafe { std::slice::from_raw_parts(data, data_length) };
 
     assert_eq!(data_length, data.len(), "data_length, {}, does not equal the converted data length, {}", data_length, data.len());
 

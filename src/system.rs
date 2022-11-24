@@ -64,11 +64,11 @@ impl AudioSystem {
         p_buffer
     }
 
-    pub fn update_buffer(&mut self, buffer: i32, data: &Vec<u8>, format: AudioFormat) {
+    pub fn update_buffer(&mut self, buffer: i32, data: &[u8], format: AudioFormat) {
 
         let mut i_buffer = self.buffers.get_mut(&buffer).unwrap();
 
-        i_buffer.data = data.clone();
+        i_buffer.data = data.to_vec();
         i_buffer.format = format;
         i_buffer.has_data = true;
     }
@@ -192,7 +192,7 @@ impl AudioSystem {
     }
 
     #[inline(always)]
-    unsafe fn get_sample(data: &Vec<u8>, pos: usize, fmt_bps: u8) -> f64 {
+    unsafe fn get_sample(data: &[u8], pos: usize, fmt_bps: u8) -> f64 {
         match fmt_bps {
             16 => (*data.get_unchecked(pos) as i16 | ((*data.get_unchecked(pos + 1) as i16) << 8) as i16) as f64,
             8 => ((((*data.get_unchecked(pos) as i32) << 8) as i32) - i16::MAX as i32) as f64,
