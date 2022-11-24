@@ -128,7 +128,9 @@ impl AudioSystem {
 
             let alignment = fmt_bps / 8;
 
-            let mut pos = (channel.position + channel.chunk as f64 * CHUNK_SIZE) as usize;
+            let mut pos_f64 = channel.position + channel.chunk as f64 * CHUNK_SIZE;
+            let actual_pos = pos_f64 as usize;
+            let mut pos = actual_pos;
             pos *= alignment as usize;
             pos += if fmt_channels == 2 { self.current_sample as usize } else { 0 };
             pos *= fmt_channels as usize;
@@ -143,7 +145,8 @@ impl AudioSystem {
 
                     // todo: perhaps move this into its own function to stop duplicated code
                     // make sure to measure perf to make sure it's not changed though
-                    pos = (channel.position + channel.chunk as f64 * CHUNK_SIZE) as usize;
+                    pos_f64 = channel.position + channel.chunk as f64 * CHUNK_SIZE;
+                    pos = pos_f64 as usize;
                     pos *= alignment as usize;
                     pos += if fmt_channels == 2 { self.current_sample as usize } else { 0 };
                     pos *= fmt_channels as usize;
@@ -156,14 +159,23 @@ impl AudioSystem {
             let pan = f64::clamp(if self.current_sample == 0 { (1.0 - channel.properties.panning) * 2.0 } else { 1.0 - ((0.5 - channel.properties.panning)) * 2.0 }, 0.0, 1.0);
 
             unsafe {
+                let mut value = Self::get_sample(data, pos, fmt_bps);
+                let mut next_pos = if channel.speed < 1.0 { pos + (((1 * alignment as usize) + (if fmt_channels == 2 { self.current_sample as usize } else { 0 })) * fmt_channels as usize)} else { pos };
 
-                if fmt_bps == 16 {
-                    result += ((*data.get_unchecked(pos) as i16 | ((*data.get_unchecked(pos + 1) as i16) << 8) as i16) as f64 * channel.properties.volume * pan) as i32;
-                }
-                else if fmt_bps == 8 {
-                    result += (((((*data.get_unchecked(pos) as i32) << 8) as i32) - i16::MAX as i32) as f64 * channel.properties.volume * pan) as i32;
-                }
+                next_pos -= next_pos % alignment as usize;
 
+                //next_pos *= alignment as usize;
+                //next_pos += if fmt_channels == 2 { self.current_sample as usize } else { 0 };
+                //next_pos *= fmt_channels as usize;
+
+                let value_next = Self::get_sample(data, next_pos, fmt_bps);
+
+                value = Self::lerp(value, value_next, pos_f64 - actual_pos as f64);
+
+                println!("{}", pos_f64 - actual_pos as f64);
+
+                value *= channel.properties.volume * pan;
+                result += value as i32;
             }
 
             if self.current_sample == 0 {
@@ -182,5 +194,19 @@ impl AudioSystem {
         let result = i32::clamp(result, i16::MIN as i32, i16::MAX as i32) as i16;
 
         result
+    }
+
+    #[inline(always)]
+    unsafe fn get_sample(data: &Vec<u8>, pos: usize, fmt_bps: u8) -> f64 {
+        match fmt_bps {
+            16 => (*data.get_unchecked(pos) as i16 | ((*data.get_unchecked(pos + 1) as i16) << 8) as i16) as f64,
+            8 => ((((*data.get_unchecked(pos) as i32) << 8) as i32) - i16::MAX as i32) as f64,
+            _ => panic!("Invalid bits per sample.")
+        }
+    }
+
+    #[inline(always)]
+    fn lerp(value: f64, next: f64, amount: f64) -> f64 {
+        amount * (next - value) + value
     }
 }

@@ -24,7 +24,7 @@ fn test_wav() {
     let mut system = mixr::system::AudioSystem::new(format, 2);
 
     let pcm1 = mixr::loaders::PCM::load_wav("/home/ollie/Music/dr6.wav").unwrap();
-    let pcm2 = mixr::loaders::PCM::load_wav("/home/ollie/Music/Samples/LowRes/Always There-8khz.wav").unwrap();
+    let pcm2 = mixr::loaders::PCM::load_wav("/home/ollie/Music/Always There.wav").unwrap();
 
     let length = pcm1.data.len();
     let rate = pcm1.format.sample_rate;
@@ -35,7 +35,7 @@ fn test_wav() {
     let buffer2 = system.create_buffer();
     system.update_buffer(buffer2, &pcm2.data, pcm2.format);
 
-    system.play_buffer(buffer1, 0, ChannelProperties { volume: 1.0, speed: 10.15, panning: 0.5, looping: true  });
+    system.play_buffer(buffer2, 0, ChannelProperties { volume: 1.0, speed: 0.1, panning: 0.5, looping: true  });
 
     let sdl = sdl2::init().unwrap();
     let audio = sdl.audio().unwrap();

@@ -36,3 +36,9 @@ impl Default for ChannelProperties {
         Self { volume: 1.0, speed: 1.0, panning: 0.5, looping: false }
     }
 }
+
+#[repr(C)]
+pub enum ChannelState {
+    Playing,
+    Stopped
+}
