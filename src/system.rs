@@ -166,6 +166,7 @@ impl AudioSystem {
                     get_pos -= get_pos % alignment;
 
                 } else if channel.queued.len() > 0 {
+                    self.callback.unwrap()(current_channel, channel.buffer);
                     channel.buffer = channel.queued.pop_front().unwrap();
                     let i_buffer = self.buffers.get(&channel.buffer).unwrap();
                     channel.chunk = 0;
@@ -173,7 +174,13 @@ impl AudioSystem {
                     channel.sample_rate = buffer.format.sample_rate;
                     channel.speed = i_buffer.format.sample_rate as f64 / self.format.sample_rate as f64;
                     channel.speed *= channel.properties.speed;
-                    self.callback.unwrap()(current_channel, channel.buffer);
+
+                    pos_f64 = channel.position + channel.chunk as f64 * CHUNK_SIZE as f64;
+                    pos = pos_f64 as usize;
+
+                    get_pos = pos * alignment * fmt_channels as usize;
+                    get_pos += self.current_sample as usize * alignment * (fmt_channels - 1) as usize;
+                    get_pos -= get_pos % alignment;
                 } else {
                     channel.playing = false;
                     self.callback.unwrap()(current_channel, channel.buffer);
