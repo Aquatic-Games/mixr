@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::collections::VecDeque;
 use crate::{AudioFormat, ChannelProperties};
 
 struct Buffer {
@@ -16,7 +17,8 @@ struct Channel {
     sample_rate: i32,
     speed: f64,
 
-    properties: ChannelProperties
+    properties: ChannelProperties,
+    queued: VecDeque<i32>
 }
 
 pub struct AudioSystem {
@@ -25,7 +27,9 @@ pub struct AudioSystem {
     buffers: HashMap<i32, Buffer>,
     channels: Vec<Channel>,
     current_handle: i32,
-    current_sample: u8
+    current_sample: u8,
+
+    callback: Option<fn(u16, i32)>
 }
 
 impl AudioSystem {
@@ -47,11 +51,12 @@ impl AudioSystem {
                 position: 0.0,
                 sample_rate: 0,
                 speed: 0.0,
-                properties: ChannelProperties::default()
+                properties: ChannelProperties::default(),
+                queued: VecDeque::new()
             });
         }
 
-        AudioSystem { format: i_fmt, buffers: HashMap::new(), channels: v_channels, current_handle: 0, current_sample: 0 }
+        AudioSystem { format: i_fmt, buffers: HashMap::new(), channels: v_channels, current_handle: 0, current_sample: 0, callback: None }
     }
 
     pub fn create_buffer(&mut self) -> i32 {
@@ -109,9 +114,19 @@ impl AudioSystem {
         channel.chunk = 0;
     }
 
+    pub fn set_buffer_finished_callback(&mut self, callback: fn(u16, i32)) {
+        self.callback = Some(callback);
+    }
+
+    pub fn queue_buffer(&mut self, buffer: i32, channel: u16) {
+        let channel = &mut self.channels[channel as usize];
+        channel.queued.push_back(buffer);
+    }
+
     pub fn advance(&mut self) -> i16 {
         let mut result: i32 = 0;
 
+        let mut current_channel = 0;
         for channel in self.channels.iter_mut() {
             if !channel.playing {
                 continue;
@@ -150,8 +165,18 @@ impl AudioSystem {
                     get_pos += self.current_sample as usize * alignment * (fmt_channels - 1) as usize;
                     get_pos -= get_pos % alignment;
 
+                } else if channel.queued.len() > 0 {
+                    channel.buffer = channel.queued.pop_front().unwrap();
+                    let i_buffer = self.buffers.get(&channel.buffer).unwrap();
+                    channel.chunk = 0;
+                    channel.position = 0.0;
+                    channel.sample_rate = buffer.format.sample_rate;
+                    channel.speed = i_buffer.format.sample_rate as f64 / self.format.sample_rate as f64;
+                    channel.speed *= channel.properties.speed;
+                    self.callback.unwrap()(current_channel, channel.buffer);
                 } else {
                     channel.playing = false;
+                    self.callback.unwrap()(current_channel, channel.buffer);
                 }
             }
 
@@ -181,6 +206,8 @@ impl AudioSystem {
                 channel.chunk += 1;
                 channel.position = channel.position - CHUNK_SIZE;
             }
+
+            current_channel += 1;
         }
 
         self.current_sample += 1;

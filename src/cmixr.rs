@@ -18,6 +18,11 @@ pub extern "C" fn mxDeleteSystem(system: *mut AudioSystem) {
 }
 
 #[no_mangle]
+pub extern "C" fn mxSetBufferFinishedCallback(system: &mut AudioSystem, callback: extern "C" fn(u16, i32)) {
+    system.set_buffer_finished_callback(unsafe { std::mem::transmute(callback) });
+}
+
+#[no_mangle]
 pub extern "C" fn mxCreateBuffer(system: &mut AudioSystem) -> i32 {
     system.create_buffer()
 }
@@ -35,6 +40,11 @@ pub extern "C" fn mxUpdateBuffer(system: &mut AudioSystem, buffer: i32, data: *c
 #[no_mangle]
 pub extern "C" fn mxPlayBuffer(system: &mut AudioSystem, buffer: i32, channel: u16, properties: ChannelProperties) {
     system.play_buffer(buffer, channel, properties);
+}
+
+#[no_mangle]
+pub extern "C" fn mxQueueBuffer(system: &mut AudioSystem, buffer: i32, channel: u16) {
+    system.queue_buffer(buffer, channel);
 }
 
 #[no_mangle]
