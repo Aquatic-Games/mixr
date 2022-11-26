@@ -23,17 +23,24 @@ impl Default for AudioFormat {
 
 #[derive(Clone, Debug)]
 #[repr(C)]
+pub enum InterpolationType {
+    None,
+    Linear
+}
+
+#[derive(Clone, Debug)]
+#[repr(C)]
 pub struct ChannelProperties {
     pub volume: f64,
     pub speed: f64,
     pub panning: f64,
-
-    pub looping: bool
+    pub looping: bool,
+    pub interpolation_type: InterpolationType
 }
 
 impl Default for ChannelProperties {
     fn default() -> Self {
-        Self { volume: 1.0, speed: 1.0, panning: 0.5, looping: false }
+        Self { volume: 1.0, speed: 1.0, panning: 0.5, looping: false, interpolation_type: InterpolationType::Linear }
     }
 }
 

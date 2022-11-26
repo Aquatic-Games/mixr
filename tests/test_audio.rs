@@ -24,7 +24,7 @@ fn test_wav() {
     let mut system = mixr::system::AudioSystem::new(format, 2);
     system.set_buffer_finished_callback(|channel, buf| println!("{}", buf));
 
-    let pcm1 = mixr::loaders::PCM::load_wav("/home/ollie/Music/others/boss8bit-start.wav").unwrap();
+    let pcm1 = mixr::loaders::PCM::load_wav("/home/ollie/Music/sucs.wav").unwrap();
     let pcm2 = mixr::loaders::PCM::load_wav("/home/ollie/Music/others/boss8bit-loop.wav").unwrap();
 
     let length = pcm1.data.len();
@@ -36,7 +36,7 @@ fn test_wav() {
     let buffer2 = system.create_buffer();
     system.update_buffer(buffer2, &pcm2.data, pcm2.format);
 
-    system.play_buffer(buffer1, 0, ChannelProperties { volume: 1.0, speed: 1.0, panning: 0.5, looping: false  });
+    system.play_buffer(buffer1, 0, ChannelProperties { volume: 1.0, speed: 0.1, panning: 0.5, looping: false, interpolation_type: mixr::InterpolationType::Linear  });
     system.queue_buffer(buffer2, 0);
 
     let sdl = sdl2::init().unwrap();

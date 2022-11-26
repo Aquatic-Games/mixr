@@ -150,7 +150,13 @@ impl AudioSystem {
             get_pos += self.current_sample as usize * alignment * (fmt_channels - 1) as usize;
             get_pos -= get_pos % alignment;
 
-            if get_pos >= data.len() {
+            let mut next_pos = if channel.speed < 1.0 { pos + channel.properties.interpolation_type as usize } else { pos };
+
+            let mut get_next_pos = next_pos * alignment * fmt_channels as usize;
+            get_next_pos += self.current_sample as usize * alignment * (fmt_channels - 1) as usize;
+            get_next_pos -= get_next_pos % alignment;
+
+            if get_next_pos >= data.len() {
                 if properties.looping {
                     channel.chunk = 0;
                     let amount = channel.position - CHUNK_SIZE;
@@ -161,9 +167,11 @@ impl AudioSystem {
                     pos_f64 = channel.position + channel.chunk as f64 * CHUNK_SIZE as f64;
                     pos = pos_f64 as usize;
 
-                    get_pos = pos * alignment * fmt_channels as usize;
-                    get_pos += self.current_sample as usize * alignment * (fmt_channels - 1) as usize;
-                    get_pos -= get_pos % alignment;
+                    next_pos = if channel.speed < 1.0 { pos + channel.properties.interpolation_type as usize } else { pos };
+
+                    get_next_pos = next_pos * alignment * fmt_channels as usize;
+                    get_next_pos += self.current_sample as usize * alignment * (fmt_channels - 1) as usize;
+                    get_next_pos -= get_next_pos % alignment;
 
                 } else if channel.queued.len() > 0 {
                     self.callback.unwrap()(current_channel, channel.buffer);
@@ -178,9 +186,11 @@ impl AudioSystem {
                     pos_f64 = channel.position + channel.chunk as f64 * CHUNK_SIZE as f64;
                     pos = pos_f64 as usize;
 
-                    get_pos = pos * alignment * fmt_channels as usize;
-                    get_pos += self.current_sample as usize * alignment * (fmt_channels - 1) as usize;
-                    get_pos -= get_pos % alignment;
+                    next_pos = if channel.speed < 1.0 { pos + channel.properties.interpolation_type as usize } else { pos };
+
+                    get_next_pos = next_pos * alignment * fmt_channels as usize;
+                    get_next_pos += self.current_sample as usize * alignment * (fmt_channels - 1) as usize;
+                    get_next_pos -= get_next_pos % alignment;
                 } else {
                     channel.playing = false;
                     self.callback.unwrap()(current_channel, channel.buffer);
@@ -190,12 +200,6 @@ impl AudioSystem {
             let pan = f64::clamp(if self.current_sample == 0 { (1.0 - channel.properties.panning) * 2.0 } else { 1.0 - ((0.5 - channel.properties.panning)) * 2.0 }, 0.0, 1.0);
 
             unsafe {
-                let next_pos = if channel.speed < 1.0 { pos + 1 } else { pos };
-
-                let mut get_next_pos = next_pos * alignment * fmt_channels as usize;
-                get_next_pos += self.current_sample as usize * alignment * (fmt_channels - 1) as usize;
-                get_next_pos -= get_next_pos % alignment;
-
                 let mut value = Self::get_sample(data, get_pos, fmt_bps);
                 let value_next = Self::get_sample(data, get_next_pos, fmt_bps);
 
