@@ -2,6 +2,24 @@ use std::collections::HashMap;
 use std::collections::VecDeque;
 use crate::{AudioFormat, ChannelProperties};
 
+pub enum AudioErrorType {
+    NoChannels
+}
+
+pub struct AudioError<'a> {
+    pub error_type: AudioErrorType,
+    pub description: &'a str
+}
+
+impl<'a> AudioError<'a> {
+    pub fn new(error_type: AudioErrorType, description: &'a str) -> Self {
+        Self {
+            error_type,
+            description
+        }
+    }
+}
+
 struct Buffer {
     has_data: bool,
 
@@ -70,6 +88,12 @@ impl AudioSystem {
     }
 
     pub fn delete_buffer(&mut self, buffer: i32) {
+        for channel in self.channels.iter_mut() {
+            if channel.buffer == buffer {
+                channel.playing = false;
+            }
+        }
+
         self.buffers.remove(&buffer).unwrap();
     }
 
@@ -231,6 +255,24 @@ impl AudioSystem {
         let result = i32::clamp(result, i16::MIN as i32, i16::MAX as i32) as i16;
 
         result
+    }
+
+    pub fn num_channels(&self) -> u16 {
+        self.channels.len() as u16
+    }
+
+    pub fn is_playing(&self, channel: u16) -> bool {
+        self.channels[channel as usize].playing
+    }
+
+    pub fn get_available_channel(&self) -> Result<u16, AudioError> {
+        for (i, channel) in self.channels.iter().enumerate() {
+            if !channel.playing {
+                return Ok(i as u16);
+            }
+        }
+
+        Err(AudioError::new(AudioErrorType::NoChannels, "No available channels."))
     }
 
     #[inline(always)]
