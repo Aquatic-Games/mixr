@@ -69,6 +69,10 @@ impl AudioSystem {
         p_buffer
     }
 
+    pub fn delete_buffer(&mut self, buffer: i32) {
+        self.buffers.remove(&buffer).unwrap();
+    }
+
     pub fn update_buffer(&mut self, buffer: i32, data: &[u8], format: AudioFormat) {
 
         let mut i_buffer = self.buffers.get_mut(&buffer).unwrap();

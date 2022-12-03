@@ -26,8 +26,12 @@ pub extern "C" fn mxSetBufferFinishedCallback(system: &mut AudioSystem, callback
 pub extern "C" fn mxCreateBuffer(system: &mut AudioSystem) -> i32 {
     system.create_buffer()
 }
-    
 
+#[no_mangle]
+pub extern "C" fn mxDeleteBuffer(system: &mut AudioSystem, buffer: i32) {
+    system.delete_buffer(buffer);
+}
+    
 #[no_mangle]
 pub extern "C" fn mxUpdateBuffer(system: &mut AudioSystem, buffer: i32, data: *const u8, data_length: usize, format: AudioFormat) {
     let data = unsafe { std::slice::from_raw_parts(data, data_length) };
