@@ -88,18 +88,18 @@ impl AudioSystem {
     }
 
     pub fn delete_buffer(&mut self, buffer: i32) {
+        self.buffers.remove(&buffer).expect("An invalid buffer was passed.");
+
         for channel in self.channels.iter_mut() {
             if channel.buffer == buffer {
                 channel.playing = false;
             }
         }
-
-        self.buffers.remove(&buffer).unwrap();
     }
 
     pub fn update_buffer(&mut self, buffer: i32, data: &[u8], format: AudioFormat) {
 
-        let mut i_buffer = self.buffers.get_mut(&buffer).unwrap();
+        let mut i_buffer = self.buffers.get_mut(&buffer).expect("An invalid buffer was passed.");
 
         i_buffer.data = data.to_vec();
         i_buffer.format = format;
@@ -107,7 +107,7 @@ impl AudioSystem {
     }
 
     pub fn play_buffer(&mut self, buffer: i32, channel: u16, properties: ChannelProperties) {
-        let i_buffer = self.buffers.get(&buffer).unwrap();
+        let i_buffer = self.buffers.get(&buffer).expect("An invalid buffer was passed.");
         let i_channel = self.channels.get_mut(channel as usize).unwrap();
 
         i_channel.chunk = 0;
@@ -204,7 +204,7 @@ impl AudioSystem {
                 } else if channel.queued.len() > 0 {
                     self.callback.unwrap()(current_channel, channel.buffer);
                     channel.buffer = channel.queued.pop_front().unwrap();
-                    let i_buffer = self.buffers.get(&channel.buffer).unwrap();
+                    let i_buffer = self.buffers.get(&channel.buffer).expect("An invalid buffer was passed.");
                     channel.chunk = 0;
                     channel.position = 0.0;
                     channel.sample_rate = buffer.format.sample_rate;

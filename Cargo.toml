@@ -16,3 +16,4 @@ debug-assertions = false
 
 [dev-dependencies]
 sdl2 = "0.35.2"
+libc = "0.2.138"
