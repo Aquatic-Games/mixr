@@ -76,6 +76,21 @@ pub extern "C" fn mxAdvance(system: &mut AudioSystem) -> i16 {
     system.advance()
 }
 
+#[no_mangle]
+pub extern "C" fn mxGetNumChannels(system: &mut AudioSystem) -> u16 {
+    system.num_channels()
+}
+
+#[no_mangle]
+pub extern "C" fn mxIsPlaying(system: &mut AudioSystem, channel: u16) -> bool {
+    system.is_playing(channel)
+}
+
+#[no_mangle]
+pub extern "C" fn mxGetAvailableChannel(system: &mut AudioSystem) -> u16 {
+    system.get_available_channel().unwrap()
+}
+
 /*#[no_mangle]
 pub unsafe extern "C" fn mxPCMLoadWav(path: *const i8) -> CPCM {
     let pcm = PCM::load_wav(CStr::from_ptr(path).to_str().unwrap()).unwrap();

@@ -2,10 +2,12 @@ use std::collections::HashMap;
 use std::collections::VecDeque;
 use crate::{AudioFormat, ChannelProperties};
 
+#[derive(Debug)]
 pub enum AudioErrorType {
     NoChannels
 }
 
+#[derive(Debug)]
 pub struct AudioError<'a> {
     pub error_type: AudioErrorType,
     pub description: &'a str
