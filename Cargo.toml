@@ -1,7 +1,13 @@
 [package]
 name = "mixr"
-version = "0.1.0"
+description = "An audio resampler & mixer."
+version = "0.3.2"
 edition = "2021"
+readme = "README.md"
+repository = "https://github.com/piegfx/mixr"
+license = "MIT"
+keywords = ["audio", "gamedev", "mixer", "resampler"]
+categories = ["game-development", "multimedia::audio"]
 
 [lib]
 crate-type = ["rlib", "cdylib"]
