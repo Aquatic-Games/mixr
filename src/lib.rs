@@ -21,7 +21,7 @@ impl Default for AudioFormat {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Copy)]
 #[repr(C)]
 pub enum InterpolationType {
     None,

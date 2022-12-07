@@ -98,13 +98,13 @@ impl AudioSystem {
     }
 
     pub fn delete_buffer(&mut self, buffer: i32) -> Result<(), AudioError> {
-        self.buffers.remove(&buffer).ok_or(AudioError::new(AudioErrorType::InvalidBuffer))?;
-
         for channel in self.channels.iter_mut() {
             if channel.buffer == buffer {
                 channel.playing = false;
             }
         }
+
+        self.buffers.remove(&buffer).ok_or(AudioError::new(AudioErrorType::InvalidBuffer))?;
 
         Ok(())
     }
