@@ -49,3 +49,12 @@ pub enum ChannelState {
     Playing,
     Stopped
 }
+
+#[repr(C)]
+pub enum AudioResult {
+    Ok,
+
+    InvalidBuffer,
+    InvalidChannel,
+    NoChannels
+}

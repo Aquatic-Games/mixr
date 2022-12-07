@@ -4,6 +4,8 @@ use crate::{AudioFormat, ChannelProperties};
 
 #[derive(Debug)]
 pub enum AudioErrorType {
+    InvalidBuffer,
+    InvalidChannel,
     NoChannels
 }
 
@@ -14,7 +16,13 @@ pub struct AudioError<'a> {
 }
 
 impl<'a> AudioError<'a> {
-    pub fn new(error_type: AudioErrorType, description: &'a str) -> Self {
+    pub fn new(error_type: AudioErrorType) -> Self {
+        let description = match error_type {
+            AudioErrorType::InvalidBuffer => "An invalid buffer was provided.",
+            AudioErrorType::InvalidChannel => "An invalid channel was provided.",
+            AudioErrorType::NoChannels => "No available channels.",
+        };
+
         Self {
             error_type,
             description
@@ -89,28 +97,32 @@ impl AudioSystem {
         p_buffer
     }
 
-    pub fn delete_buffer(&mut self, buffer: i32) {
-        self.buffers.remove(&buffer).expect("An invalid buffer was passed.");
+    pub fn delete_buffer(&mut self, buffer: i32) -> Result<(), AudioError> {
+        self.buffers.remove(&buffer).ok_or(AudioError::new(AudioErrorType::InvalidBuffer))?;
 
         for channel in self.channels.iter_mut() {
             if channel.buffer == buffer {
                 channel.playing = false;
             }
         }
+
+        Ok(())
     }
 
-    pub fn update_buffer(&mut self, buffer: i32, data: &[u8], format: AudioFormat) {
+    pub fn update_buffer(&mut self, buffer: i32, data: &[u8], format: AudioFormat) -> Result<(), AudioError> {
 
-        let mut i_buffer = self.buffers.get_mut(&buffer).expect("An invalid buffer was passed.");
+        let mut i_buffer = self.buffers.get_mut(&buffer).ok_or(AudioError::new(AudioErrorType::InvalidBuffer))?;
 
         i_buffer.data = data.to_vec();
         i_buffer.format = format;
         i_buffer.has_data = true;
+
+        Ok(())
     }
 
-    pub fn play_buffer(&mut self, buffer: i32, channel: u16, properties: ChannelProperties) {
-        let i_buffer = self.buffers.get(&buffer).expect("An invalid buffer was passed.");
-        let i_channel = self.channels.get_mut(channel as usize).unwrap();
+    pub fn play_buffer(&mut self, buffer: i32, channel: u16, properties: ChannelProperties) -> Result<(), AudioError> {
+        let i_buffer = self.buffers.get(&buffer).ok_or(AudioError::new(AudioErrorType::InvalidBuffer))?;
+        let i_channel = self.channels.get_mut(channel as usize).ok_or(AudioError::new(AudioErrorType::InvalidChannel))?;
 
         i_channel.chunk = 0;
         i_channel.position = 0.0;
@@ -120,37 +132,54 @@ impl AudioSystem {
         i_channel.speed *= i_channel.properties.speed;
         i_channel.playing = true;
         i_channel.buffer = buffer;
+
+        Ok(())
     }
 
-    pub fn set_channel_properties(&mut self, channel: u16, properties: ChannelProperties) {
-        let mut channel = &mut self.channels[channel as usize];
+    pub fn set_channel_properties(&mut self, channel: u16, properties: ChannelProperties) -> Result<(), AudioError> {
+        let mut channel = &mut self.channels.get_mut(channel as usize).ok_or(AudioError::new(AudioErrorType::InvalidChannel))?;
         channel.properties = properties;
         channel.speed = self.buffers[&channel.buffer].format.sample_rate as f64 / self.format.sample_rate as f64;
         channel.speed *= channel.properties.speed;
+
+        Ok(())
     }
 
-    pub fn play(&mut self, channel: u16) {
-        self.channels[channel as usize].playing = true;
+    pub fn play(&mut self, channel: u16) -> Result<(), AudioError> {
+        let mut channel = &mut self.channels.get_mut(channel as usize).ok_or(AudioError::new(AudioErrorType::InvalidChannel))?;
+        channel.playing = true;
+
+        Ok(())
     }
 
-    pub fn pause(&mut self, channel: u16) {
-        self.channels[channel as usize].playing = false;
+    pub fn pause(&mut self, channel: u16) -> Result<(), AudioError> {
+        let mut channel = &mut self.channels.get_mut(channel as usize).ok_or(AudioError::new(AudioErrorType::InvalidChannel))?;
+        channel.playing = false;
+
+        Ok(())
     }
 
-    pub fn stop(&mut self, channel: u16) {
-        let mut channel = &mut self.channels[channel as usize];
+    pub fn stop(&mut self, channel: u16) -> Result<(), AudioError> {
+        let mut channel = &mut self.channels.get_mut(channel as usize).ok_or(AudioError::new(AudioErrorType::InvalidChannel))?;
         channel.playing = false;
         channel.position = 0.0;
         channel.chunk = 0;
+
+        Ok(())
     }
 
     pub fn set_buffer_finished_callback(&mut self, callback: fn(u16, i32)) {
         self.callback = Some(callback);
     }
 
-    pub fn queue_buffer(&mut self, buffer: i32, channel: u16) {
-        let channel = &mut self.channels[channel as usize];
+    pub fn queue_buffer(&mut self, buffer: i32, channel: u16) -> Result<(), AudioError> {
+        let channel = &mut self.channels.get_mut(channel as usize).ok_or(AudioError::new(AudioErrorType::InvalidChannel))?;
+        if !self.buffers.contains_key(&buffer) { 
+            return Err(AudioError::new(AudioErrorType::InvalidBuffer));
+        }
         channel.queued.push_back(buffer);
+
+        Ok(())
     }
 
     pub fn advance(&mut self) -> i16 {
@@ -206,7 +235,7 @@ impl AudioSystem {
                 } else if channel.queued.len() > 0 {
                     self.callback.unwrap()(current_channel, channel.buffer);
                     channel.buffer = channel.queued.pop_front().unwrap();
-                    let i_buffer = self.buffers.get(&channel.buffer).expect("An invalid buffer was passed.");
+                    let i_buffer = self.buffers.get(&channel.buffer).unwrap();
                     channel.chunk = 0;
                     channel.position = 0.0;
                     channel.sample_rate = buffer.format.sample_rate;
@@ -274,7 +303,7 @@ impl AudioSystem {
             }
         }
 
-        Err(AudioError::new(AudioErrorType::NoChannels, "No available channels."))
+        Err(AudioError::new(AudioErrorType::NoChannels))
     }
 
     #[inline(always)]

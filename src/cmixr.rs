@@ -1,4 +1,4 @@
-use crate::{system::{AudioSystem}, AudioFormat, ChannelProperties};
+use crate::{system::{AudioSystem, AudioErrorType, AudioError}, AudioFormat, ChannelProperties, AudioResult};
 
 /*#[repr(C)]
 pub struct CPCM {
@@ -28,47 +28,47 @@ pub extern "C" fn mxCreateBuffer(system: &mut AudioSystem) -> i32 {
 }
 
 #[no_mangle]
-pub extern "C" fn mxDeleteBuffer(system: &mut AudioSystem, buffer: i32) {
-    system.delete_buffer(buffer);
+pub extern "C" fn mxDeleteBuffer(system: &mut AudioSystem, buffer: i32) -> AudioResult {
+    result_to_result(system.delete_buffer(buffer))
 }
     
 #[no_mangle]
-pub extern "C" fn mxUpdateBuffer(system: &mut AudioSystem, buffer: i32, data: *const u8, data_length: usize, format: AudioFormat) {
+pub extern "C" fn mxUpdateBuffer(system: &mut AudioSystem, buffer: i32, data: *const u8, data_length: usize, format: AudioFormat) -> AudioResult {
     let data = unsafe { std::slice::from_raw_parts(data, data_length) };
 
     assert_eq!(data_length, data.len(), "data_length, {}, does not equal the converted data length, {}", data_length, data.len());
 
-    system.update_buffer(buffer, &data, format);
+    result_to_result(system.update_buffer(buffer, &data, format))
 }
 
 #[no_mangle]
-pub extern "C" fn mxPlayBuffer(system: &mut AudioSystem, buffer: i32, channel: u16, properties: ChannelProperties) {
-    system.play_buffer(buffer, channel, properties);
+pub extern "C" fn mxPlayBuffer(system: &mut AudioSystem, buffer: i32, channel: u16, properties: ChannelProperties) -> AudioResult {
+    result_to_result(system.play_buffer(buffer, channel, properties))
 }
 
 #[no_mangle]
-pub extern "C" fn mxQueueBuffer(system: &mut AudioSystem, buffer: i32, channel: u16) {
-    system.queue_buffer(buffer, channel);
+pub extern "C" fn mxQueueBuffer(system: &mut AudioSystem, buffer: i32, channel: u16) -> AudioResult {
+    result_to_result(system.queue_buffer(buffer, channel))
 }
 
 #[no_mangle]
-pub extern "C" fn mxSetChannelProperties(system: &mut AudioSystem, channel: u16, properties: ChannelProperties) {
-    system.set_channel_properties(channel, properties);
+pub extern "C" fn mxSetChannelProperties(system: &mut AudioSystem, channel: u16, properties: ChannelProperties) -> AudioResult {
+    result_to_result(system.set_channel_properties(channel, properties))
 }
 
 #[no_mangle]
-pub extern "C" fn mxPlay(system: &mut AudioSystem, channel: u16) {
-    system.play(channel);
+pub extern "C" fn mxPlay(system: &mut AudioSystem, channel: u16) -> AudioResult {
+    result_to_result(system.play(channel))
 }
 
 #[no_mangle]
-pub extern "C" fn mxPause(system: &mut AudioSystem, channel: u16) {
-    system.pause(channel);
+pub extern "C" fn mxPause(system: &mut AudioSystem, channel: u16) -> AudioResult {
+    result_to_result(system.pause(channel))
 }
 
 #[no_mangle]
-pub extern "C" fn mxStop(system: &mut AudioSystem, channel: u16) {
-    system.stop(channel);
+pub extern "C" fn mxStop(system: &mut AudioSystem, channel: u16) -> AudioResult {
+    result_to_result(system.stop(channel))
 }
 
 #[no_mangle]
@@ -89,6 +89,17 @@ pub extern "C" fn mxIsPlaying(system: &mut AudioSystem, channel: u16) -> bool {
 #[no_mangle]
 pub extern "C" fn mxGetAvailableChannel(system: &mut AudioSystem) -> u16 {
     system.get_available_channel().unwrap()
+}
+
+fn result_to_result(result: Result<(), AudioError>) -> AudioResult {
+    match result {
+        Ok(_) => todo!(),
+        Err(err) => match err.error_type {
+            AudioErrorType::InvalidBuffer => AudioResult::InvalidBuffer,
+            AudioErrorType::InvalidChannel => AudioResult::InvalidChannel,
+            AudioErrorType::NoChannels => AudioResult::NoChannels,
+        }
+    }
 }
 
 /*#[no_mangle]
