@@ -93,7 +93,7 @@ pub extern "C" fn mxGetAvailableChannel(system: &mut AudioSystem) -> u16 {
 
 fn result_to_result(result: Result<(), AudioError>) -> AudioResult {
     match result {
-        Ok(_) => todo!(),
+        Ok(_) => AudioResult::Ok,
         Err(err) => match err.error_type {
             AudioErrorType::InvalidBuffer => AudioResult::InvalidBuffer,
             AudioErrorType::InvalidChannel => AudioResult::InvalidChannel,
