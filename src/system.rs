@@ -139,7 +139,7 @@ impl AudioSystem {
     pub fn set_channel_properties(&mut self, channel: u16, properties: ChannelProperties) -> Result<(), AudioError> {
         let mut channel = &mut self.channels.get_mut(channel as usize).ok_or(AudioError::new(AudioErrorType::InvalidChannel))?;
         channel.properties = properties;
-        channel.speed = self.buffers[&channel.buffer].format.sample_rate as f64 / self.format.sample_rate as f64;
+        channel.speed = self.buffers.get(&channel.buffer).ok_or(AudioError::new(AudioErrorType::InvalidBuffer))?.format.sample_rate as f64 / self.format.sample_rate as f64;
         channel.speed *= channel.properties.speed;
 
         Ok(())
@@ -293,7 +293,11 @@ impl AudioSystem {
     }
 
     pub fn is_playing(&self, channel: u16) -> bool {
-        self.channels[channel as usize].playing
+        if let Some(channel) = self.channels.get(channel as usize) {
+            channel.playing
+        } else {
+            false
+        }
     }
 
     pub fn get_available_channel(&self) -> Result<u16, AudioError> {
