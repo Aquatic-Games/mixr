@@ -124,14 +124,16 @@ impl AudioSystem {
         let i_buffer = self.buffers.get(&buffer).ok_or(AudioError::new(AudioErrorType::InvalidBuffer))?;
         let i_channel = self.channels.get_mut(channel as usize).ok_or(AudioError::new(AudioErrorType::InvalidChannel))?;
 
+        i_channel.queued.clear();
+
         i_channel.chunk = 0;
         i_channel.position = 0.0;
         i_channel.properties = properties;
         i_channel.sample_rate = i_buffer.format.sample_rate;
         i_channel.speed = i_buffer.format.sample_rate as f64 / self.format.sample_rate as f64;
         i_channel.speed *= i_channel.properties.speed;
-        i_channel.playing = true;
         i_channel.buffer = buffer;
+        i_channel.playing = true;
 
         Ok(())
     }
@@ -164,6 +166,7 @@ impl AudioSystem {
         channel.playing = false;
         channel.position = 0.0;
         channel.chunk = 0;
+        channel.queued.clear();
 
         Ok(())
     }
@@ -233,7 +236,9 @@ impl AudioSystem {
                     get_next_pos -= get_next_pos % alignment;
 
                 } else if channel.queued.len() > 0 {
-                    self.callback.unwrap()(current_channel, channel.buffer);
+                    if let Some(cb) = self.callback {
+                        cb(current_channel, channel.buffer)
+                    };
                     channel.buffer = channel.queued.pop_front().unwrap();
                     let i_buffer = self.buffers.get(&channel.buffer).unwrap();
                     channel.chunk = 0;
@@ -252,7 +257,9 @@ impl AudioSystem {
                     get_next_pos -= get_next_pos % alignment;
                 } else {
                     channel.playing = false;
-                    self.callback.unwrap()(current_channel, channel.buffer);
+                    if let Some(cb) = self.callback {
+                        cb(current_channel, channel.buffer)
+                    };
                 }
             }
 
