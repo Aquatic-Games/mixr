@@ -196,23 +196,23 @@ impl AudioSystem {
 
             const CHUNK_SIZE: f64 = 48000.0;
 
-            let buffer = &self.buffers[&channel.buffer];
+            let mut buffer = &self.buffers[&channel.buffer];
             let format = &buffer.format;
             let properties = &channel.properties;
             let fmt_channels = format.channels;
             let fmt_bps = format.bits_per_sample;
-            let data = &buffer.data;
+            let mut data = &buffer.data;
 
             let alignment = (fmt_bps / 8) as usize;
 
-            let mut pos_f64 = channel.position + channel.chunk as f64 * CHUNK_SIZE as f64;
-            let mut pos = pos_f64 as usize;
+            let pos_f64 = channel.position + channel.chunk as f64 * CHUNK_SIZE as f64;
+            let pos = pos_f64 as usize;
 
             let mut get_pos = pos * alignment * fmt_channels as usize;
             get_pos += self.current_sample as usize * alignment * (fmt_channels - 1) as usize;
             get_pos -= get_pos % alignment;
-
-            let mut next_pos = if channel.speed < 1.0 { pos + channel.properties.interpolation_type as usize } else { pos };
+            
+            let next_pos = if channel.speed < 1.0 { pos + channel.properties.interpolation_type as usize } else { pos };
 
             let mut get_next_pos = next_pos * alignment * fmt_channels as usize;
             get_next_pos += self.current_sample as usize * alignment * (fmt_channels - 1) as usize;
@@ -223,57 +223,54 @@ impl AudioSystem {
                     channel.chunk = 0;
                     let amount = channel.position - CHUNK_SIZE;
                     channel.position = if amount > 0.0 { amount } else { 0.0 };
+                    if get_pos == get_next_pos {
+                        get_pos = 0;
+                    }
 
-                    // todo: perhaps move this into its own function to stop duplicated code
-                    // make sure to measure perf to make sure it's not changed though
-                    pos_f64 = channel.position + channel.chunk as f64 * CHUNK_SIZE as f64;
-                    pos = pos_f64 as usize;
-
-                    next_pos = if channel.speed < 1.0 { pos + channel.properties.interpolation_type as usize } else { pos };
-
-                    get_next_pos = next_pos * alignment * fmt_channels as usize;
-                    get_next_pos += self.current_sample as usize * alignment * (fmt_channels - 1) as usize;
-                    get_next_pos -= get_next_pos % alignment;
+                    get_next_pos = 0;
 
                 } else if channel.queued.len() > 0 {
                     if let Some(cb) = self.callback {
                         cb(current_channel, channel.buffer)
                     };
+
                     channel.buffer = channel.queued.pop_front().unwrap();
-                    let i_buffer = self.buffers.get(&channel.buffer).unwrap();
+                    buffer = &self.buffers[&channel.buffer];
+                    data = &buffer.data;
+
                     channel.chunk = 0;
-                    channel.position = 0.0;
-                    channel.sample_rate = buffer.format.sample_rate;
-                    channel.speed = i_buffer.format.sample_rate as f64 / self.format.sample_rate as f64;
-                    channel.speed *= channel.properties.speed;
+                    let amount = channel.position - CHUNK_SIZE;
+                    channel.position = if amount > 0.0 { amount } else { 0.0 };
 
-                    pos_f64 = channel.position + channel.chunk as f64 * CHUNK_SIZE as f64;
-                    pos = pos_f64 as usize;
+                    if get_pos == get_next_pos {
+                        get_pos = 0;
+                    }
 
-                    next_pos = if channel.speed < 1.0 { pos + channel.properties.interpolation_type as usize } else { pos };
-
-                    get_next_pos = next_pos * alignment * fmt_channels as usize;
-                    get_next_pos += self.current_sample as usize * alignment * (fmt_channels - 1) as usize;
-                    get_next_pos -= get_next_pos % alignment;
+                    get_next_pos = 0;
                 } else {
-                    channel.playing = false;
                     if let Some(cb) = self.callback {
                         cb(current_channel, channel.buffer)
                     };
+                    channel.playing = false;
+                    channel.chunk = 0;
+                    channel.position = 0.0;
+                    continue;
                 }
             }
 
-            let pan = f64::clamp(if self.current_sample == 0 { (1.0 - channel.properties.panning) * 2.0 } else { 1.0 - ((0.5 - channel.properties.panning)) * 2.0 }, 0.0, 1.0);
-
-            unsafe {
-                let mut value = Self::get_sample(data, get_pos, fmt_bps);
-                let value_next = Self::get_sample(data, get_next_pos, fmt_bps);
-
-                value = Self::lerp(value, value_next, pos_f64 - pos as f64);
-
-                value *= channel.properties.volume * pan;
-                result += value as i32;
+            if data.len() == 0 {
+                continue;
             }
+
+            let pan = f64::clamp(if self.current_sample == 0 { (1.0 - channel.properties.panning) * 2.0 } else { 1.0 - ((0.5 - channel.properties.panning)) * 2.0 }, 0.0, 1.0);
+            
+            let mut value = Self::get_sample(data, get_pos, fmt_bps);
+            let value_next = Self::get_sample(data, get_next_pos, fmt_bps);
+
+            value = Self::lerp(value, value_next, pos_f64 - pos as f64);
+            value *= channel.properties.volume * pan;
+
+            result += value as i32;
 
             if self.current_sample == 0 {
                 channel.position += channel.speed;   
@@ -318,10 +315,10 @@ impl AudioSystem {
     }
 
     #[inline(always)]
-    unsafe fn get_sample(data: &[u8], pos: usize, fmt_bps: u8) -> f64 {
+    fn get_sample(data: &[u8], pos: usize, fmt_bps: u8) -> f64 {
         match fmt_bps {
-            16 => (*data.get_unchecked(pos) as i16 | ((*data.get_unchecked(pos + 1) as i16) << 8) as i16) as f64,
-            8 => ((((*data.get_unchecked(pos) as i32) << 8) as i32) - i16::MAX as i32) as f64,
+            16 => (data[pos] as i16 | ((data[pos + 1] as i16) << 8) as i16) as f64,
+            8 => ((((data[pos] as i32) << 8) as i32) - i16::MAX as i32) as f64,
             _ => panic!("Invalid bits per sample.")
         }
     }
