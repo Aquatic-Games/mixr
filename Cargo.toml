@@ -19,6 +19,7 @@ opt-level = 3
 debug = false
 overflow-checks = false
 debug-assertions = false
+strip = true
 
 [dev-dependencies]
 sdl2 = "0.35.2"
