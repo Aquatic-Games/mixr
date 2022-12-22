@@ -33,7 +33,7 @@ pub extern "C" fn mxDeleteBuffer(system: &mut AudioSystem, buffer: i32) -> Audio
 }
     
 #[no_mangle]
-pub extern "C" fn mxUpdateBuffer(system: &mut AudioSystem, buffer: i32, data: *const u8, data_length: usize, format: AudioFormat) -> AudioResult {
+pub extern "C" fn mxUpdateBuffer(system: &mut AudioSystem, buffer: i32, data: *const std::ffi::c_void, data_length: usize, format: AudioFormat) -> AudioResult {
     let data = unsafe { std::slice::from_raw_parts(data, data_length) };
 
     assert_eq!(data_length, data.len(), "data_length, {}, does not equal the converted data length, {}", data_length, data.len());

@@ -19,25 +19,20 @@ impl<'a> AudioCallback for Audio<'a> {
 
 #[test]
 fn test_wav() {
-    let mut format: Option<AudioFormat> = None;
+    let format: Option<AudioFormat> = None;
 
     let mut system = mixr::system::AudioSystem::new(format, 2);
-    system.set_buffer_finished_callback(|channel, buf| println!("{}", buf));
 
-    let pcm1 = mixr::loaders::PCM::load_wav("/home/ollie/Music/sucs.wav").unwrap();
-    let pcm2 = mixr::loaders::PCM::load_wav("/home/ollie/Music/others/boss8bit-loop.wav").unwrap();
-
-    let length = pcm1.data.len();
-    let rate = pcm1.format.sample_rate;
-
-    let buffer1 = system.create_buffer();
-    system.update_buffer(buffer1, &pcm1.data, pcm1.format);
-
-    let buffer2 = system.create_buffer();
-    system.update_buffer(buffer2, &pcm2.data, pcm2.format);
-
-    system.play_buffer(buffer1, 0, ChannelProperties { volume: 1.0, speed: 0.1, panning: 0.5, looping: false, interpolation_type: mixr::InterpolationType::Linear  });
-    system.queue_buffer(buffer2, 0);
+    let pcm = mixr::loaders::PCM::load_wav("/home/ollie/Music/Samples/Waveworld/soundstate/Samplepack18w/wah24.wav").unwrap();
+    let buffer = system.create_buffer();
+    system.update_buffer(buffer, &pcm.data, pcm.format).unwrap();
+    system.play_buffer(buffer, 0, ChannelProperties { 
+        volume: 1.0, 
+        speed: 2.0, 
+        panning: 0.5, 
+        looping: true, 
+        interpolation_type: mixr::InterpolationType::Linear
+    }).unwrap();
 
     let sdl = sdl2::init().unwrap();
     let audio = sdl.audio().unwrap();

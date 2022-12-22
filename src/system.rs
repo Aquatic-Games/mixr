@@ -31,8 +31,6 @@ impl<'a> AudioError<'a> {
 }
 
 struct Buffer {
-    has_data: bool,
-
     data: Vec<u8>,
     format: AudioFormat,
 }
@@ -88,7 +86,7 @@ impl AudioSystem {
     }
 
     pub fn create_buffer(&mut self) -> i32 {
-        let buffer = Buffer { has_data: false, data: Vec::new(), format: AudioFormat { channels: 0, sample_rate: 0, bits_per_sample: 0 } };
+        let buffer = Buffer { data: Vec::new(), format: AudioFormat { channels: 0, sample_rate: 0, bits_per_sample: 0 } };
         self.buffers.insert(self.current_handle, buffer);
         
         let p_buffer = self.current_handle;
@@ -109,13 +107,12 @@ impl AudioSystem {
         Ok(())
     }
 
-    pub fn update_buffer(&mut self, buffer: i32, data: &[u8], format: AudioFormat) -> Result<(), AudioError> {
+    pub fn update_buffer<T>(&mut self, buffer: i32, data: &[T], format: AudioFormat) -> Result<(), AudioError> {
 
         let mut i_buffer = self.buffers.get_mut(&buffer).ok_or(AudioError::new(AudioErrorType::InvalidBuffer))?;
 
-        i_buffer.data = data.to_vec();
+        i_buffer.data = unsafe { std::slice::from_raw_parts(data.as_ptr() as *const u8, data.len() * std::mem::size_of::<T>()).to_vec() };
         i_buffer.format = format;
-        i_buffer.has_data = true;
 
         Ok(())
     }
