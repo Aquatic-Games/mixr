@@ -19,27 +19,37 @@ impl<'a> AudioCallback for Audio<'a> {
 
 #[test]
 fn test_wav() {
-    let format: Option<AudioFormat> = None;
+    let format = AudioFormat { channels: 2, sample_rate: 48000, bits_per_sample: 16 };
 
-    let mut system = mixr::system::AudioSystem::new(format, 2);
+    let mut system = mixr::system::AudioSystem::new(Some(format.clone()), 2);
+    system.master_volume = 1.0;
 
-    let pcm = mixr::loaders::PCM::load_wav("/home/ollie/Music/Samples/Waveworld/soundstate/Samplepack18w/wah24.wav").unwrap();
-    let buffer = system.create_buffer();
-    system.update_buffer(buffer, &pcm.data, pcm.format).unwrap();
-    system.play_buffer(buffer, 0, ChannelProperties { 
+    let pcm1 = mixr::loaders::PCM::load_wav("/home/ollie/Music/Always There.wav").unwrap();
+    //let pcm1 = mixr::loaders::PCM::load_wav("/home/ollie/Music/others/kf-main-start.wav").unwrap();
+    let pcm2 = mixr::loaders::PCM::load_wav("/home/ollie/Music/others/kf-main-loop.wav").unwrap();
+
+    let buffer1 = system.create_buffer();
+    let buffer2 = system.create_buffer();
+
+    system.update_buffer(buffer1, &pcm1.data, pcm1.format).unwrap();
+    system.update_buffer(buffer2, &pcm2.data, pcm2.format).unwrap();
+
+    system.play_buffer(buffer1, 0, ChannelProperties { 
         volume: 1.0, 
-        speed: 2.0, 
+        speed: 1.15, 
         panning: 0.5, 
-        looping: true, 
+        looping: false, 
         interpolation_type: mixr::InterpolationType::Linear
     }).unwrap();
+
+    system.queue_buffer(buffer2, 0).unwrap();
 
     let sdl = sdl2::init().unwrap();
     let audio = sdl.audio().unwrap();
 
     let desired_spec = AudioSpecDesired {
-        freq: Some(48000),
-        channels: Some(2 as u8),
+        freq: Some(format.sample_rate),
+        channels: Some(format.channels),
         samples: Some(8192)
     };
 
