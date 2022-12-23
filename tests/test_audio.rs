@@ -36,7 +36,7 @@ fn test_wav() {
 
     system.play_buffer(buffer1, 0, ChannelProperties { 
         volume: 1.0, 
-        speed: 1.15, 
+        speed: 0.15, 
         panning: 0.5, 
         looping: false, 
         interpolation_type: mixr::InterpolationType::Linear

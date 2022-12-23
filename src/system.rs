@@ -249,13 +249,6 @@ impl AudioSystem {
             let mut curr_sample_f64 = channel.chunk as f64 * CHUNK_SIZE + channel.position;
             let mut curr_sample = curr_sample_f64 as usize;
 
-            if channel.prev_curr_sample != curr_sample {
-                channel.prev_sample = channel.prev_curr_sample;
-                channel.prev_curr_sample = curr_sample;
-            }
-
-            let prev_sample = channel.prev_sample;
-
             if curr_sample >= curr_buffer.length_in_samples {
                 if properties.looping {
                     // Looping just returns the channel back to 0.
@@ -286,6 +279,13 @@ impl AudioSystem {
                     continue;
                 }
             }
+
+            if channel.prev_curr_sample != curr_sample {
+                channel.prev_sample = channel.prev_curr_sample;
+                channel.prev_curr_sample = curr_sample;
+            }
+
+            let prev_sample = channel.prev_sample;
 
             let curr_data = &curr_buffer.data;
             let prev_data = &prev_buffer.data;
