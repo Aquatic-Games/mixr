@@ -3,7 +3,7 @@ pub mod loaders;
 pub mod binary_reader;
 mod cmixr;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Copy)]
 #[repr(C)]
 pub struct AudioFormat {
     pub channels: u8,
@@ -28,7 +28,7 @@ pub enum InterpolationType {
     Linear
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Copy)]
 #[repr(C)]
 pub struct ChannelProperties {
     pub volume: f64,
