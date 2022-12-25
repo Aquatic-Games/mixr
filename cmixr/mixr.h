@@ -1,3 +1,6 @@
+#ifndef CMIXR_H
+#define CMIXR_H
+
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -81,3 +84,5 @@ uint16_t mxGetAvailableChannel(AudioSystem *system);
 #ifdef __cplusplus
 } // extern "C"
 #endif // __cplusplus
+
+#endif /* CMIXR_H */
