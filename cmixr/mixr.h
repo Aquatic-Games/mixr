@@ -37,7 +37,7 @@ typedef struct {
 extern "C" {
 #endif // __cplusplus
 
-const AudioSystem *mxCreateSystem(AudioFormat format, uint16_t channels);
+AudioSystem *mxCreateSystem(AudioFormat format, uint16_t channels);
 
 void mxDeleteSystem(AudioSystem *system);
 

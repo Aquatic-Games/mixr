@@ -8,7 +8,7 @@ pub struct CPCM {
 }*/
 
 #[no_mangle]
-pub extern "C" fn mxCreateSystem(format: AudioFormat, channels: u16) -> *const AudioSystem {
+pub extern "C" fn mxCreateSystem(format: AudioFormat, channels: u16) -> *mut AudioSystem {
     Box::into_raw(Box::new(AudioSystem::new(Some(format), channels)))
 }
 
