@@ -1,0 +1,12 @@
+language = "C"
+
+include_version = false
+cpp_compat = true
+style = "type"
+
+[struct]
+rename_fields = "CamelCase"
+
+[enum]
+rename_variants = "ScreamingSnakeCase"
+prefix_with_name = true
