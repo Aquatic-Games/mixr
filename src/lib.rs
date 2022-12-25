@@ -35,12 +35,15 @@ pub struct ChannelProperties {
     pub speed: f64,
     pub panning: f64,
     pub looping: bool,
-    pub interpolation_type: InterpolationType
+    pub interpolation_type: InterpolationType,
+
+    pub loop_start: i32,
+    pub loop_end: i32,
 }
 
 impl Default for ChannelProperties {
     fn default() -> Self {
-        Self { volume: 1.0, speed: 1.0, panning: 0.5, looping: false, interpolation_type: InterpolationType::Linear }
+        Self { volume: 1.0, speed: 1.0, panning: 0.5, looping: false, interpolation_type: InterpolationType::Linear, loop_start: 0, loop_end: -1 }
     }
 }
 

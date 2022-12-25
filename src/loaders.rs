@@ -70,7 +70,7 @@ impl PCM {
         }
 
         let data_size = reader.read_i32();
-        let data = reader.read_bytes(data_size as usize);
+        let data = reader.read_bytes(data_size as usize).to_vec();
 
         Ok(PCM { data, format })
     }

@@ -166,7 +166,12 @@ impl AudioSystem {
         i_channel.position = 0.0;
         i_channel.prev_sample = 0;
         i_channel.prev_curr_sample = 0;
+
         i_channel.properties = properties;
+        if i_channel.properties.loop_end == -1 {
+            i_channel.properties.loop_end = self.buffers[&buffer].length_in_samples as i32;
+        }
+
         i_channel.sample_rate = i_buffer.format.sample_rate;
         i_channel.speed = i_buffer.format.sample_rate as f64 / self.format.sample_rate as f64;
         i_channel.speed *= i_channel.properties.speed;
@@ -249,11 +254,11 @@ impl AudioSystem {
             let mut curr_sample_f64 = channel.chunk as f64 * CHUNK_SIZE + channel.position;
             let mut curr_sample = curr_sample_f64 as usize;
 
-            if curr_sample >= curr_buffer.length_in_samples {
+            if curr_sample >= properties.loop_end as usize {
                 if properties.looping {
                     // Looping just returns the channel back to 0.
-                    channel.chunk = 0;
-                    channel.position = if CHUNK_SIZE > channel.position { 0.0 } else { channel.position - CHUNK_SIZE };
+                    channel.chunk = (properties.loop_start as f64 / CHUNK_SIZE) as u64;
+                    channel.position = if channel.chunk == 0 { properties.loop_start as f64 } else { properties.loop_start as f64 / channel.chunk as f64 - CHUNK_SIZE };
                     curr_sample_f64 = channel.chunk as f64 * CHUNK_SIZE + channel.position;
                     curr_sample = curr_sample_f64 as usize;
 
