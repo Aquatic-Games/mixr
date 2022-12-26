@@ -26,7 +26,15 @@ fn main() {
     let buffer = system.create_buffer();
     system.update_buffer(buffer, &pcm.data, pcm.format).unwrap();
 
-    system.play_buffer(buffer, 0, ChannelProperties::default()).unwrap();
+    system.play_buffer(buffer, 0, ChannelProperties {
+        volume: 1.0,
+        speed: 1.0,
+        panning: 0.5,
+        looping: false,
+        interpolation_type: mixr::InterpolationType::Linear,
+        loop_start: 0,
+        loop_end: -1,
+    }).unwrap();
 
     let sdl = sdl2::init().unwrap();
     let audio = sdl.audio().unwrap();
