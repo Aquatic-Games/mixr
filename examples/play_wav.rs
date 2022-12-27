@@ -17,7 +17,10 @@ struct CommandArgs {
     speed: f64,
 
     #[arg(short, long, default_value_t = 0.5)]
-    panning: f64
+    panning: f64,
+
+    #[arg(long, default_value_t = false)]
+    looping: bool
 }
 
 fn main() {
@@ -27,6 +30,7 @@ fn main() {
     let volume = args.volume;
     let speed = args.speed;
     let panning = args.panning;
+    let looping = args.looping;
 
     // Create our audio system. We provide "None" as our argument, which means it defaults to 48khz sample rate, 2 channels, 16 bits.
     // We also only create one channel, as that's all we need to play a single sound.
@@ -59,7 +63,7 @@ fn main() {
         volume,
         speed,
         panning,
-        looping: false,
+        looping,
         interpolation_type: mixr::InterpolationType::Linear,
         loop_start: 0,
         loop_end: -1,
