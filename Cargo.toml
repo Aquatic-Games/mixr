@@ -25,3 +25,4 @@ strip = true
 sdl2 = "0.35.2"
 libc = "0.2.138"
 ctrlc = "3.2.4"
+clap = { version = "4.0.32", features = ["derive"] }

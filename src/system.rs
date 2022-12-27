@@ -2,6 +2,9 @@ use std::collections::HashMap;
 use std::collections::VecDeque;
 use crate::{AudioFormat, ChannelProperties};
 
+// Chunk size denotes how many samples a chunk is. In this case, 48000 samples.
+const CHUNK_SIZE: f64 = 48000.0;
+
 #[derive(Debug)]
 pub enum AudioErrorType {
     InvalidBuffer,
@@ -27,6 +30,10 @@ impl<'a> AudioError<'a> {
             error_type,
             description
         }
+    }
+
+    pub fn with_description(error_type: AudioErrorType, description: &'a str) -> Self {
+        Self { error_type, description }
     }
 }
 
@@ -183,7 +190,7 @@ impl AudioSystem {
     }
 
     pub fn set_channel_properties(&mut self, channel: u16, properties: ChannelProperties) -> Result<(), AudioError> {
-        let mut channel = &mut self.channels.get_mut(channel as usize).ok_or(AudioError::new(AudioErrorType::InvalidChannel))?;
+        let mut channel = self.channels.get_mut(channel as usize).ok_or(AudioError::new(AudioErrorType::InvalidChannel))?;
         let buffer = self.buffers.get(&channel.buffer).ok_or(AudioError::new(AudioErrorType::InvalidBuffer))?;
         
         channel.properties = properties;
@@ -198,21 +205,21 @@ impl AudioSystem {
     }
 
     pub fn play(&mut self, channel: u16) -> Result<(), AudioError> {
-        let mut channel = &mut self.channels.get_mut(channel as usize).ok_or(AudioError::new(AudioErrorType::InvalidChannel))?;
+        let mut channel = self.channels.get_mut(channel as usize).ok_or(AudioError::new(AudioErrorType::InvalidChannel))?;
         channel.playing = true;
 
         Ok(())
     }
 
     pub fn pause(&mut self, channel: u16) -> Result<(), AudioError> {
-        let mut channel = &mut self.channels.get_mut(channel as usize).ok_or(AudioError::new(AudioErrorType::InvalidChannel))?;
+        let mut channel = self.channels.get_mut(channel as usize).ok_or(AudioError::new(AudioErrorType::InvalidChannel))?;
         channel.playing = false;
 
         Ok(())
     }
 
     pub fn stop(&mut self, channel: u16) -> Result<(), AudioError> {
-        let mut channel = &mut self.channels.get_mut(channel as usize).ok_or(AudioError::new(AudioErrorType::InvalidChannel))?;
+        let mut channel = self.channels.get_mut(channel as usize).ok_or(AudioError::new(AudioErrorType::InvalidChannel))?;
         channel.playing = false;
         channel.position = 0.0;
         channel.chunk = 0;
@@ -226,7 +233,7 @@ impl AudioSystem {
     }
 
     pub fn queue_buffer(&mut self, buffer: i32, channel: u16) -> Result<(), AudioError> {
-        let channel = &mut self.channels.get_mut(channel as usize).ok_or(AudioError::new(AudioErrorType::InvalidChannel))?;
+        let channel = self.channels.get_mut(channel as usize).ok_or(AudioError::new(AudioErrorType::InvalidChannel))?;
         if !self.buffers.contains_key(&buffer) { 
             return Err(AudioError::new(AudioErrorType::InvalidBuffer));
         }
@@ -245,9 +252,6 @@ impl AudioSystem {
                 continue;
             }
 
-            // Chunk size denotes how many samples a chunk is. In this case, 48000 samples.
-            const CHUNK_SIZE: f64 = 48000.0;
-
             let mut curr_buffer = &self.buffers[&channel.buffer];
             let prev_buffer = &self.buffers[&channel.prev_buffer];
 
@@ -262,9 +266,10 @@ impl AudioSystem {
 
             if curr_sample >= properties.loop_end as usize {
                 if properties.looping {
-                    // Looping just returns the channel back to 0.
-                    channel.chunk = (properties.loop_start as f64 / CHUNK_SIZE) as u64;
-                    channel.position = if channel.chunk == 0 { properties.loop_start as f64 } else { properties.loop_start as f64 / channel.chunk as f64 - CHUNK_SIZE };
+                    // Looping just returns the channel back to the loop point..
+                    let loop_pos = (properties.loop_start + (curr_sample as i32 - properties.loop_end)) as f64;
+                    channel.chunk = (loop_pos / CHUNK_SIZE) as u64;
+                    channel.position = if channel.chunk == 0 { loop_pos } else { loop_pos / channel.chunk as f64 - CHUNK_SIZE };
                     curr_sample_f64 = channel.chunk as f64 * CHUNK_SIZE + channel.position;
                     curr_sample = curr_sample_f64 as usize;
 
@@ -369,6 +374,28 @@ impl AudioSystem {
         }
 
         Err(AudioError::new(AudioErrorType::NoChannels))
+    }
+
+    pub fn seek_to_sample(&mut self, channel: u16, sample: usize) -> Result<(), AudioError> {
+        let mut channel = self.channels.get_mut(channel as usize).ok_or(AudioError::new(AudioErrorType::InvalidChannel))?;
+        
+        let sample = sample as f64;
+
+        channel.chunk = (sample / CHUNK_SIZE) as u64;
+        channel.position = if channel.chunk == 0 { sample } else { sample / channel.chunk as f64 - CHUNK_SIZE };
+
+        Ok(())
+    }
+
+    pub fn seek_seconds(&mut self, channel: u16, seconds: f64) -> Result<(), AudioError> {
+        let mut channel = self.channels.get_mut(channel as usize).ok_or(AudioError::new(AudioErrorType::InvalidChannel))?;
+        // I have no idea why I stored the sample rate in the channel but it's coming in useful now I guess..
+        let sample = channel.sample_rate as f64 * seconds;
+
+        channel.chunk = (sample / CHUNK_SIZE) as u64;
+        channel.position = if channel.chunk == 0 { sample } else { sample / channel.chunk as f64 - CHUNK_SIZE };
+
+        Ok(())
     }
 
     #[inline(always)]
