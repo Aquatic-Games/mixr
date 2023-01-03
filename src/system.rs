@@ -59,7 +59,9 @@ struct Channel {
 
     playing: bool,
     properties: ChannelProperties,
-    queued: VecDeque<i32>
+    queued: VecDeque<i32>,
+
+    in_use: bool
 }
 
 pub struct AudioSystem {
@@ -101,7 +103,9 @@ impl AudioSystem {
 
                 playing: false,
                 properties: ChannelProperties::default(),
-                queued: VecDeque::new()
+                queued: VecDeque::new(),
+
+                in_use: false
             });
         }
 
@@ -146,7 +150,6 @@ impl AudioSystem {
     }
 
     pub fn update_buffer<T: Sized>(&mut self, buffer: i32, data: &[T], format: AudioFormat) -> Result<(), AudioError> {
-
         let mut i_buffer = self.buffers.get_mut(&buffer).ok_or(AudioError::new(AudioErrorType::InvalidBuffer))?;
 
         i_buffer.data = unsafe { std::slice::from_raw_parts(data.as_ptr() as *const u8, data.len() * std::mem::size_of::<T>()).to_vec() };
@@ -185,12 +188,17 @@ impl AudioSystem {
         i_channel.buffer = buffer;
         i_channel.prev_buffer = buffer;
         i_channel.playing = true;
+        i_channel.in_use = true;
 
         Ok(())
     }
 
     pub fn set_channel_properties(&mut self, channel: u16, properties: ChannelProperties) -> Result<(), AudioError> {
         let mut channel = self.channels.get_mut(channel as usize).ok_or(AudioError::new(AudioErrorType::InvalidChannel))?;
+        if !channel.in_use {
+            return Ok(());
+        }
+
         let buffer = self.buffers.get(&channel.buffer).ok_or(AudioError::new(AudioErrorType::InvalidBuffer))?;
         
         channel.properties = properties;
@@ -206,6 +214,10 @@ impl AudioSystem {
 
     pub fn play(&mut self, channel: u16) -> Result<(), AudioError> {
         let mut channel = self.channels.get_mut(channel as usize).ok_or(AudioError::new(AudioErrorType::InvalidChannel))?;
+        if !channel.in_use {
+            return Ok(());
+        }
+
         channel.playing = true;
 
         Ok(())
@@ -213,6 +225,10 @@ impl AudioSystem {
 
     pub fn pause(&mut self, channel: u16) -> Result<(), AudioError> {
         let mut channel = self.channels.get_mut(channel as usize).ok_or(AudioError::new(AudioErrorType::InvalidChannel))?;
+        if !channel.in_use {
+            return Ok(());
+        }
+
         channel.playing = false;
 
         Ok(())
@@ -220,6 +236,10 @@ impl AudioSystem {
 
     pub fn stop(&mut self, channel: u16) -> Result<(), AudioError> {
         let mut channel = self.channels.get_mut(channel as usize).ok_or(AudioError::new(AudioErrorType::InvalidChannel))?;
+        if !channel.in_use {
+            return Ok(());
+        }
+
         channel.playing = false;
         channel.position = 0.0;
         channel.chunk = 0;
@@ -233,6 +253,7 @@ impl AudioSystem {
     }
 
     pub fn queue_buffer(&mut self, buffer: i32, channel: u16) -> Result<(), AudioError> {
+        // todo: Check if channel is in use, if it isn't, return NotInUse error.
         let channel = self.channels.get_mut(channel as usize).ok_or(AudioError::new(AudioErrorType::InvalidChannel))?;
         if !self.buffers.contains_key(&buffer) { 
             return Err(AudioError::new(AudioErrorType::InvalidBuffer));
@@ -292,6 +313,7 @@ impl AudioSystem {
                     }
 
                     channel.playing = false;
+                    channel.in_use = false;
                     continue;
                 }
             }
