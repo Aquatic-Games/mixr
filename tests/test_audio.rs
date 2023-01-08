@@ -24,27 +24,29 @@ fn test_wav() {
     let mut system = mixr::system::AudioSystem::new(SAMPLE_RATE, 2);
     system.master_volume = 1.0;
 
-    let pcm1 = mixr::loaders::PCM::load_wav_path("/home/ollie/Music/WavTests/robot-9d-16bit-stereo.wav").unwrap();
+    let pcm1 = mixr::loaders::PCM::load_wav_path("/home/ollie/Music/r-59.wav").unwrap();
     //let pcm1 = mixr::loaders::PCM::load_wav("/home/ollie/Music/others/kf-main-start.wav").unwrap();
     //let pcm2 = mixr::loaders::PCM::load_wav("/home/ollie/Music/others/kf-main-loop.wav").unwrap();
+    
+    const NUM_BUFFERS: i32 = 30;
+    const SIZE: usize = 96000;
 
-    let buffer1 = system.create_buffer();
-    //let buffer2 = system.create_buffer();
+    let mut buffers = Vec::with_capacity(NUM_BUFFERS as usize);
 
-    system.update_buffer(buffer1, &pcm1.data, pcm1.format).unwrap();
-    //system.update_buffer(buffer2, &pcm2.data, pcm2.format).unwrap();
+    
+    for i in 0..NUM_BUFFERS {
+        let i = i as usize;
 
-    system.play_buffer(buffer1, 0, ChannelProperties { 
-        volume: 1.0, 
-        speed: 1.0, 
-        panning: 0.5, 
-        looping: false, 
-        interpolation_type: mixr::InterpolationType::Linear,
-        loop_start: 0,
-        loop_end: -1
-    }).unwrap();
+        let buffer = system.create_buffer();
+        system.update_buffer(buffer, &pcm1.data[(i * SIZE)..((i + 1) * SIZE)], pcm1.format).unwrap();
+        buffers.push(buffer);
+    }
 
-    //system.queue_buffer(buffer2, 0).unwrap();
+    system.play_buffer(buffers[0], 0, ChannelProperties::default()).unwrap();
+
+    for i in 1..NUM_BUFFERS {
+        system.queue_buffer(buffers[i as usize], 0).unwrap();
+    }
 
     let sdl = sdl2::init().unwrap();
     let audio = sdl.audio().unwrap();

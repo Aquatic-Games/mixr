@@ -291,10 +291,6 @@ impl AudioSystem {
                     curr_sample = curr_sample_f64 as usize;
 
                 } else if channel.queued.len() > 0 {
-                    if let Some(cb) = self.callback {
-                        cb(current_channel, channel.buffer);
-                    }
-
                     channel.chunk = 0;
                     channel.position = if CHUNK_SIZE > channel.position { 0.0 } else { channel.position - CHUNK_SIZE };
                     curr_sample_f64 = channel.chunk as f64 * CHUNK_SIZE + channel.position;
@@ -350,10 +346,15 @@ impl AudioSystem {
 
             result += curr_value * pan * properties.volume;
 
-            channel.prev_buffer = channel.buffer;
-
             // Advance by the channel's speed, but only when both stereo channels have been mixed.
             if self.current_sample == 0 {
+                if channel.prev_buffer != channel.buffer {
+                    if let Some(cb) = self.callback {
+                        cb(current_channel, channel.buffer);
+                    }
+                }
+                channel.prev_buffer = channel.buffer;
+
                 channel.position += channel.speed;
                 if channel.position >= CHUNK_SIZE {
                     channel.chunk += 1;
