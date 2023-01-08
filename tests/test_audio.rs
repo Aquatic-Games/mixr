@@ -24,19 +24,19 @@ fn test_wav() {
     let mut system = mixr::system::AudioSystem::new(Some(format.clone()), 2);
     system.master_volume = 1.0;
 
-    let pcm1 = mixr::loaders::PCM::load_wav("/home/ollie/Music/Always There.wav").unwrap();
+    let pcm1 = mixr::loaders::PCM::load_wav("/home/ollie/Music/robot-9d.wav").unwrap();
     //let pcm1 = mixr::loaders::PCM::load_wav("/home/ollie/Music/others/kf-main-start.wav").unwrap();
-    let pcm2 = mixr::loaders::PCM::load_wav("/home/ollie/Music/others/kf-main-loop.wav").unwrap();
+    //let pcm2 = mixr::loaders::PCM::load_wav("/home/ollie/Music/others/kf-main-loop.wav").unwrap();
 
     let buffer1 = system.create_buffer();
-    let buffer2 = system.create_buffer();
+    //let buffer2 = system.create_buffer();
 
     system.update_buffer(buffer1, &pcm1.data, pcm1.format).unwrap();
-    system.update_buffer(buffer2, &pcm2.data, pcm2.format).unwrap();
+    //system.update_buffer(buffer2, &pcm2.data, pcm2.format).unwrap();
 
     system.play_buffer(buffer1, 0, ChannelProperties { 
         volume: 1.0, 
-        speed: 1.15, 
+        speed: 1.0, 
         panning: 0.5, 
         looping: false, 
         interpolation_type: mixr::InterpolationType::Linear,
@@ -44,7 +44,7 @@ fn test_wav() {
         loop_end: -1
     }).unwrap();
 
-    system.queue_buffer(buffer2, 0).unwrap();
+    //system.queue_buffer(buffer2, 0).unwrap();
 
     let sdl = sdl2::init().unwrap();
     let audio = sdl.audio().unwrap();

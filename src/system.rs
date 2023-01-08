@@ -335,7 +335,7 @@ impl AudioSystem {
             curr_pos += self.current_sample as usize * (curr_format.channels - 1) as usize * curr_bps;
             curr_pos -= curr_pos % curr_bps * curr_format.channels as usize;
 
-            let mut curr_value = Self::get_sample(curr_data, curr_pos, curr_format.bits_per_sample);
+            let mut curr_value = unsafe { Self::get_sample(curr_data, curr_pos, curr_format.bits_per_sample) };
 
             match properties.interpolation_type {
                 crate::InterpolationType::None => {},
@@ -344,7 +344,7 @@ impl AudioSystem {
                     prev_pos += self.current_sample as usize * (prev_format.channels - 1) as usize * prev_bps;
                     prev_pos -= prev_pos % prev_bps * prev_format.channels as usize;
 
-                    let prev_value = Self::get_sample(prev_data, prev_pos, prev_format.bits_per_sample);
+                    let prev_value = unsafe { Self::get_sample(prev_data, prev_pos, prev_format.bits_per_sample) };
 
                     curr_value = Self::lerp(prev_value, curr_value, curr_sample_f64 - curr_sample as f64);
                 }
@@ -421,8 +421,9 @@ impl AudioSystem {
     }
 
     #[inline(always)]
-    fn get_sample(data: &[u8], pos: usize, fmt_bps: u8) -> f64 {
+    unsafe fn get_sample(data: &[u8], pos: usize, fmt_bps: u8) -> f64 {
         match fmt_bps {
+            32 => std::mem::transmute::<i32, f32>(data[pos] as i32 | ((data[pos + 1] as i32) << 8) as i32 | ((data[pos + 2] as i32) << 16) as i32 | ((data[pos + 3] as i32) << 24) as i32) as f64 * i16::MAX as f64,
             16 => (data[pos] as i16 | ((data[pos + 1] as i16) << 8) as i16) as f64,
             8 => ((((data[pos] as i32) << 8) as i32) - i16::MAX as i32) as f64,
             _ => panic!("Invalid bits per sample.")

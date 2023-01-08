@@ -41,36 +41,50 @@ impl PCM {
             return Err(LoadError::new(String::from("The \"WAVE\" identifier was not found at its expected location. Currently, files with \"JUNK\" headers are not supported.")));
         }
 
-        if reader.read_string(4) != "fmt " {
-            return Err(LoadError::new(String::from("\"fmt \" identifier was not found at its expected location.")));
+        let mut has_data = false;
+        let mut format = AudioFormat::default();
+        let mut data = Vec::new();
+
+        while !has_data {
+            let text = reader.read_string(4);
+
+            let chunk = text.as_str();
+            
+            match chunk {
+                "fmt " => {
+                    reader.read_i32();
+
+                    if reader.read_i16() != 1 {
+                        //return Err(LoadError::new(String::from("Currently, only PCM formats are supported. This file may be compressed?")));
+                    }
+
+                    let channels = reader.read_i16();
+                    let sample_rate = reader.read_i32();
+
+                    reader.read_i32();
+                    reader.read_i16();
+
+                    let bits_per_sample = reader.read_i16();
+
+                    format = AudioFormat {
+                        channels: channels as u8,
+                        sample_rate: sample_rate,
+                        bits_per_sample: bits_per_sample as u8
+                    };
+                },
+
+                "data" => {
+                    let data_size = reader.read_i32();
+                    data = reader.read_bytes(data_size as usize).to_vec();
+
+                    has_data = true;
+                }
+
+                _ => reader.position += reader.read_i32() as usize
+            }
         }
 
-        reader.read_i32();
-
-        if reader.read_i16() != 1 {
-            return Err(LoadError::new(String::from("Currently, only PCM formats are supported. This file may be compressed?")));
-        }
-
-        let channels = reader.read_i16();
-        let sample_rate = reader.read_i32();
-
-        reader.read_i32();
-        reader.read_i16();
-
-        let bits_per_sample = reader.read_i16();
-
-        let format = AudioFormat {
-            channels: channels as u8,
-            sample_rate: sample_rate,
-            bits_per_sample: bits_per_sample as u8
-        };
-
-        if reader.read_string(4) != "data" {
-            return Err(LoadError::new(String::from("An error has occurred while reading the format data.")));
-        }
-
-        let data_size = reader.read_i32();
-        let data = reader.read_bytes(data_size as usize).to_vec();
+        
 
         Ok(PCM { data, format })
     }
