@@ -47,7 +47,7 @@ typedef struct {
 extern "C" {
 #endif // __cplusplus
 
-AudioSystem *mxCreateSystem(AudioFormat format, uint16_t channels);
+AudioSystem *mxCreateSystem(int32_t sample_rate, uint16_t channels);
 
 void mxDeleteSystem(AudioSystem *system);
 
@@ -80,7 +80,7 @@ AudioResult mxPause(AudioSystem *system, uint16_t channel);
 
 AudioResult mxStop(AudioSystem *system, uint16_t channel);
 
-int16_t mxAdvance(AudioSystem *system);
+float mxAdvance(AudioSystem *system);
 
 uint16_t mxGetNumChannels(AudioSystem *system);
 
