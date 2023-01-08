@@ -4,17 +4,11 @@ pub struct BinaryReader {
 }
 
 impl BinaryReader {
-    pub fn new(path: &str) -> Result<BinaryReader, std::io::Error> {
-        let data = std::fs::read(path);
-        let data = match data {
-            Ok(dat) => dat,
-            Err(error) => return Err(error),
-        };
-
-        Ok(BinaryReader {
-            data: data,
+    pub fn new(data: &[u8]) -> BinaryReader {
+        BinaryReader {
+            data: data.to_vec(),
             position: 0
-        })
+        }
     }
 
     pub fn read_i8(&mut self) -> i8 {

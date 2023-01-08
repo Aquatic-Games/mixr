@@ -105,8 +105,8 @@ fn result_to_result(result: Result<(), AudioError>) -> AudioResult {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn mxPCMLoadWav(path: *const i8) -> *mut CPCM {
-    let mut pcm = PCM::load_wav(CStr::from_ptr(path).to_str().unwrap()).unwrap();
+pub unsafe extern "C" fn mxPCMLoadWav(data: *const u8, data_length: usize) -> *mut CPCM {
+    let mut pcm = PCM::load_wav(std::slice::from_raw_parts(data, data_length)).unwrap();
     let data = pcm.data.as_mut_ptr();
     let len = pcm.data.len();
     std::mem::forget(pcm.data);

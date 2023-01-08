@@ -38,7 +38,7 @@ fn main() {
     let mut system = AudioSystem::new(None, 1);
 
     // Load our wav file from the given path.
-    let pcm = mixr::loaders::PCM::load_wav(path).expect("A valid path is required. Make sure if it contains spaces, you surround it with quotes.");
+    let pcm = mixr::loaders::PCM::load_wav_path(path).expect("A valid path is required. Make sure if it contains spaces, you surround it with quotes.");
 
     // In mixr, buffer IDs are stored as integers. Creating a buffer always creates a unique ID.
     // Once the buffer has been created, we give it our PCM data and its format.

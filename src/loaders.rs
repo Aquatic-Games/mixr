@@ -25,11 +25,19 @@ pub struct PCM {
 }
 
 impl PCM {
-    pub fn load_wav(path: &str) -> Result<PCM, LoadError> {
-        let mut reader = match BinaryReader::new(path) {
-            Ok(reader) => reader,
-            Err(error) => return Err(LoadError::new(error.to_string())),
-        };
+    pub fn load_wav_path(path: &str) -> Result<PCM, LoadError> {
+        let read = std::fs::read(path);
+
+        if let Ok(data) = read {
+            return Self::load_wav(&data);
+        }
+
+        return Err(LoadError::new(read.err().unwrap().to_string()));
+        
+    }
+
+    pub fn load_wav(data: &[u8]) -> Result<PCM, LoadError> {
+        let mut reader = BinaryReader::new(data);
 
         if reader.read_string(4) != "RIFF" {
             return Err(LoadError::new(String::from("Given file is missing the \"RIFF\" file header. This means it is either not a wave file, or is the wrong wave type.")));

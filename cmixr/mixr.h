@@ -88,7 +88,7 @@ bool mxIsPlaying(AudioSystem *system, uint16_t channel);
 
 uint16_t mxGetAvailableChannel(AudioSystem *system);
 
-CPCM *mxPCMLoadWav(const int8_t *path);
+CPCM *mxPCMLoadWav(const uint8_t *data, uintptr_t data_length);
 
 void mxPCMFree(CPCM *pcm);
 
