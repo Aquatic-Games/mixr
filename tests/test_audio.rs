@@ -24,7 +24,7 @@ fn test_wav() {
     let mut system = mixr::system::AudioSystem::new(Some(format.clone()), 2);
     system.master_volume = 1.0;
 
-    let pcm1 = mixr::loaders::PCM::load_wav("/home/ollie/Music/WavTests/robot-9d-24bit-stereo.wav").unwrap();
+    let pcm1 = mixr::loaders::PCM::load_wav("/home/ollie/Music/WavTests/robot-9d-16bit-stereo.wav").unwrap();
     //let pcm1 = mixr::loaders::PCM::load_wav("/home/ollie/Music/others/kf-main-start.wav").unwrap();
     //let pcm2 = mixr::loaders::PCM::load_wav("/home/ollie/Music/others/kf-main-loop.wav").unwrap();
 

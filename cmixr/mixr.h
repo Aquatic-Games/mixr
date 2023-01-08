@@ -24,6 +24,7 @@ typedef struct {
   uint8_t channels;
   int32_t sampleRate;
   uint8_t bitsPerSample;
+  bool floatingPoint;
 } AudioFormat;
 
 typedef struct {
@@ -35,6 +36,12 @@ typedef struct {
   int32_t loopStart;
   int32_t loopEnd;
 } ChannelProperties;
+
+typedef struct {
+  uint8_t *data;
+  uintptr_t dataLength;
+  AudioFormat format;
+} CPCM;
 
 #ifdef __cplusplus
 extern "C" {
@@ -80,6 +87,10 @@ uint16_t mxGetNumChannels(AudioSystem *system);
 bool mxIsPlaying(AudioSystem *system, uint16_t channel);
 
 uint16_t mxGetAvailableChannel(AudioSystem *system);
+
+CPCM *mxPCMLoadWav(const int8_t *path);
+
+void mxPCMFree(CPCM *pcm);
 
 #ifdef __cplusplus
 } // extern "C"

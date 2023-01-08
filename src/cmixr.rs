@@ -1,11 +1,13 @@
-use crate::{system::{AudioSystem, AudioErrorType, AudioError}, AudioFormat, ChannelProperties, AudioResult};
+use std::ffi::CStr;
 
-/*#[repr(C)]
+use crate::{system::{AudioSystem, AudioErrorType, AudioError}, AudioFormat, ChannelProperties, AudioResult, loaders::PCM};
+
+#[repr(C)]
 pub struct CPCM {
-    pub data: *const u8,
+    pub data: *mut u8,
     pub data_length: usize,
-    pub format: CAudioFormat
-}*/
+    pub format: AudioFormat
+}
 
 #[no_mangle]
 pub extern "C" fn mxCreateSystem(format: AudioFormat, channels: u16) -> *mut AudioSystem {
@@ -13,8 +15,8 @@ pub extern "C" fn mxCreateSystem(format: AudioFormat, channels: u16) -> *mut Aud
 }
 
 #[no_mangle]
-pub extern "C" fn mxDeleteSystem(system: *mut AudioSystem) {
-    unsafe { Box::from_raw(system) };
+pub unsafe extern "C" fn mxDeleteSystem(system: *mut AudioSystem) {
+    std::mem::drop(Box::from_raw(system));
 }
 
 #[no_mangle]
@@ -102,17 +104,22 @@ fn result_to_result(result: Result<(), AudioError>) -> AudioResult {
     }
 }
 
-/*#[no_mangle]
-pub unsafe extern "C" fn mxPCMLoadWav(path: *const i8) -> CPCM {
-    let pcm = PCM::load_wav(CStr::from_ptr(path).to_str().unwrap()).unwrap();
-    
-    CPCM {
-        data: Box::into_raw(Box::new(pcm.data.as_ptr().clone())) as *const u8,
-        data_length: pcm.data.len(),
-        format: CAudioFormat { 
-            channels: pcm.format.channels.unwrap(), 
-            sample_rate: pcm.format.sample_rate.unwrap(), 
-            bits_per_sample: pcm.format.bits_per_sample.unwrap() 
-        }
-    }
-}*/
+#[no_mangle]
+pub unsafe extern "C" fn mxPCMLoadWav(path: *const i8) -> *mut CPCM {
+    let mut pcm = PCM::load_wav(CStr::from_ptr(path).to_str().unwrap()).unwrap();
+    let data = pcm.data.as_mut_ptr();
+    let len = pcm.data.len();
+    std::mem::forget(pcm.data);
+
+    Box::into_raw(Box::new(CPCM {
+        data,
+        data_length: len,
+        format: pcm.format
+    }))
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn mxPCMFree(pcm: &mut CPCM) {
+    std::mem::drop(Vec::from_raw_parts(pcm.data, pcm.data_length, pcm.data_length));
+    std::mem::drop(Box::from_raw(pcm));
+}
