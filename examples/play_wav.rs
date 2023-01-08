@@ -32,10 +32,11 @@ fn main() {
     let panning = args.panning;
     let looping = args.looping;
 
-    // Create our audio system. We provide "None" as our argument, which means it defaults to 48khz sample rate, 2 channels, 16 bits.
+    // Create our audio system. We must give it a sample rate, in this case 48khz.
     // We also only create one channel, as that's all we need to play a single sound.
     // In mixr, a single channel can play both mono and stereo sounds.
-    let mut system = AudioSystem::new(None, 1);
+    const SAMPLE_RATE: i32 = 48000;
+    let mut system = AudioSystem::new(SAMPLE_RATE, 1);
 
     // Load our wav file from the given path.
     let pcm = mixr::loaders::PCM::load_wav_path(path).expect("A valid path is required. Make sure if it contains spaces, you surround it with quotes.");
@@ -76,8 +77,8 @@ fn main() {
     // The SDL audio should match the format of mixr.
     // Mixr's audio format has been designed to be compatible with SDL's audio spec.
     let desired_spec = AudioSpecDesired {
-        freq: Some(system.format.sample_rate),
-        channels: Some(system.format.channels),
+        freq: Some(SAMPLE_RATE),
+        channels: Some(2),
         samples: Some(8192)
     };
 
@@ -111,7 +112,7 @@ struct Audio<'a> {
 }
 
 impl<'a> AudioCallback for Audio<'a> {
-    type Channel = i16;
+    type Channel = f32;
 
     fn callback(&mut self, out: &mut [Self::Channel]) {
         for x in out.iter_mut() {

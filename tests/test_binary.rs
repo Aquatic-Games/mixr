@@ -2,7 +2,7 @@ use mixr;
 
 #[test]
 pub fn load_wave() {
-    let mut reader = mixr::binary_reader::BinaryReader::new("/home/ollie/Music/Always There.wav").unwrap();
+    let mut reader = mixr::binary_reader::BinaryReader::new(&std::fs::read("/home/ollie/Music/Always There.wav").unwrap());
     println!("\"RIFF\": {}", reader.read_string(4));
     println!("File size: {}", reader.read_i32());
     println!("\"WAVE\": {}", reader.read_string(4));

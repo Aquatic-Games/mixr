@@ -65,8 +65,10 @@ struct Channel {
 }
 
 pub struct AudioSystem {
-    pub format: AudioFormat,
+    //pub format: AudioFormat,
     pub master_volume: f64,
+
+    sample_rate: i32,
 
     buffers: HashMap<i32, Buffer>,
     channels: Vec<Channel>,
@@ -77,15 +79,7 @@ pub struct AudioSystem {
 }
 
 impl AudioSystem {
-    pub fn new(format: Option<AudioFormat>, channels: u16) -> AudioSystem {
-        let i_fmt = if format.is_none() {
-            AudioFormat {
-                channels: 2,
-                sample_rate: 48000,
-                bits_per_sample: 16,
-                floating_point: false
-            }
-        } else { format.unwrap() };
+    pub fn new(sample_rate: i32, channels: u16) -> AudioSystem {
 
         let mut v_channels = Vec::with_capacity(channels as usize);
         for _ in 0..channels {
@@ -111,7 +105,8 @@ impl AudioSystem {
         }
 
         AudioSystem { 
-            format: i_fmt, 
+            sample_rate: sample_rate,
+
             buffers: HashMap::new(), 
             channels: v_channels, 
             current_handle: 0, 
@@ -184,7 +179,7 @@ impl AudioSystem {
         }
 
         i_channel.sample_rate = i_buffer.format.sample_rate;
-        i_channel.speed = i_buffer.format.sample_rate as f64 / self.format.sample_rate as f64;
+        i_channel.speed = i_buffer.format.sample_rate as f64 / self.sample_rate as f64;
         i_channel.speed *= i_channel.properties.speed;
         i_channel.buffer = buffer;
         i_channel.prev_buffer = buffer;
@@ -203,7 +198,7 @@ impl AudioSystem {
         let buffer = self.buffers.get(&channel.buffer).ok_or(AudioError::new(AudioErrorType::InvalidBuffer))?;
         
         channel.properties = properties;
-        channel.speed = buffer.format.sample_rate as f64 / self.format.sample_rate as f64;
+        channel.speed = buffer.format.sample_rate as f64 / self.sample_rate as f64;
         channel.speed *= channel.properties.speed;
 
         if channel.properties.loop_end == -1 {
@@ -264,7 +259,7 @@ impl AudioSystem {
         Ok(())
     }
 
-    pub fn advance(&mut self) -> i16 {
+    pub fn advance(&mut self) -> f32 {
         let mut result: f64 = 0.0;
 
         let mut current_channel = 0;
@@ -372,7 +367,7 @@ impl AudioSystem {
         self.current_sample += 1;
         self.current_sample = self.current_sample % 2;
 
-        let result = (f64::clamp(result * self.master_volume, -1.0, 1.0) * i16::MAX as f64) as i16;
+        let result = f64::clamp(result * self.master_volume, -1.0, 1.0) as f32;
 
         result
     }

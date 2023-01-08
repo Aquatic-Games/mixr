@@ -10,8 +10,8 @@ pub struct CPCM {
 }
 
 #[no_mangle]
-pub extern "C" fn mxCreateSystem(format: AudioFormat, channels: u16) -> *mut AudioSystem {
-    Box::into_raw(Box::new(AudioSystem::new(Some(format), channels)))
+pub extern "C" fn mxCreateSystem(sample_rate: i32, channels: u16) -> *mut AudioSystem {
+    Box::into_raw(Box::new(AudioSystem::new(sample_rate, channels)))
 }
 
 #[no_mangle]
@@ -74,7 +74,7 @@ pub extern "C" fn mxStop(system: &mut AudioSystem, channel: u16) -> AudioResult 
 }
 
 #[no_mangle]
-pub extern "C" fn mxAdvance(system: &mut AudioSystem) -> i16 {
+pub extern "C" fn mxAdvance(system: &mut AudioSystem) -> f32 {
     system.advance()
 }
 

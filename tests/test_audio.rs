@@ -8,7 +8,7 @@ struct Audio<'a> {
 }
 
 impl<'a> AudioCallback for Audio<'a> {
-    type Channel = i16;
+    type Channel = f32;
 
     fn callback(&mut self, out: &mut [Self::Channel]) {
         for x in out.iter_mut() {
@@ -19,9 +19,9 @@ impl<'a> AudioCallback for Audio<'a> {
 
 #[test]
 fn test_wav() {
-    let format = AudioFormat { channels: 2, sample_rate: 48000, bits_per_sample: 16, floating_point: false };
+    const SAMPLE_RATE: i32 = 48000;
 
-    let mut system = mixr::system::AudioSystem::new(Some(format.clone()), 2);
+    let mut system = mixr::system::AudioSystem::new(SAMPLE_RATE, 2);
     system.master_volume = 1.0;
 
     let pcm1 = mixr::loaders::PCM::load_wav_path("/home/ollie/Music/WavTests/robot-9d-16bit-stereo.wav").unwrap();
@@ -50,8 +50,8 @@ fn test_wav() {
     let audio = sdl.audio().unwrap();
 
     let desired_spec = AudioSpecDesired {
-        freq: Some(format.sample_rate),
-        channels: Some(format.channels),
+        freq: Some(SAMPLE_RATE),
+        channels: Some(2),
         samples: Some(8192)
     };
 
