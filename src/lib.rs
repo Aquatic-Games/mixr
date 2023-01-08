@@ -8,7 +8,8 @@ mod cmixr;
 pub struct AudioFormat {
     pub channels: u8,
     pub sample_rate: i32,
-    pub bits_per_sample: u8
+    pub bits_per_sample: u8,
+    pub floating_point: bool
 }
 
 impl Default for AudioFormat {
@@ -16,7 +17,8 @@ impl Default for AudioFormat {
         Self {
             channels: 2,
             sample_rate: 48000,
-            bits_per_sample: 16
+            bits_per_sample: 16,
+            floating_point: false
         }
     }
 }
@@ -60,4 +62,22 @@ pub enum AudioResult {
     InvalidBuffer,
     InvalidChannel,
     NoChannels
+}
+
+pub trait ByteConvert<T> {
+    fn from_bytes_le(bytes: &[u8]) -> T;
+}
+
+impl ByteConvert<f32> for f32 {
+    #[inline(always)]
+    fn from_bytes_le(bytes: &[u8]) -> f32 {
+        unsafe { std::mem::transmute::<i32, f32>(i32::from_bytes_le(bytes)) }
+    }
+}
+
+impl ByteConvert<i32> for i32 {
+    #[inline(always)]
+    fn from_bytes_le(bytes: &[u8]) -> i32 {
+        bytes[0] as i32 | ((bytes[1] as i32) << 8) | ((bytes[2] as i32) << 16)| ((bytes[3] as i32) << 24)
+    }
 }

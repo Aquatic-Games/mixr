@@ -54,9 +54,15 @@ impl PCM {
                 "fmt " => {
                     reader.read_i32();
 
-                    if reader.read_i16() != 1 {
-                        //return Err(LoadError::new(String::from("Currently, only PCM formats are supported. This file may be compressed?")));
-                    }
+                    let a_fmt = reader.read_i16();
+
+                    let floating_point = if a_fmt == 1 {
+                        false
+                    } else if a_fmt == 3 {
+                        true
+                    } else {
+                        return Err(LoadError::new(String::from("Unrecognized audio format.")));
+                    };
 
                     let channels = reader.read_i16();
                     let sample_rate = reader.read_i32();
@@ -68,8 +74,9 @@ impl PCM {
 
                     format = AudioFormat {
                         channels: channels as u8,
-                        sample_rate: sample_rate,
-                        bits_per_sample: bits_per_sample as u8
+                        sample_rate,
+                        bits_per_sample: bits_per_sample as u8,
+                        floating_point
                     };
                 },
 
