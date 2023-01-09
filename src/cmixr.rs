@@ -15,8 +15,8 @@ pub extern "C" fn mxCreateSystem(sample_rate: i32, channels: u16) -> *mut AudioS
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn mxDeleteSystem(system: *mut AudioSystem) {
-    std::mem::drop(Box::from_raw(system));
+pub unsafe extern "C" fn mxDeleteSystem(system: &mut AudioSystem) {
+    std::mem::drop(system);
 }
 
 #[no_mangle]
