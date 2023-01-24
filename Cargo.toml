@@ -20,6 +20,7 @@ debug = false
 overflow-checks = false
 debug-assertions = false
 strip = true
+lto = true
 
 [dev-dependencies]
 sdl2 = { version = "0.35.2", features = ["bundled"] }

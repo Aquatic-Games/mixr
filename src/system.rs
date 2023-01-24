@@ -325,7 +325,8 @@ impl AudioSystem {
 
             let mut curr_pos = curr_sample * curr_bps * curr_format.channels as usize;
             curr_pos += self.current_sample as usize * (curr_format.channels - 1) as usize * curr_bps;
-            curr_pos -= curr_pos % curr_bps * curr_format.channels as usize;
+            // curr_pos % curr_bps
+            curr_pos -= (curr_pos & (curr_bps - 1)) * curr_format.channels as usize;
 
             let mut curr_value = unsafe { Self::get_sample(curr_data, curr_pos, curr_format.bits_per_sample, curr_format.floating_point) };
 
@@ -334,7 +335,8 @@ impl AudioSystem {
                 crate::InterpolationType::Linear => {
                     let mut prev_pos = prev_sample * prev_bps * prev_format.channels as usize;
                     prev_pos += self.current_sample as usize * (prev_format.channels - 1) as usize * prev_bps;
-                    prev_pos -= prev_pos % prev_bps * prev_format.channels as usize;
+                    // prev_pos % prev_bps
+                    prev_pos -= (prev_pos & (prev_bps - 1)) * prev_format.channels as usize;
 
                     let prev_value = unsafe { Self::get_sample(prev_data, prev_pos, prev_format.bits_per_sample, prev_format.floating_point) };
 
@@ -366,7 +368,8 @@ impl AudioSystem {
         }
 
         self.current_sample += 1;
-        self.current_sample = self.current_sample % 2;
+        // self.current_sample % 2
+        self.current_sample = self.current_sample & 1;
 
         let result = f64::clamp(result * self.master_volume, -1.0, 1.0) as f32;
 
@@ -422,9 +425,9 @@ impl AudioSystem {
         match fmt_bps {
             32 => {
                 if floating_point {
-                    f32::from_bytes_le(&data[pos..pos + 4]) as f64
+                    f32::from_bytes_le(&data.get_unchecked(pos..pos + 4)) as f64
                 } else {
-                    i32::from_bytes_le(&data[pos..pos + 4]) as f64 / i32::MAX as f64
+                    i32::from_bytes_le(&data.get_unchecked(pos..pos + 4)) as f64 / i32::MAX as f64
                 }
             },
             /*24 => {
@@ -433,8 +436,8 @@ impl AudioSystem {
 
                 value as f64 / ((1 << 23) - 1) as f64
             },*/
-            16 => (data[pos] as i16 | ((data[pos + 1] as i16) << 8) as i16) as f64 / i16::MAX as f64,
-            8 => ((((data[pos] as i32) << 8) as i32) - i16::MAX as i32) as f64 / i16::MAX as f64,
+            16 => (*data.get_unchecked(pos) as i16 | ((*data.get_unchecked(pos + 1) as i16) << 8) as i16) as f64 / i16::MAX as f64,
+            8 => ((((*data.get_unchecked(pos) as i32) << 8) as i32) - i16::MAX as i32) as f64 / i16::MAX as f64,
             _ => panic!("Invalid bits per sample.")
         }
     }

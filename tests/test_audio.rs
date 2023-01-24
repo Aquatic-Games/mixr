@@ -42,7 +42,9 @@ fn test_wav() {
         buffers.push(buffer);
     }
 
-    system.play_buffer(buffers[0], 0, ChannelProperties::default()).unwrap();
+    let mut props = ChannelProperties::default();
+    props.speed = 1.0;
+    system.play_buffer(buffers[0], 0, props).unwrap();
 
     for i in 1..NUM_BUFFERS {
         system.queue_buffer(buffers[i as usize], 0).unwrap();
