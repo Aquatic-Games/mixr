@@ -13,9 +13,22 @@ impl<'a> AudioCallback for Audio<'a> {
     type Channel = f32;
 
     fn callback(&mut self, out: &mut [Self::Channel]) {
+        let mut s_buffer = -1;
         for x in out.iter_mut() {
-            *x = self.system.advance();
+            *x = self.system.advance(Some(|channel, buffer| { s_buffer = buffer; }));
+
+            if s_buffer != -1 {
+                self.system.update_buffer(s_buffer, self.stream.buffer(), self.format).unwrap();
+                self.system.queue_buffer(s_buffer, 0).unwrap();
+                s_buffer = -1;
+            }
         }
+    }
+}
+
+impl<'a> Audio<'a> {
+    fn test(&mut self) {
+        println!("Buffer");
     }
 }
 
