@@ -88,18 +88,12 @@ pub extern "C" fn mxIsPlaying(system: &mut AudioSystem, channel: u16) -> bool {
     system.is_playing(channel)
 }
 
-#[no_mangle]
-pub extern "C" fn mxGetAvailableChannel(system: &mut AudioSystem) -> u16 {
-    system.get_available_channel().unwrap()
-}
-
 fn result_to_result(result: Result<(), AudioError>) -> AudioResult {
     match result {
         Ok(_) => AudioResult::Ok,
         Err(err) => match err.error_type {
             AudioErrorType::InvalidBuffer => AudioResult::InvalidBuffer,
-            AudioErrorType::InvalidChannel => AudioResult::InvalidChannel,
-            AudioErrorType::NoChannels => AudioResult::NoChannels,
+            AudioErrorType::InvalidChannel => AudioResult::InvalidChannel
         }
     }
 }

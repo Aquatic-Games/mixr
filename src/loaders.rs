@@ -104,3 +104,65 @@ impl PCM {
         Ok(PCM { data, format })
     }
 }
+
+pub trait Stream {
+    fn format(&self) -> AudioFormat;
+
+    fn buffer_size(&self) -> usize;
+
+    fn buffer(&mut self) -> &[u8];
+}
+
+pub fn load_stream_path(path: &str) -> Result<Box<dyn Stream + Send>, LoadError> {
+    let read = std::fs::read(path);
+
+    if let Ok(data) = read {
+        return Ok(load_stream(&data));
+    }
+
+    return Err(LoadError::new(read.err().unwrap().to_string()));
+}
+
+pub fn load_stream(data: &[u8]) -> Box<dyn Stream + Send> {
+    let mut reader = BinaryReader::new(data);
+    //if reader.read_string("RIFF") {
+        const DEFAULT_BUFFER_SIZE: usize = 22050 * 2 * 2;
+        let mut buffer = Vec::with_capacity(DEFAULT_BUFFER_SIZE);
+        for _ in 0..DEFAULT_BUFFER_SIZE {
+            buffer.push(0);
+        }
+
+        return Box::new(PcmStream { pcm: PCM::load_wav(data).unwrap(), buffer, buffer_pos: 0 })
+    //}
+}
+
+pub struct PcmStream {
+    pcm: PCM,
+    buffer: Vec<u8>,
+    buffer_pos: usize
+}
+
+impl Stream for PcmStream {
+    fn buffer(&mut self) -> &[u8] {
+        let mut decoded = 0;
+
+        for value in self.buffer.iter_mut() {
+            *value = self.pcm.data[self.buffer_pos];
+            self.buffer_pos += 1;
+            if self.buffer_pos >= self.pcm.data.len() {
+                break;
+            }
+            decoded += 1;
+        }
+
+        &self.buffer[0..decoded]
+    }
+
+    fn buffer_size(&self) -> usize {
+        self.buffer.len()
+    }
+
+    fn format(&self) -> AudioFormat {
+        self.pcm.format
+    }
+}

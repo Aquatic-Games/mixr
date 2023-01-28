@@ -1,7 +1,10 @@
 pub mod system;
 pub mod loaders;
 pub mod binary_reader;
-mod cmixr;
+//mod cmixr;
+
+//#[cfg(feature = "engine")]
+pub mod engine;
 
 #[derive(Clone, Debug, Copy)]
 #[repr(C)]
@@ -61,7 +64,6 @@ pub enum AudioResult {
 
     InvalidBuffer,
     InvalidChannel,
-    NoChannels
 }
 
 pub trait ByteConvert<T> {

@@ -8,8 +8,7 @@ const CHUNK_SIZE: f64 = 48000.0;
 #[derive(Debug)]
 pub enum AudioErrorType {
     InvalidBuffer,
-    InvalidChannel,
-    NoChannels
+    InvalidChannel
 }
 
 #[derive(Debug)]
@@ -23,7 +22,6 @@ impl<'a> AudioError<'a> {
         let description = match error_type {
             AudioErrorType::InvalidBuffer => "An invalid buffer was provided.",
             AudioErrorType::InvalidChannel => "An invalid channel was provided.",
-            AudioErrorType::NoChannels => "No available channels.",
         };
 
         Self {
@@ -110,7 +108,7 @@ impl AudioSystem {
             buffers: HashMap::new(), 
             channels: v_channels, 
             current_handle: 0, 
-            current_sample: 0, 
+            current_sample: 0,
             callback: None,
 
             master_volume: 1.0
@@ -386,16 +384,6 @@ impl AudioSystem {
         } else {
             false
         }
-    }
-
-    pub fn get_available_channel(&self) -> Result<u16, AudioError> {
-        for (i, channel) in self.channels.iter().enumerate() {
-            if !channel.playing {
-                return Ok(i as u16);
-            }
-        }
-
-        Err(AudioError::new(AudioErrorType::NoChannels))
     }
 
     pub fn seek_to_sample(&mut self, channel: u16, sample: usize) -> Result<(), AudioError> {
