@@ -21,7 +21,7 @@ impl<'a> AudioError<'a> {
     pub fn new(error_type: AudioErrorType) -> Self {
         let description = match error_type {
             AudioErrorType::InvalidBuffer => "An invalid buffer was provided.",
-            AudioErrorType::InvalidChannel => "An invalid channel was provided.",
+            AudioErrorType::InvalidChannel => "An invalid channel was provided."
         };
 
         Self {
@@ -73,9 +73,7 @@ pub struct AudioSystem {
     current_handle: i32,
     current_sample: u8,
 
-    
-
-    //callback: Option<fn(u16, i32)>
+    buffers_finished: VecDeque<(u16, i32)>
 }
 
 impl AudioSystem {
@@ -111,7 +109,7 @@ impl AudioSystem {
             channels: v_channels, 
             current_handle: 0, 
             current_sample: 0,
-            //callback: None,
+            buffers_finished: VecDeque::new(),
 
             master_volume: 1.0
         }
@@ -244,10 +242,6 @@ impl AudioSystem {
         Ok(())
     }
 
-    /*pub fn set_buffer_finished_callback(&mut self, callback: fn(u16, i32)) {
-        self.callback = Some(callback);
-    }*/
-
     pub fn queue_buffer(&mut self, buffer: i32, channel: u16) -> Result<(), AudioError> {
         // todo: Check if channel is in use, if it isn't, return NotInUse error.
         let channel = self.channels.get_mut(channel as usize).ok_or(AudioError::new(AudioErrorType::InvalidChannel))?;
@@ -259,7 +253,11 @@ impl AudioSystem {
         Ok(())
     }
 
-    pub fn advance(&mut self, mut callback: Option<impl FnMut(u16, i32)>) -> f32 {
+    pub fn pop_finished_buffer(&mut self) -> Option<(u16, i32)> {
+        self.buffers_finished.pop_back()
+    }
+
+    pub fn advance(&mut self) -> f32 {
         let mut result: f64 = 0.0;
 
         let mut current_channel = 0;
@@ -300,9 +298,7 @@ impl AudioSystem {
                     curr_buffer = &self.buffers[&channel.buffer];
 
                 } else {
-                    if let Some(cb) = &mut callback {
-                        cb(current_channel, channel.buffer);
-                    }
+                    self.buffers_finished.push_back((current_channel, channel.buffer));
 
                     channel.playing = false;
                     channel.in_use = false;
@@ -351,9 +347,7 @@ impl AudioSystem {
             // Advance by the channel's speed, but only when both stereo channels have been mixed.
             if self.current_sample == 0 {
                 if channel.prev_buffer != channel.buffer {
-                    if let Some(cb) = &mut callback {
-                        cb(current_channel, channel.prev_buffer);
-                    }
+                    self.buffers_finished.push_back((current_channel, channel.prev_buffer));
                 }
                 channel.prev_buffer = channel.buffer;
 
@@ -436,8 +430,4 @@ impl AudioSystem {
     fn lerp(value: f64, next: f64, amount: f64) -> f64 {
         amount * (next - value) + value
     }
-}
-
-pub struct CallbackHandler {
-    pub fn new
 }
