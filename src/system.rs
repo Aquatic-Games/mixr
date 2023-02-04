@@ -73,7 +73,9 @@ pub struct AudioSystem {
     current_handle: i32,
     current_sample: u8,
 
-    buffers_finished: VecDeque<(u16, i32)>
+    buffers_finished: VecDeque<(u16, i32)>,
+
+    callback: Option<fn(u16, i32)>
 }
 
 impl AudioSystem {
@@ -111,7 +113,9 @@ impl AudioSystem {
             current_sample: 0,
             buffers_finished: VecDeque::new(),
 
-            master_volume: 1.0
+            master_volume: 1.0,
+
+            callback: None
         }
     }
 
@@ -257,6 +261,10 @@ impl AudioSystem {
         self.buffers_finished.pop_back()
     }
 
+    pub fn set_buffer_finished_callback(&mut self, callback: fn(u16, i32)) {
+        self.callback = Some(callback);
+    }
+
     pub fn advance(&mut self) -> f32 {
         let mut result: f64 = 0.0;
 
@@ -299,6 +307,9 @@ impl AudioSystem {
 
                 } else {
                     self.buffers_finished.push_back((current_channel, channel.buffer));
+                    if let Some(cb) = self.callback {
+                        cb(current_channel, channel.buffer);
+                    }
 
                     channel.playing = false;
                     channel.in_use = false;
@@ -348,6 +359,9 @@ impl AudioSystem {
             if self.current_sample == 0 {
                 if channel.prev_buffer != channel.buffer {
                     self.buffers_finished.push_back((current_channel, channel.prev_buffer));
+                    if let Some(cb) = self.callback {
+                        cb(current_channel, channel.buffer);
+                    }
                 }
                 channel.prev_buffer = channel.buffer;
 
@@ -409,9 +423,9 @@ impl AudioSystem {
         match fmt_bps {
             32 => {
                 if floating_point {
-                    f32::from_bytes_le(&data.get_unchecked(pos..pos + 4)) as f64
+                    f32::from_bytes_le(&data[pos..pos + 4]) as f64
                 } else {
-                    i32::from_bytes_le(&data.get_unchecked(pos..pos + 4)) as f64 / i32::MAX as f64
+                    i32::from_bytes_le(&data[pos..pos + 4]) as f64 / i32::MAX as f64
                 }
             },
             /*24 => {
@@ -420,8 +434,8 @@ impl AudioSystem {
 
                 value as f64 / ((1 << 23) - 1) as f64
             },*/
-            16 => (*data.get_unchecked(pos) as i16 | ((*data.get_unchecked(pos + 1) as i16) << 8) as i16) as f64 / i16::MAX as f64,
-            8 => ((((*data.get_unchecked(pos) as i32) << 8) as i32) - i16::MAX as i32) as f64 / i16::MAX as f64,
+            16 => (data[pos] as i16 | ((data[pos + 1] as i16) << 8) as i16) as f64 / i16::MAX as f64,
+            8 => ((((data[pos] as i32) << 8) as i32) - i16::MAX as i32) as f64 / i16::MAX as f64,
             _ => panic!("Invalid bits per sample.")
         }
     }

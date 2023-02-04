@@ -1,6 +1,6 @@
 use std::{time::Duration, cell::RefCell};
 
-use mixr::{self, system::AudioSystem, AudioFormat, ChannelProperties, loaders::{Stream, PcmStream}};
+use mixr::{self, system::AudioSystem, AudioFormat, ChannelProperties, loaders::{Stream, PcmStream, StreamManager}};
 use sdl2::audio::{AudioSpecDesired, AudioCallback};
 
 struct Audio<'a> {
@@ -88,7 +88,8 @@ fn test_stream() {
     let mut system = mixr::system::AudioSystem::new(SAMPLE_RATE, 2);
     system.master_volume = 1.0;
 
-    let mut stream = mixr::loaders::load_stream_path("/home/ollie/Music/r-59.wav").unwrap();
+    let mut manager = StreamManager::new();
+    let mut stream = manager.load_stream_path("/home/ollie/Music/Always There.wav").unwrap();
     let format = stream.format();
     
     const NUM_BUFFERS: usize = 2;

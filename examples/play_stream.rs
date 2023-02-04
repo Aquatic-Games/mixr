@@ -3,7 +3,7 @@
 // Simply input your path, and the program will run until the sound has finished.
 
 use clap::Parser;
-use mixr::{self, ChannelProperties, system::{AudioSystem}};
+use mixr::{self, ChannelProperties, system::{AudioSystem}, loaders::{Stream, StreamManager}, AudioFormat};
 use sdl2::audio::{AudioSpecDesired, AudioCallback};
 
 #[derive(Parser)]
@@ -32,35 +32,23 @@ fn main() {
     let panning = args.panning;
     let looping = args.looping;
 
-    // Create our audio system. We must give it a sample rate, in this case 48khz.
-    // We also only create one channel, as that's all we need to play a single sound.
-    // In mixr, a single channel can play both mono and stereo sounds.
     const SAMPLE_RATE: i32 = 48000;
     let mut system = AudioSystem::new(SAMPLE_RATE, 1);
 
-    // Load our wav file from the given path.
-    let pcm = mixr::loaders::PCM::load_wav_path(path).expect("A valid path is required. Make sure if it contains spaces, you surround it with quotes.");
+    let mut manager = StreamManager::new();
+    let mut stream = manager.load_stream_path(path).unwrap();
+    let format = stream.format();
 
-    // In mixr, buffer IDs are stored as integers. Creating a buffer always creates a unique ID.
-    // Once the buffer has been created, we give it our PCM data and its format.
-    let buffer = system.create_buffer();
-    system.update_buffer(buffer, &pcm.data, pcm.format).unwrap();
+    const NUM_BUFFERS: usize = 2;
 
-    // Play the buffer!
-    // First, we provide it with the buffer itself. Then, we provide the channel.
-    // The channel can be any value between 0 and the maximum number of channels, however be wary of playing a sound on
-    // an existing channel. Doing so will overwrite the currently playing sound!
-    // Then, we give it the channel properties.
-    // The channel properties do pretty much what they say on the tin. You tell it what volume, speed, panning, etc, to run at.
-    // You can change this later as well, by using set_channel_properties.
-    // A few things to note:
-    //     - These values are normalized. Therefore, a volume of 1.0 is full volume.
-    //       While you can go out of this range, it is not advisable, as mixr, by design, does not have a volume limiter.
-    //     - Panning is also normalized. A value of 0.0 = fully left, and 1.0 = fully right.
-    //       Therefore, the default panning value is 0.5.
-    //     - Setting loop_end to -1 will set the loop point to the end of the sample.
-    //     - Currently, even if looping is disabled, the sample will stop at the loop point. This is not final, and may change later.
-    system.play_buffer(buffer, 0, ChannelProperties {
+    let mut buffers = Vec::with_capacity(NUM_BUFFERS);
+    for _ in 0..NUM_BUFFERS {
+        let buffer = system.create_buffer();
+        system.update_buffer(buffer, stream.buffer(), format).unwrap();
+        buffers.push(buffer);
+    }
+
+    system.play_buffer(buffers[0], 0, ChannelProperties {
         volume,
         speed,
         panning,
@@ -69,6 +57,10 @@ fn main() {
         loop_start: 0,
         loop_end: -1,
     }).unwrap();
+
+    for i in 1..buffers.len() {
+        system.queue_buffer(buffers[i], 0).unwrap();
+    }
 
     // Initialize the SDL audio subsystem.
     let sdl = sdl2::init().unwrap();
@@ -85,7 +77,9 @@ fn main() {
     // Create our audio device, with our audio struct (defined later) as our callback.
     let device = audio.open_playback(None, &desired_spec, |_| {
         Audio {
-            system: &mut system
+            system: &mut system,
+            stream: &mut stream,
+            format
         }
     }).unwrap();
 
@@ -108,7 +102,9 @@ fn main() {
 // This struct holds the audio callback for SDK.
 // We need to keep a reference to our audio system in the audio struct.
 struct Audio<'a> {
-    system: &'a mut AudioSystem
+    system: &'a mut AudioSystem,
+    stream: &'a mut Box<dyn Stream + Send>,
+    format: AudioFormat
 }
 
 impl<'a> AudioCallback for Audio<'a> {
@@ -116,11 +112,12 @@ impl<'a> AudioCallback for Audio<'a> {
 
     fn callback(&mut self, out: &mut [Self::Channel]) {
         for x in out.iter_mut() {
-            // Advance mixr.
-            // Mixr does not return an audio buffer, instead you call advance for each sample you need.
-            // Make sure this doesn't get out of sync, otherwise many problems can occur.
-            // Advance currently returns a u16, this is subject to change.
             *x = self.system.advance();
+
+            while let Some((channel, buffer)) = self.system.pop_finished_buffer() {
+                self.system.update_buffer(buffer, self.stream.buffer(), self.format).unwrap();
+                self.system.queue_buffer(buffer, channel).unwrap();
+            }
         }
     }
 }
