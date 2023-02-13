@@ -384,6 +384,12 @@ impl AudioSystem {
         result
     }
 
+    pub fn advance_buffer(&mut self, buffer: &mut [f32]) {
+        for element in buffer.iter_mut() {
+            *element = self.advance();
+        }
+    }
+
     pub fn num_channels(&self) -> u16 {
         self.channels.len() as u16
     }

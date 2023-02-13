@@ -1,10 +1,10 @@
-mod polymod;
-
 use std::fmt;
+
+mod polymod;
 
 use crate::{AudioFormat, binary_reader::BinaryReader};
 
-use self::polymod::{track_player::{TrackPlayer, self}, track::Track};
+use self::polymod::{track::Track, track_player::TrackPlayer};
 
 #[derive(Debug, Clone)]
 pub struct LoadError {
@@ -149,10 +149,11 @@ impl StreamManager {
         }
 
         reader.position = 0;
-
         if reader.read_string(4) == "IMPM" {
-            return Ok(Box::new(TrackStream::new(Track::from_it(data).unwrap(), buffer)));
+            return Ok(Box::new(TrackStream::new(Track::from_it(data).unwrap(), buffer)))
         }
+
+        reader.position = 0;
 
         // TODO: Actual return error.
         Err(LoadError::new(String::from("Invalid file provided.")))
@@ -191,14 +192,13 @@ impl Stream for PcmStream {
 }
 
 pub struct TrackStream {
-    track_player: TrackPlayer,
-    format: AudioFormat,
-    buffer: Vec<u8>,
+    player: TrackPlayer,
+    buffer: Vec<u8>
 }
 
 impl Stream for TrackStream {
     fn format(&self) -> AudioFormat {
-        self.format
+        AudioFormat { channels: 2, sample_rate: 48000, bits_per_sample: 32, floating_point: true }
     }
 
     fn buffer_size(&self) -> usize {
@@ -207,23 +207,24 @@ impl Stream for TrackStream {
 
     fn buffer(&mut self) -> &[u8] {
         for i in (0..self.buffer.len()).step_by(4) {
-            let advance = f32::to_le_bytes(self.track_player.advance());
-            self.buffer[i + 0] = advance[0];
-            self.buffer[i + 1] = advance[1];
-            self.buffer[i + 2] = advance[2];
-            self.buffer[i + 3] = advance[3];
+            let mixed = self.player.advance();
+            let to_bytes = f32::to_le_bytes(mixed);
+            self.buffer[i] = to_bytes[0];
+            self.buffer[i + 1] = to_bytes[1];
+            self.buffer[i + 2] = to_bytes[2];
+            self.buffer[i + 3] = to_bytes[3];
         }
 
         &self.buffer
     }
 }
 
-impl<'b> TrackStream {
+impl TrackStream {
     pub fn new(track: Track, buffer: Vec<u8>) -> Self {
-        let track_player = TrackPlayer::new(track);
+        let player = TrackPlayer::new(track);
+
         Self {
-            track_player,
-            format: AudioFormat { channels: 2, sample_rate: 48000, bits_per_sample: 32, floating_point: true },
+            player,
             buffer
         }
     }

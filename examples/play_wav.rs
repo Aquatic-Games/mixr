@@ -115,12 +115,14 @@ impl<'a> AudioCallback for Audio<'a> {
     type Channel = f32;
 
     fn callback(&mut self, out: &mut [Self::Channel]) {
-        for x in out.iter_mut() {
+        /*for x in out.iter_mut() {
             // Advance mixr.
             // Mixr does not return an audio buffer, instead you call advance for each sample you need.
             // Make sure this doesn't get out of sync, otherwise many problems can occur.
             // Advance currently returns a u16, this is subject to change.
             *x = self.system.advance();
-        }
+        }*/
+
+        self.system.advance_buffer(out);
     }
 }

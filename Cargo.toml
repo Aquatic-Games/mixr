@@ -12,7 +12,10 @@ categories = ["game-development", "multimedia::audio"]
 [lib]
 crate-type = ["rlib", "cdylib", "staticlib"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[features]
+cmixr = []
+loaders = []
+engine = ["loaders"]
 
 [profile.release]
 opt-level = 3

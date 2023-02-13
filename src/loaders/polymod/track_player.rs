@@ -1,6 +1,6 @@
 use crate::ChannelProperties;
 
-use super::{track::Track, PianoKey, Effect};
+use super::{track::Track, PianoKey, Effect, sample::Sample, Note};
 
 pub const SAMPLE_RATE: i32 = 48000;
 
@@ -62,7 +62,7 @@ impl TrackPlayer {
             // A pan value of >= 128 means the channel is disabled and will not be played.
             channels.push(TrackChannel {
                 properties,
-                enabled: pan >= 128,
+                enabled: pan < 128,
                 current_sample: None,
                 note_volume: 0,
 
@@ -73,8 +73,8 @@ impl TrackPlayer {
             });
         }
 
+        let half_samples_per_tick = calculate_half_samples_per_tick(track.tempo);
         let speed = track.speed;
-        let tempo = track.tempo;
 
         Self { 
             track, 
@@ -82,7 +82,7 @@ impl TrackPlayer {
             buffers,
 
             current_half_sample: 0,
-            half_samples_per_tick: calculate_half_samples_per_tick(tempo),
+            half_samples_per_tick,
             current_tick: 0,
             current_speed: speed,
 
@@ -107,9 +107,9 @@ impl TrackPlayer {
             for c in 0..pattern.channels {
                 let mut channel = &mut self.channels[c as usize];
 
-                //if !channel.enabled {
-                //    continue;
-               // }
+                if !channel.enabled {
+                    continue;
+                }
 
                 let note = pattern.notes.get(c as usize, self.current_row);
                 
@@ -238,8 +238,12 @@ impl TrackPlayer {
                             channel.high_offset = (param & 0xF) as usize * 65536;
                         }
                     },
-                    /*Effect::Tempo => todo!(),
-                    Effect::FineVibrato => todo!(),
+                    Effect::Tempo => {
+                        if note.effect_param > 0x20 && self.current_tick == 0 {
+                            self.half_samples_per_tick = calculate_half_samples_per_tick(note.effect_param);
+                        }
+                    },
+                    /*Effect::FineVibrato => todo!(),
                     Effect::SetGlobalVolume => todo!(),
                     Effect::GlobalVolumeSlide => todo!(),
                     Effect::SetPanning => todo!(),
@@ -274,6 +278,8 @@ impl TrackPlayer {
                         self.current_order = 0;
                     }
                 }
+
+                println!("Ord {}/{} Row {}/{} Spd {}, HSPT {} (Tmp {}, SR {})", self.current_order + 1, self.track.orders.len(), self.current_row, pattern.rows, self.current_speed, self.half_samples_per_tick, calculate_tempo_from_hspt(self.half_samples_per_tick), SAMPLE_RATE);
             }
         }
 
@@ -291,6 +297,10 @@ pub fn calculate_half_samples_per_tick(tempo: u8) -> u32 {
     ((2.5 / tempo as f64) * 2.0 * SAMPLE_RATE as f64) as u32
 }
 
+pub fn calculate_tempo_from_hspt(hspt: u32) -> u8 {
+    (2.5 / (hspt as f64 / SAMPLE_RATE as f64 / 2.0)) as u8
+}
+
 pub fn calculate_speed(key: PianoKey, octave: u8, multiplier: f64) -> f64 {
     if key == PianoKey::NoteCut {
         return 0.0;
@@ -304,8 +314,4 @@ pub fn calculate_speed(key: PianoKey, octave: u8, multiplier: f64) -> f64 {
     let pow_note = f64::powf(2.0, (note as f64 - 49.0) / 12.0);
 
     pow_note * multiplier
-}
-
-pub struct TrackAndPlayer {
-    
 }

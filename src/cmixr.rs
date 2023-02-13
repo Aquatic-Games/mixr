@@ -79,6 +79,11 @@ pub extern "C" fn mxAdvance(system: &mut AudioSystem) -> f32 {
 }
 
 #[no_mangle]
+pub extern "C" fn mxAdvanceBuffer(system: &mut AudioSystem, buffer: *mut f32, buffer_len: usize) {
+    unsafe { system.advance_buffer(std::slice::from_raw_parts_mut(buffer, buffer_len)); }
+}
+
+#[no_mangle]
 pub extern "C" fn mxGetNumChannels(system: &mut AudioSystem) -> u16 {
     system.num_channels()
 }

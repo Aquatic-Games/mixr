@@ -1,7 +1,11 @@
 pub mod system;
-pub mod loaders;
 pub mod binary_reader;
+
+//#[cfg(feature = "cmixr")]
 mod cmixr;
+
+//#[cfg(feature = "loaders")]
+pub mod loaders;
 
 //#[cfg(feature = "engine")]
 //pub mod engine;
