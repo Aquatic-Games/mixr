@@ -115,6 +115,10 @@ pub trait Stream {
     fn buffer_size(&self) -> usize;
 
     fn buffer(&mut self) -> &[u8];
+
+    fn seek(&mut self, secs: f32);
+
+    fn seek_samples(&mut self, samples: usize);
 }
 
 pub struct StreamManager {
@@ -189,6 +193,16 @@ impl Stream for PcmStream {
     fn format(&self) -> AudioFormat {
         self.pcm.format
     }
+
+    fn seek(&mut self, secs: f32) {
+        self.seek_samples((secs * self.pcm.format.sample_rate as f32) as usize);
+    }
+
+    fn seek_samples(&mut self, samples: usize) {
+        let format = &self.pcm.format;
+
+        self.buffer_pos = samples * format.channels as usize * (format.bits_per_sample / 8) as usize;
+    }
 }
 
 pub struct TrackStream {
@@ -216,6 +230,14 @@ impl Stream for TrackStream {
         }
 
         &self.buffer
+    }
+
+    fn seek(&mut self, secs: f32) {
+        todo!()
+    }
+
+    fn seek_samples(&mut self, samples: usize) {
+        todo!()
     }
 }
 

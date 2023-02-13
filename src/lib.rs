@@ -68,6 +68,7 @@ pub enum AudioResult {
 
     InvalidBuffer,
     InvalidChannel,
+    OutOfRange
 }
 
 pub trait ByteConvert<T> {

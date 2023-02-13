@@ -8,7 +8,8 @@ const CHUNK_SIZE: f64 = 48000.0;
 #[derive(Debug)]
 pub enum AudioErrorType {
     InvalidBuffer,
-    InvalidChannel
+    InvalidChannel,
+    OutOfRange
 }
 
 #[derive(Debug)]
@@ -21,7 +22,8 @@ impl<'a> AudioError<'a> {
     pub fn new(error_type: AudioErrorType) -> Self {
         let description = match error_type {
             AudioErrorType::InvalidBuffer => "An invalid buffer was provided.",
-            AudioErrorType::InvalidChannel => "An invalid channel was provided."
+            AudioErrorType::InvalidChannel => "An invalid channel was provided.",
+            AudioErrorType::OutOfRange => "The given sample was out of range."
         };
 
         Self {
@@ -407,6 +409,11 @@ impl AudioSystem {
         
         let sample = sample as f64;
 
+        let buffer = self.buffers.get(&channel.buffer).ok_or(AudioError::new(AudioErrorType::InvalidBuffer))?;
+        if sample < 0.0 || sample >= (buffer.data.len() / buffer.bytes_per_sample as usize) as f64 {
+            return Err(AudioError::new(AudioErrorType::OutOfRange));
+        }
+
         channel.chunk = (sample / CHUNK_SIZE) as u64;
         channel.position = if channel.chunk == 0 { sample } else { sample / channel.chunk as f64 - CHUNK_SIZE };
 
@@ -424,7 +431,7 @@ impl AudioSystem {
         Ok(())
     }
 
-    #[inline(always)]
+    //#[inline(always)]
     unsafe fn get_sample(data: &[u8], pos: usize, fmt_bps: u8, floating_point: bool) -> f64 {
         match fmt_bps {
             32 => {

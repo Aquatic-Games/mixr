@@ -12,6 +12,7 @@ struct TrackChannel {
     note_volume: u8,
 
     vol_memory: u8,
+    pitch_memory: u8,
 
     offset_memory: u8,
     high_offset: usize
@@ -67,6 +68,7 @@ impl TrackPlayer {
                 note_volume: 0,
 
                 vol_memory: 0,
+                pitch_memory: 0,
 
                 offset_memory: 0,
                 high_offset: 0
@@ -208,9 +210,45 @@ impl TrackPlayer {
                         channel.properties.volume = ((channel.note_volume as u32 * sample.global_volume as u32 * 64 * self.track.global_volume as u32) >> 18) as f64 / 128.0 * (self.track.mix_volume as f64 / u8::MAX as f64);
                         self.system.set_channel_properties(c, channel.properties).unwrap();
                     },
-                    /*Effect::PortamentoDown => todo!(),
-                    Effect::PortamentoUp => todo!(),
-                    Effect::TonePortamento => todo!(),
+                    Effect::PortamentoDown => {
+                        let mut pitch_param = if note.effect_param == 0 { channel.pitch_memory } else { note.effect_param };
+                        channel.pitch_memory = pitch_param;
+
+                        if ((pitch_param & 0xF0) >= 0xE0 && self.current_tick != 0) || self.current_tick == 0 && (pitch_param & 0xF0) < 0xE0 {
+                            continue;
+                        }
+
+                        let multiplier = if (pitch_param & 0xF0) == 0xE0 { 1.0 / 4.0 } else { 1.0 };
+
+                        if (pitch_param & 0xF0) == 0xF0 {
+                            pitch_param &= 0xF;
+                        } else if (pitch_param & 0xF0) == 0xE0 {
+                            pitch_param &= 0xF;
+                        }
+
+                        channel.properties.speed *= f64::powf(2.0, -4.0 * (pitch_param as f64 * multiplier) / 768.0);
+                        self.system.set_channel_properties(c, channel.properties).unwrap();
+                    },
+                    Effect::PortamentoUp => {
+                        let mut pitch_param = if note.effect_param == 0 { channel.pitch_memory } else { note.effect_param };
+                        channel.pitch_memory = pitch_param;
+
+                        if ((pitch_param & 0xF0) >= 0xE0 && self.current_tick != 0) || self.current_tick == 0 && (pitch_param & 0xF0) < 0xE0 {
+                            continue;
+                        }
+
+                        let multiplier = if (pitch_param & 0xF0) == 0xE0 { 1.0 / 4.0 } else { 1.0 };
+
+                        if (pitch_param & 0xF0) == 0xF0 {
+                            pitch_param &= 0xF;
+                        } else if (pitch_param & 0xF0) == 0xE0 {
+                            pitch_param &= 0xF;
+                        }
+
+                        channel.properties.speed *= f64::powf(2.0, 4.0 * (pitch_param as f64 * multiplier) / 768.0);
+                        self.system.set_channel_properties(c, channel.properties).unwrap();
+                    },
+                    /*Effect::TonePortamento => todo!(),
                     Effect::Vibrato => todo!(),
                     Effect::Tremor => todo!(),
                     Effect::Arpeggio => todo!(),
@@ -224,7 +262,7 @@ impl TrackPlayer {
                             channel.offset_memory = offset;
 
                             if note.key != PianoKey::None {
-                                self.system.seek_to_sample(c, offset as usize * 256 + channel.high_offset).unwrap();
+                                let _ = self.system.seek_to_sample(c, offset as usize * 256 + channel.high_offset);
                             }
                         }
                     },
