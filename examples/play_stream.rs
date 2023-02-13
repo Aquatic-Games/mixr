@@ -44,7 +44,7 @@ fn main() {
     let mut buffers = Vec::with_capacity(NUM_BUFFERS);
     for _ in 0..NUM_BUFFERS {
         let buffer = system.create_buffer();
-        system.update_buffer(buffer, stream.buffer(), format).unwrap();
+        system.update_buffer(buffer, stream.buffer().unwrap(), format).unwrap();
         buffers.push(buffer);
     }
 
@@ -115,8 +115,12 @@ impl<'a> AudioCallback for Audio<'a> {
             *x = self.system.advance();
 
             while let Some((channel, buffer)) = self.system.pop_finished_buffer() {
-                self.system.update_buffer(buffer, self.stream.buffer(), self.format).unwrap();
-                self.system.queue_buffer(buffer, channel).unwrap();
+                if let Some(buf) = self.stream.buffer() {
+                    self.system.update_buffer(buffer, buf, self.format).unwrap();
+                    self.system.queue_buffer(buffer, channel).unwrap();
+                } else {
+                    std::process::exit(0);
+                }
             }
         }
     }

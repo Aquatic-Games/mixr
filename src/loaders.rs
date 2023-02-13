@@ -114,7 +114,7 @@ pub trait Stream {
 
     fn buffer_size(&self) -> usize;
 
-    fn buffer(&mut self) -> &[u8];
+    fn buffer(&mut self) -> Option<&[u8]>;
 
     fn seek(&mut self, secs: f32);
 
@@ -171,19 +171,24 @@ pub struct PcmStream {
 }
 
 impl Stream for PcmStream {
-    fn buffer(&mut self) -> &[u8] {
+    fn buffer(&mut self) -> Option<&[u8]> {
         let mut decoded = 0;
 
         for value in self.buffer.iter_mut() {
-            *value = self.pcm.data[self.buffer_pos];
             self.buffer_pos += 1;
             if self.buffer_pos >= self.pcm.data.len() {
                 break;
             }
+            // It's a hack but it works!
+            *value = self.pcm.data[self.buffer_pos - 1];
             decoded += 1;
         }
 
-        &self.buffer[0..decoded]
+        if decoded == 0 {
+            None
+        } else {
+            Some(&self.buffer[0..decoded])
+        }
     }
 
     fn buffer_size(&self) -> usize {
@@ -219,7 +224,7 @@ impl Stream for TrackStream {
         self.buffer.len()
     }
 
-    fn buffer(&mut self) -> &[u8] {
+    fn buffer(&mut self) -> Option<&[u8]> {
         for i in (0..self.buffer.len()).step_by(4) {
             let mixed = self.player.advance();
             let to_bytes = f32::to_le_bytes(mixed);
@@ -229,7 +234,7 @@ impl Stream for TrackStream {
             self.buffer[i + 3] = to_bytes[3];
         }
 
-        &self.buffer
+        Some(&self.buffer)
     }
 
     fn seek(&mut self, secs: f32) {
