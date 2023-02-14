@@ -272,6 +272,11 @@ impl TrackPlayer {
                     Effect::Special => {
                         let param = note.effect_param;
 
+                        if param >= 0x80 && param <= 0x8F {
+                            channel.properties.panning = (param & 0xF) as f64 / 15.0;
+                            self.system.set_channel_properties(c, channel.properties).unwrap();
+                        }
+
                         if param >= 0xA0 && param <= 0xAF {
                             channel.high_offset = (param & 0xF) as usize * 65536;
                         }
@@ -283,9 +288,12 @@ impl TrackPlayer {
                     },
                     /*Effect::FineVibrato => todo!(),
                     Effect::SetGlobalVolume => todo!(),
-                    Effect::GlobalVolumeSlide => todo!(),
-                    Effect::SetPanning => todo!(),
-                    Effect::Panbrello => todo!(),
+                    Effect::GlobalVolumeSlide => todo!(),*/
+                    Effect::SetPanning => {
+                        channel.properties.panning = note.effect_param as f64 / 255.0;
+                        self.system.set_channel_properties(c, channel.properties).unwrap();
+                    },
+                    /*Effect::Panbrello => todo!(),
                     Effect::MidiMacro => todo!(),*/
                     _ => {}
                 }

@@ -442,10 +442,12 @@ impl AudioSystem {
                 }
             },
             /*24 => {
-                let mut value = (((data[pos] as i32) << 8) | ((data[pos + 1] as i32) << 16) | ((data[pos + 2] as i32) << 24) >> 8) as i32;
+                let mut value = ((data[pos] as u32)) | ((data[pos + 1] as u32) << 8) | ((data[pos + 2] as u32) << 16);
                 //let value = value as i32;
 
-                value as f64 / ((1 << 23) - 1) as f64
+                let value = ((value << 8) & 0xFFFFFF00);
+
+                value as f64 / 0x7FFFFFFF as f64
             },*/
             16 => (data[pos] as i16 | ((data[pos + 1] as i16) << 8) as i16) as f64 / i16::MAX as f64,
             8 => ((((data[pos] as i32) << 8) as i32) - i16::MAX as i32) as f64 / i16::MAX as f64,
