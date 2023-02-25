@@ -25,9 +25,6 @@ debug-assertions = false
 strip = true
 lto = true
 
-[build-dependencies]
-cc = "1.0.79"
-
 [dev-dependencies]
 sdl2 = { version = "0.35.2", features = ["bundled"] }
 libc = "0.2.138"

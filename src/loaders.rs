@@ -151,10 +151,10 @@ impl StreamManager {
             return Ok(Box::new(TrackStream::new(Track::from_it(data).unwrap())))
         }
 
-        reader.position = 0;
+        /*reader.position = 0;
         if reader.read_string(4) == "OggS" {
             return Ok(Box::new(VorbisStream::new(data)))
-        }
+        }*/
 
         reader.position = 0;
 
@@ -271,98 +271,6 @@ impl TrackStream {
             buffer
         }
     }
-}
-
-pub struct VorbisStream {
-    vorbis: *mut std::ffi::c_void,
-    format: AudioFormat,
-    buffer: Vec<u8>
-}
-
-impl Stream for VorbisStream {
-    fn format(&self) -> AudioFormat {
-        self.format
-    }
-
-    fn buffer_size(&self) -> usize {
-        self.buffer.len()
-    }
-
-    fn buffer(&mut self) -> Option<&[u8]> {
-        unsafe {
-            let decoded = stb_vorbis_get_samples_float_interleaved(self.vorbis, self.format.channels as i32, self.buffer.as_mut_ptr() as *mut _, /*(self.buffer.len() / 8)*/ 100 as i32);
-
-            if decoded <= 0 {
-                None
-            } else {
-                Some(&self.buffer[0..decoded as usize])
-            }
-        }
-    }
-
-    fn seek(&mut self, secs: f32) {
-        todo!()
-    }
-
-    fn seek_samples(&mut self, samples: usize) {
-        todo!()
-    }
-}
-
-impl VorbisStream {
-    pub fn new(data: &[u8]) -> Self {
-        unsafe {
-            let vorbis = stb_vorbis_open_memory(data.as_ptr(), data.len() as i32, std::ptr::null_mut(), std::ptr::null_mut());
-
-            let info = stb_vorbis_get_info(vorbis);
-            let format = AudioFormat {
-                channels: info.channels as u8,
-                sample_rate: info.sample_rate as i32,
-                bits_per_sample: 32,
-                floating_point: true
-            };
-
-            let buffer = create_buffer(info.sample_rate as usize);
-
-            stb_vorbis_seek_start(vorbis);
-
-            Self {
-                vorbis,
-                format,
-                buffer
-            }
-        }
-    }
-}
-
-impl Drop for VorbisStream {
-    fn drop(&mut self) {
-        unsafe { std::mem::drop(Box::from_raw(self.vorbis)) }
-    }
-}
-
-unsafe impl Send for VorbisStream {}
-
-#[repr(C)]
-struct StbVorbisInfo {
-    pub sample_rate: std::ffi::c_uint,
-    pub channels: std::ffi::c_int,
-
-    pub setup_memory_required: std::ffi::c_uint,
-    pub setup_temp_memory_required: std::ffi::c_uint,
-    pub temp_memory_required: std::ffi::c_uint,
-
-    pub nax_frame_size: std::ffi::c_int,
-}
-
-extern "C" {
-    fn stb_vorbis_open_memory(data: *const std::ffi::c_uchar, len: std::ffi::c_int, error: *mut std::ffi::c_int, alloc_buffer: *const std::ffi::c_void) -> *mut std::ffi::c_void;
-
-    fn stb_vorbis_get_info(f: *mut std::ffi::c_void) -> StbVorbisInfo;
-
-    fn stb_vorbis_get_samples_float_interleaved(f: *mut std::ffi::c_void, channels: std::ffi::c_int, buffer: *mut std::ffi::c_float, num_floats: std::ffi::c_int) -> std::ffi::c_int;
-
-    fn stb_vorbis_seek_start(f: *mut std::ffi::c_void);
 }
 
 fn create_buffer(size: usize) -> Vec<u8> {
