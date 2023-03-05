@@ -25,18 +25,18 @@ struct CommandArgs {
 
 fn main() {
     // Parse the command line arguments.
-    /*let args = CommandArgs::parse();
+    let args = CommandArgs::parse();
     let path = args.path.as_str();
     let volume = args.volume;
     let speed = args.speed;
     let panning = args.panning;
-    let looping = args.looping;*/
+    let looping = args.looping;
 
     const SAMPLE_RATE: i32 = 48000;
     let mut system = AudioSystem::new(SAMPLE_RATE, 1);
 
     let mut manager = StreamManager::new();
-    let mut stream = manager.load_stream_path("/home/ollie/Music/m1compat2.ogg").unwrap();
+    let mut stream = manager.load_stream_path(path).unwrap();
     let format = stream.format();
 
     const NUM_BUFFERS: usize = 2;
@@ -49,9 +49,9 @@ fn main() {
     }
 
     system.play_buffer(buffers[0], 0, ChannelProperties {
-        volume: 1.0,
-        speed: 1.0,
-        panning: 1.0,
+        volume,
+        speed,
+        panning,
         looping: false,
         interpolation_type: mixr::InterpolationType::Linear,
         loop_start: 0,

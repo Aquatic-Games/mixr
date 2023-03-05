@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::collections::VecDeque;
+use crate::FormatType;
 use crate::{AudioFormat, ChannelProperties, ByteConvert};
 
 // Chunk size denotes how many samples a chunk is. In this case, 48000 samples.
@@ -124,7 +125,7 @@ impl AudioSystem {
     pub fn create_buffer(&mut self) -> i32 {
         let buffer = Buffer { 
             data: Vec::new(), 
-            format: AudioFormat { channels: 0, sample_rate: 0, bits_per_sample: 0, floating_point: false }, 
+            format: AudioFormat { channels: 0, sample_rate: 0, format_type: FormatType::I16 }, 
             length_in_samples: 0,
             bytes_per_sample: 0 
         };
@@ -156,7 +157,7 @@ impl AudioSystem {
         
         // As the data is stored as bytes, we need to convert this to a byte value.
         // A bits per sample of 8 = 1 byte. 16 bits = 2 bytes, etc.
-        let bytes_per_sample = format.bits_per_sample / 8;
+        let bytes_per_sample = format.bytes_per_sample();
 
         i_buffer.length_in_samples = data.len() / bytes_per_sample as usize / format.channels as usize;
         i_buffer.bytes_per_sample = bytes_per_sample;
@@ -337,7 +338,7 @@ impl AudioSystem {
             // curr_pos % curr_bps
             curr_pos -= (curr_pos & (curr_bps - 1)) * curr_format.channels as usize;
 
-            let mut curr_value = unsafe { Self::get_sample(curr_data, curr_pos, curr_format.bits_per_sample, curr_format.floating_point) };
+            let mut curr_value = unsafe { Self::get_sample(curr_data, curr_pos, curr_format.format_type) };
 
             match properties.interpolation_type {
                 crate::InterpolationType::None => {},
@@ -347,7 +348,7 @@ impl AudioSystem {
                     // prev_pos % prev_bps
                     prev_pos -= (prev_pos & (prev_bps - 1)) * prev_format.channels as usize;
 
-                    let prev_value = unsafe { Self::get_sample(prev_data, prev_pos, prev_format.bits_per_sample, prev_format.floating_point) };
+                    let prev_value = unsafe { Self::get_sample(prev_data, prev_pos, prev_format.format_type) };
 
                     curr_value = Self::lerp(prev_value, curr_value, curr_sample_f64 - curr_sample as f64);
                 }
@@ -431,27 +432,16 @@ impl AudioSystem {
         Ok(())
     }
 
-    //#[inline(always)]
-    unsafe fn get_sample(data: &[u8], pos: usize, fmt_bps: u8, floating_point: bool) -> f64 {
-        match fmt_bps {
-            32 => {
-                if floating_point {
-                    f32::from_bytes_le(&data[pos..pos + 4]) as f64
-                } else {
-                    i32::from_bytes_le(&data[pos..pos + 4]) as f64 / i32::MAX as f64
-                }
-            },
-            /*24 => {
-                let mut value = ((data[pos] as u32)) | ((data[pos + 1] as u32) << 8) | ((data[pos + 2] as u32) << 16);
-                //let value = value as i32;
-
-                let value = ((value << 8) & 0xFFFFFF00);
-
-                value as f64 / 0x7FFFFFFF as f64
-            },*/
-            16 => (data[pos] as i16 | ((data[pos + 1] as i16) << 8) as i16) as f64 / i16::MAX as f64,
-            8 => ((((data[pos] as i32) << 8) as i32) - i16::MAX as i32) as f64 / i16::MAX as f64,
-            _ => panic!("Invalid bits per sample.")
+    #[inline(always)]
+    unsafe fn get_sample(data: &[u8], pos: usize, format_type: FormatType) -> f64 {
+        match format_type {
+            FormatType::U8 => ((((data[pos] as i32) << 8) as i32) - i16::MAX as i32) as f64 / i16::MAX as f64,
+            FormatType::I8 => ((data[pos] as i16) << 8) as f64 / i16::MAX as f64,
+            FormatType::U16 => (data[pos] as u16 | ((data[pos + 1] as u16) << 8) - i16::MAX as u16) as f64 / i16::MAX as f64,
+            FormatType::I16 => (data[pos] as i16 | ((data[pos + 1] as i16) << 8) as i16) as f64 / i16::MAX as f64,
+            FormatType::I32 => i32::from_bytes_le(&data[pos..pos + 4]) as f64 / i32::MAX as f64,
+            FormatType::F32 => f32::from_bytes_le(&data[pos..pos + 4]) as f64,
+            FormatType::F64 => f64::from_bytes_le(&data[pos..pos + 8]),
         }
     }
 

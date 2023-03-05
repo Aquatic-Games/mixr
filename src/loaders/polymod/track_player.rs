@@ -282,6 +282,7 @@ impl TrackPlayer {
                         }
                     },
                     Effect::Tempo => {
+                        // TODO: Tempo slides
                         if note.effect_param > 0x20 && self.current_tick == 0 {
                             self.half_samples_per_tick = calculate_half_samples_per_tick(note.effect_param);
                         }
@@ -325,7 +326,7 @@ impl TrackPlayer {
                     }
                 }
 
-                println!("Ord {}/{} Row {}/{} Spd {}, HSPT {} (Tmp {}, SR {})", self.current_order + 1, self.track.orders.len(), self.current_row, pattern.rows, self.current_speed, self.half_samples_per_tick, calculate_tempo_from_hspt(self.half_samples_per_tick), SAMPLE_RATE);
+                //println!("Ord {}/{} Row {}/{} Spd {}, HSPT {} (Tmp {}, SR {})", self.current_order + 1, self.track.orders.len(), self.current_row, pattern.rows, self.current_speed, self.half_samples_per_tick, calculate_tempo_from_hspt(self.half_samples_per_tick), SAMPLE_RATE);
             }
         }
 

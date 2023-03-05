@@ -1,4 +1,4 @@
-use crate::AudioFormat;
+use crate::{AudioFormat, FormatType};
 
 pub struct Sample {
     pub data: Vec<u8>,
@@ -35,11 +35,11 @@ impl Sample {
 }
 
 fn fix_sample(data: &mut Vec<u8>, format: &AudioFormat) {
-    if format.bits_per_sample == 8 {
+    /*if format.format_type == FormatType::U8 {
         for i in 0..data.len() {
             data[i] = (data[i] as i32 - 128) as u8;
         }
-    }
+    }*/
 
     if format.channels == 2 {
         let old_data = data.clone();
@@ -50,7 +50,7 @@ fn fix_sample(data: &mut Vec<u8>, format: &AudioFormat) {
         let mut right_i = old_data.len() / 2;
         let mut is_right = false;
 
-        let alignment = format.bits_per_sample / 8;
+        let alignment = format.bytes_per_sample();
 
         while data.len() != old_data.len() {
             if is_right {

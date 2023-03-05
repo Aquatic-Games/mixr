@@ -2,7 +2,7 @@ use std::fmt;
 
 mod polymod;
 
-use crate::{AudioFormat, binary_reader::BinaryReader};
+use crate::{AudioFormat, binary_reader::BinaryReader, FormatType};
 
 use self::{polymod::{track::Track, track_player::TrackPlayer}};
 
@@ -84,11 +84,17 @@ impl PCM {
 
                     let bits_per_sample = reader.read_i16();
 
+                    let format_type = match bits_per_sample {
+                        8 => FormatType::U8,
+                        16 => FormatType::I16,
+                        32 => if floating_point { FormatType::F32 } else { FormatType::I32 },
+                        _ => return Err(LoadError::new(format!("{bits_per_sample}-bit audio is not yet supported.")))
+                    };
+
                     format = AudioFormat {
                         channels: channels as u8,
                         sample_rate,
-                        bits_per_sample: bits_per_sample as u8,
-                        floating_point
+                        format_type
                     };
                 },
 
@@ -205,7 +211,7 @@ impl Stream for PcmStream {
     fn seek_samples(&mut self, samples: usize) {
         let format = &self.pcm.format;
 
-        self.buffer_pos = samples * format.channels as usize * (format.bits_per_sample / 8) as usize;
+        self.buffer_pos = samples * format.channels as usize * format.bytes_per_sample() as usize;
     }
 }
 
@@ -213,7 +219,7 @@ impl PcmStream {
     pub fn new(data: &[u8]) -> Self {
         let pcm = PCM::load_wav(data).unwrap();
 
-        let buffer = create_buffer(22050 * pcm.format.channels as usize * (pcm.format.bits_per_sample / 8) as usize);
+        let buffer = create_buffer(22050 * pcm.format.channels as usize * pcm.format.bytes_per_sample() as usize);
 
         Self {
             pcm,
@@ -230,7 +236,7 @@ pub struct TrackStream {
 
 impl Stream for TrackStream {
     fn format(&self) -> AudioFormat {
-        AudioFormat { channels: 2, sample_rate: 48000, bits_per_sample: 32, floating_point: true }
+        AudioFormat { channels: 2, sample_rate: 48000, format_type: FormatType::F32 }
     }
 
     fn buffer_size(&self) -> usize {
@@ -280,4 +286,8 @@ fn create_buffer(size: usize) -> Vec<u8> {
     }
 
     buffer
+}
+
+impl crate::system::AudioSystem {
+    pub fn test() {}
 }
