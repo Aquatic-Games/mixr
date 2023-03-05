@@ -58,6 +58,21 @@ impl AudioFormat {
     }
 }
 
+#[derive(Clone, Debug, Copy, PartialEq)]
+#[repr(C)]
+pub enum DataType {
+    Pcm,
+    Wav,
+    Module
+}
+
+#[derive(Clone, Debug, Copy, PartialEq)]
+#[repr(C)]
+pub struct BufferDescription {
+    pub data_type: DataType,
+    pub format:    AudioFormat
+}
+
 #[derive(Clone, Debug, Copy)]
 #[repr(C)]
 pub enum InterpolationType {
@@ -68,19 +83,19 @@ pub enum InterpolationType {
 #[derive(Clone, Debug, Copy)]
 #[repr(C)]
 pub struct ChannelProperties {
-    pub volume: f64,
-    pub speed: f64,
-    pub panning: f64,
-    pub looping: bool,
-    pub interpolation_type: InterpolationType,
+    pub volume:        f64,
+    pub speed:         f64,
+    pub panning:       f64,
+    pub looping:       bool,
+    pub interpolation: InterpolationType,
 
-    pub loop_start: i32,
-    pub loop_end: i32,
+    pub loop_start:    i32,
+    pub loop_end:      i32,
 }
 
 impl Default for ChannelProperties {
     fn default() -> Self {
-        Self { volume: 1.0, speed: 1.0, panning: 0.5, looping: false, interpolation_type: InterpolationType::Linear, loop_start: 0, loop_end: -1 }
+        Self { volume: 1.0, speed: 1.0, panning: 0.5, looping: false, interpolation: InterpolationType::Linear, loop_start: 0, loop_end: -1 }
     }
 }
 

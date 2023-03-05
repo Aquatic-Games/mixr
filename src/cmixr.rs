@@ -1,6 +1,6 @@
 use std::ffi::CStr;
 
-use crate::{system::{AudioSystem, AudioErrorType, AudioError}, AudioFormat, ChannelProperties, AudioResult, loaders::PCM};
+use crate::{system::{AudioSystem, AudioErrorType, AudioError}, AudioFormat, ChannelProperties, AudioResult, loaders::PCM, BufferDescription};
 
 #[repr(C)]
 pub struct CPCM {
@@ -25,8 +25,9 @@ pub extern "C" fn mxSetBufferFinishedCallback(system: &mut AudioSystem, callback
 }
 
 #[no_mangle]
-pub extern "C" fn mxCreateBuffer(system: &mut AudioSystem) -> i32 {
-    system.create_buffer()
+pub extern "C" fn mxCreateBuffer(system: &mut AudioSystem, description: BufferDescription, data: *const std::ffi::c_void, data_length: usize) -> i32 {
+    let data = unsafe { if data.is_null() { None } else { Some(std::slice::from_raw_parts(data, data_length)) } };
+    system.create_buffer(description, data)
 }
 
 #[no_mangle]
@@ -35,12 +36,12 @@ pub extern "C" fn mxDeleteBuffer(system: &mut AudioSystem, buffer: i32) -> Audio
 }
     
 #[no_mangle]
-pub extern "C" fn mxUpdateBuffer(system: &mut AudioSystem, buffer: i32, data: *const std::ffi::c_void, data_length: usize, format: AudioFormat) -> AudioResult {
+pub extern "C" fn mxUpdateBuffer(system: &mut AudioSystem, buffer: i32, data: *const std::ffi::c_void, data_length: usize) -> AudioResult {
     let data = unsafe { std::slice::from_raw_parts(data, data_length) };
 
     assert_eq!(data_length, data.len(), "data_length, {}, does not equal the converted data length, {}", data_length, data.len());
 
-    result_to_result(system.update_buffer(buffer, &data, format))
+    result_to_result(system.update_buffer(buffer, &data))
 }
 
 #[no_mangle]

@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::collections::VecDeque;
+use crate::BufferDescription;
 use crate::FormatType;
 use crate::{AudioFormat, ChannelProperties, ByteConvert};
 
@@ -40,7 +41,7 @@ impl<'a> AudioError<'a> {
 
 struct Buffer {
     data: Vec<u8>,
-    format: AudioFormat,
+    description: BufferDescription,
     bytes_per_sample: u8,
     length_in_samples: usize
 }
@@ -122,12 +123,22 @@ impl AudioSystem {
         }
     }
 
-    pub fn create_buffer(&mut self) -> i32 {
+    pub fn create_buffer<T: Sized>(&mut self, description: BufferDescription, data: Option<&[T]>) -> i32 {
+        let bytes_per_sample = description.format.bytes_per_sample();
+
+        let (data, length_in_samples) = if let Some(d_vec) = data {
+            let data = unsafe { std::slice::from_raw_parts(d_vec.as_ptr() as *const u8, d_vec.len() * std::mem::size_of::<T>()).to_vec() };
+            let length_in_samples = d_vec.len() / bytes_per_sample as usize / description.format.channels as usize;
+            (data, length_in_samples)
+        } else {
+            (Vec::new(), 0)
+        };
+
         let buffer = Buffer { 
-            data: Vec::new(), 
-            format: AudioFormat { channels: 0, sample_rate: 0, format_type: FormatType::I16 }, 
-            length_in_samples: 0,
-            bytes_per_sample: 0 
+            description,
+            bytes_per_sample,
+            data,
+            length_in_samples
         };
 
         self.buffers.insert(self.current_handle, buffer);
@@ -150,19 +161,12 @@ impl AudioSystem {
         Ok(())
     }
 
-    pub fn update_buffer<T: Sized>(&mut self, buffer: i32, data: &[T], format: AudioFormat) -> Result<(), AudioError> {
+    pub fn update_buffer<T: Sized>(&mut self, buffer: i32, data: &[T]) -> Result<(), AudioError> {
         let mut i_buffer = self.buffers.get_mut(&buffer).ok_or(AudioError::new(AudioErrorType::InvalidBuffer))?;
 
         i_buffer.data = unsafe { std::slice::from_raw_parts(data.as_ptr() as *const u8, data.len() * std::mem::size_of::<T>()).to_vec() };
-        
-        // As the data is stored as bytes, we need to convert this to a byte value.
-        // A bits per sample of 8 = 1 byte. 16 bits = 2 bytes, etc.
-        let bytes_per_sample = format.bytes_per_sample();
 
-        i_buffer.length_in_samples = data.len() / bytes_per_sample as usize / format.channels as usize;
-        i_buffer.bytes_per_sample = bytes_per_sample;
-
-        i_buffer.format = format;
+        i_buffer.length_in_samples = data.len() / i_buffer.bytes_per_sample as usize / i_buffer.description.format.channels as usize;
 
         Ok(())
     }
@@ -183,8 +187,8 @@ impl AudioSystem {
             i_channel.properties.loop_end = self.buffers[&buffer].length_in_samples as i32;
         }
 
-        i_channel.sample_rate = i_buffer.format.sample_rate;
-        i_channel.speed = i_buffer.format.sample_rate as f64 / self.sample_rate as f64;
+        i_channel.sample_rate = i_buffer.description.format.sample_rate;
+        i_channel.speed = i_buffer.description.format.sample_rate as f64 / self.sample_rate as f64;
         i_channel.speed *= i_channel.properties.speed;
         i_channel.buffer = buffer;
         i_channel.prev_buffer = buffer;
@@ -203,7 +207,7 @@ impl AudioSystem {
         let buffer = self.buffers.get(&channel.buffer).ok_or(AudioError::new(AudioErrorType::InvalidBuffer))?;
         
         channel.properties = properties;
-        channel.speed = buffer.format.sample_rate as f64 / self.sample_rate as f64;
+        channel.speed = buffer.description.format.sample_rate as f64 / self.sample_rate as f64;
         channel.speed *= channel.properties.speed;
 
         if channel.properties.loop_end == -1 {
@@ -282,8 +286,8 @@ impl AudioSystem {
             let prev_buffer = &self.buffers[&channel.prev_buffer];
 
             let properties = &channel.properties;
-            let curr_format = &curr_buffer.format;
-            let prev_format = &prev_buffer.format;
+            let curr_format = &curr_buffer.description.format;
+            let prev_format = &prev_buffer.description.format;
 
             // Calculate the current and previous sample.
             // Sample != position in array
@@ -340,7 +344,7 @@ impl AudioSystem {
 
             let mut curr_value = unsafe { Self::get_sample(curr_data, curr_pos, curr_format.format_type) };
 
-            match properties.interpolation_type {
+            match properties.interpolation {
                 crate::InterpolationType::None => {},
                 crate::InterpolationType::Linear => {
                     let mut prev_pos = prev_sample * prev_bps * prev_format.channels as usize;

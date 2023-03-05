@@ -1,4 +1,4 @@
-use crate::ChannelProperties;
+use crate::{ChannelProperties, BufferDescription, DataType, AudioFormat};
 
 use super::{track::Track, PianoKey, Effect, sample::Sample, Note};
 
@@ -47,16 +47,15 @@ impl TrackPlayer {
         
         let mut buffers = Vec::with_capacity(track.samples.len());
         for i in 0..track.samples.len() {
-            let buffer = system.create_buffer();
             let sample = &track.samples[i];
-            system.update_buffer(buffer, &sample.data, sample.format).unwrap();
+            let buffer = system.create_buffer(BufferDescription { data_type: DataType::Pcm, format: sample.format }, Some(&sample.data));
             buffers.push(buffer);
         }
 
         let mut channels = Vec::with_capacity(system.num_channels() as usize);
         for i in 0..system.num_channels() {
             let mut properties = ChannelProperties::default();
-            properties.interpolation_type = crate::InterpolationType::Linear;
+            properties.interpolation = crate::InterpolationType::Linear;
 
             let pan = track.pans[i as usize];
             properties.panning = pan as f64 / 64.0;
@@ -335,7 +334,7 @@ impl TrackPlayer {
 
     pub fn set_interpolation(&mut self, interp_type: crate::InterpolationType) {
         for channel in self.channels.iter_mut() {
-            channel.properties.interpolation_type = interp_type;
+            channel.properties.interpolation = interp_type;
         }
     }
 }

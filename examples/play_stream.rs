@@ -3,7 +3,7 @@
 // Simply input your path, and the program will run until the sound has finished.
 
 use clap::Parser;
-use mixr::{self, ChannelProperties, system::{AudioSystem}, loaders::{Stream, StreamManager}, AudioFormat};
+use mixr::{self, ChannelProperties, system::{AudioSystem}, loaders::{Stream, StreamManager}, AudioFormat, BufferDescription, DataType};
 use sdl2::audio::{AudioSpecDesired, AudioCallback};
 
 #[derive(Parser)]
@@ -43,8 +43,7 @@ fn main() {
 
     let mut buffers = Vec::with_capacity(NUM_BUFFERS);
     for _ in 0..NUM_BUFFERS {
-        let buffer = system.create_buffer();
-        system.update_buffer(buffer, stream.buffer().unwrap(), format).unwrap();
+        let buffer = system.create_buffer(BufferDescription { data_type: DataType::Pcm, format }, Some(stream.buffer().unwrap()));
         buffers.push(buffer);
     }
 
@@ -53,7 +52,7 @@ fn main() {
         speed,
         panning,
         looping: false,
-        interpolation_type: mixr::InterpolationType::Linear,
+        interpolation: mixr::InterpolationType::Linear,
         loop_start: 0,
         loop_end: -1,
     }).unwrap();
@@ -116,7 +115,7 @@ impl<'a> AudioCallback for Audio<'a> {
 
             while let Some((channel, buffer)) = self.system.pop_finished_buffer() {
                 if let Some(buf) = self.stream.buffer() {
-                    self.system.update_buffer(buffer, buf, self.format).unwrap();
+                    self.system.update_buffer(buffer, buf).unwrap();
                     self.system.queue_buffer(buffer, channel).unwrap();
                 } else {
                     std::process::exit(0);
