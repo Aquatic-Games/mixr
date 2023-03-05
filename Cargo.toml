@@ -16,7 +16,7 @@ crate-type = ["rlib", "cdylib", "staticlib"]
 cmixr = []
 loaders = []
 #engine = ["loaders", "dep:sdl2"]
-engine = ["loaders"]
+#engine = ["loaders"]
 
 [profile.release]
 opt-level = 3
@@ -28,7 +28,7 @@ lto = true
 
 [dependencies]
 #sdl2 = { version = "0.35.2", features = ["bundled"], optional = true }
-sdl2 = { version = "0.35.2", features = ["bundled"] }
+#sdl2 = { version = "0.35.2", features = ["bundled"] }
 
 [dev-dependencies]
 sdl2 = { version = "0.35.2", features = ["bundled"] }
