@@ -217,7 +217,7 @@ impl AudioSystem {
         Ok(())
     }
 
-    pub fn play(&mut self, channel: u16) -> Result<(), AudioError> {
+    pub fn resume(&mut self, channel: u16) -> Result<(), AudioError> {
         let mut channel = self.channels.get_mut(channel as usize).ok_or(AudioError::new(AudioErrorType::InvalidChannel))?;
         if !channel.in_use {
             return Ok(());

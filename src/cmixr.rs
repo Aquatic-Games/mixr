@@ -61,7 +61,7 @@ pub extern "C" fn mxSetChannelProperties(system: &mut AudioSystem, channel: u16,
 
 #[no_mangle]
 pub extern "C" fn mxPlay(system: &mut AudioSystem, channel: u16) -> AudioResult {
-    result_to_result(system.play(channel))
+    result_to_result(system.resume(channel))
 }
 
 #[no_mangle]
