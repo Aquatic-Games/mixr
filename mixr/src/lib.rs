@@ -2,13 +2,7 @@ pub mod system;
 pub mod binary_reader;
 
 //#[cfg(feature = "cmixr")]
-mod cmixr;
-
-//#[cfg(feature = "loaders")]
-pub mod loaders;
-
-//#[cfg(feature = "engine")]
-//pub mod engine;
+//mod cmixr;
 
 #[derive(Clone, Debug, Copy, PartialEq)]
 #[repr(C)]
@@ -61,9 +55,7 @@ impl AudioFormat {
 #[derive(Clone, Debug, Copy, PartialEq)]
 #[repr(C)]
 pub enum DataType {
-    Pcm,
-    Wav,
-    Module
+    Pcm
 }
 
 #[derive(Clone, Debug, Copy, PartialEq)]

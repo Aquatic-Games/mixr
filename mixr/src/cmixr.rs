@@ -75,7 +75,7 @@ pub extern "C" fn mxStop(system: &mut AudioSystem, channel: u16) -> AudioResult 
 }
 
 #[no_mangle]
-pub extern "C" fn mxAdvance(system: &mut AudioSystem) -> f32 {
+pub extern "C" fn mxAdvance(system: &mut AudioSystem) -> f64 {
     system.advance()
 }
 

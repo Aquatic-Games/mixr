@@ -78,7 +78,7 @@ fn main() {
         Audio {
             system: &mut system,
             stream: &mut stream,
-            format
+            looping
         }
     }).unwrap();
 
@@ -103,7 +103,7 @@ fn main() {
 struct Audio<'a> {
     system: &'a mut AudioSystem,
     stream: &'a mut Box<dyn Stream + Send>,
-    format: AudioFormat
+    looping: bool
 }
 
 impl<'a> AudioCallback for Audio<'a> {
@@ -117,8 +117,16 @@ impl<'a> AudioCallback for Audio<'a> {
                 if let Some(buf) = self.stream.buffer() {
                     self.system.update_buffer(buffer, buf).unwrap();
                     self.system.queue_buffer(buffer, channel).unwrap();
+                } else if self.looping {
+                    self.stream.seek_samples(0);
+                    if let Some(buf) = self.stream.buffer() {
+                        self.system.update_buffer(buffer, buf).unwrap();
+                        self.system.queue_buffer(buffer, channel).unwrap();
+                    } else {
+                        self.system.stop(channel).unwrap();
+                    }
                 } else {
-                    std::process::exit(0);
+                    self.system.stop(channel).unwrap();
                 }
             }
         }

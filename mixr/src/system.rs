@@ -272,7 +272,7 @@ impl AudioSystem {
         self.callback = Some(callback);
     }
 
-    pub fn advance(&mut self) -> f32 {
+    pub fn advance(&mut self) -> f64 {
         let mut result: f64 = 0.0;
 
         let mut current_channel = 0;
@@ -386,14 +386,14 @@ impl AudioSystem {
         // self.current_sample % 2
         self.current_sample = self.current_sample & 1;
 
-        let result = f64::clamp(result * self.master_volume, -1.0, 1.0) as f32;
+        let result = f64::clamp(result * self.master_volume, -1.0, 1.0);
 
         result
     }
 
     pub fn advance_buffer(&mut self, buffer: &mut [f32]) {
         for element in buffer.iter_mut() {
-            *element = self.advance();
+            *element = self.advance() as f32;
         }
     }
 
