@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::collections::VecDeque;
 use crate::BufferDescription;
 use crate::FormatType;
-use crate::{AudioFormat, ChannelProperties, ByteConvert};
+use crate::{ChannelProperties, ByteConvert};
 
 // Chunk size denotes how many samples a chunk is. In this case, 48000 samples.
 const CHUNK_SIZE: f64 = 48000.0;
