@@ -25,9 +25,3 @@ overflow-checks = false
 debug-assertions = false
 strip = true
 lto = true
-
-[dev-dependencies]
-sdl2 = { version = "0.35.2", features = ["bundled"] }
-libc = "0.2.138"
-ctrlc = "3.2.4"
-clap = { version = "4.0.32", features = ["derive"] }

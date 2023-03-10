@@ -1,14 +1,13 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
+use std::io;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+use mixr::AudioFormat;
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+pub mod wav;
+
+pub trait SupportedFormat {
+    fn load_memory(data: &[u8]) -> Result<Self, io::Error> where Self: Sized;
+
+    fn format(&self) -> AudioFormat;
+
+    fn pcm_data(&self) -> &[u8];
 }
