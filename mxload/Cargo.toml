@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 mixr = { path = "../mixr" }
+polymod = { git = "https://github.com/skyebird189/polymod" }

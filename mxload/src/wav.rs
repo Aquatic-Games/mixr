@@ -87,7 +87,7 @@ impl SupportedFormat for Wav {
         self.format
     }
 
-    fn pcm_data(&self) -> &[u8] {
-        &self.data
+    fn pcm_data(&self) -> Vec<u8> {
+        self.data.clone()
     }
 }

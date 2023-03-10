@@ -43,6 +43,7 @@ fn main() {
     };
 
     let wav = mxload::wav::Wav::load_memory(&file).unwrap();
+    //let wav = mxload::module::Module::load_memory(&file).unwrap();
     let buffer = system.create_buffer(BufferDescription { data_type: DataType::Pcm, format: wav.format() }, Some(&wav.pcm_data()));
 
     system.play_buffer(buffer, 0, ChannelProperties {
