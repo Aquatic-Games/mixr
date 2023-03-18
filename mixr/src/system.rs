@@ -4,9 +4,6 @@ use crate::BufferDescription;
 use crate::FormatType;
 use crate::{ChannelProperties, ByteConvert};
 
-// Chunk size denotes how many samples a chunk is. In this case, 48000 samples.
-const CHUNK_SIZE: f64 = 48000.0;
-
 #[derive(Debug)]
 pub enum AudioErrorType {
     InvalidBuffer,
@@ -53,8 +50,8 @@ struct Channel {
     buffer: i32,
     prev_buffer: i32,
 
-    chunk: u64,
-    position: f64,
+    position: usize,
+    position_counter: f64,
 
     prev_curr_sample: usize,
     prev_sample: usize,
@@ -94,8 +91,8 @@ impl AudioSystem {
                 buffer: -1,
                 prev_buffer: -1,
 
-                chunk: 0,
-                position: 0.0,
+                position: 0,
+                position_counter: 0.0,
 
                 prev_curr_sample: 0,
                 prev_sample: 0,
@@ -109,7 +106,7 @@ impl AudioSystem {
         }
 
         AudioSystem { 
-            sample_rate: sample_rate,
+            sample_rate,
 
             buffers: HashMap::new(), 
             channels: v_channels, 
@@ -177,8 +174,8 @@ impl AudioSystem {
 
         i_channel.queued.clear();
 
-        i_channel.chunk = 0;
-        i_channel.position = 0.0;
+        i_channel.position = 0;
+        i_channel.position_counter = 0.0;
         i_channel.prev_sample = 0;
         i_channel.prev_curr_sample = 0;
 
@@ -246,8 +243,8 @@ impl AudioSystem {
         }
 
         channel.playing = false;
-        channel.position = 0.0;
-        channel.chunk = 0;
+        channel.position_counter = 0.0;
+        channel.position = 0;
         channel.queued.clear();
 
         Ok(())
@@ -291,23 +288,21 @@ impl AudioSystem {
 
             // Calculate the current and previous sample.
             // Sample != position in array
-            let mut curr_sample_f64 = channel.chunk as f64 * CHUNK_SIZE + channel.position;
-            let mut curr_sample = curr_sample_f64 as usize;
+            let mut curr_sample = channel.position;
 
             if curr_sample >= properties.loop_end as usize {
                 if properties.looping {
-                    // Looping just returns the channel back to the loop point..
-                    let loop_pos = (properties.loop_start + (curr_sample as i32 - properties.loop_end)) as f64;
-                    channel.chunk = (loop_pos / CHUNK_SIZE) as u64;
-                    channel.position = if channel.chunk == 0 { loop_pos } else { loop_pos / channel.chunk as f64 - CHUNK_SIZE };
-                    curr_sample_f64 = channel.chunk as f64 * CHUNK_SIZE + channel.position;
-                    curr_sample = curr_sample_f64 as usize;
+                    // Looping just returns the channel back to the loop point.
+                    let loop_pos = properties.loop_start as usize;
+                    channel.position = loop_pos;
+                    channel.position_counter = 0.0;
+
+                    curr_sample = channel.position;
 
                 } else if channel.queued.len() > 0 {
-                    channel.chunk = 0;
-                    channel.position = if CHUNK_SIZE > channel.position { 0.0 } else { channel.position - CHUNK_SIZE };
-                    curr_sample_f64 = channel.chunk as f64 * CHUNK_SIZE + channel.position;
-                    curr_sample = curr_sample_f64 as usize;
+                    channel.position = 0;
+                    channel.position_counter = 0.0;
+                    curr_sample = channel.position;
 
                     channel.buffer = channel.queued.pop_front().unwrap();
                     curr_buffer = &self.buffers[&channel.buffer];
@@ -354,7 +349,9 @@ impl AudioSystem {
 
                     let prev_value = unsafe { Self::get_sample(prev_data, prev_pos, prev_format.format_type) };
 
-                    curr_value = Self::lerp(prev_value, curr_value, curr_sample_f64 - curr_sample as f64);
+                    let s_f64 = curr_sample as f64 + channel.position_counter;
+
+                    curr_value = Self::lerp(prev_value, curr_value, s_f64 - curr_sample as f64);
                 }
             }
 
@@ -372,11 +369,10 @@ impl AudioSystem {
                 }
                 channel.prev_buffer = channel.buffer;
 
-                channel.position += channel.speed;
-                if channel.position >= CHUNK_SIZE {
-                    channel.chunk += 1;
-                    channel.position -= CHUNK_SIZE;
-                }
+                channel.position_counter += channel.speed;
+                let i_pos = channel.position_counter as usize;
+                channel.position += i_pos;
+                channel.position_counter -= i_pos as f64;
             }
 
             current_channel += 1;
@@ -411,16 +407,14 @@ impl AudioSystem {
 
     pub fn seek_to_sample(&mut self, channel: u16, sample: usize) -> Result<(), AudioError> {
         let mut channel = self.channels.get_mut(channel as usize).ok_or(AudioError::new(AudioErrorType::InvalidChannel))?;
-        
-        let sample = sample as f64;
 
         let buffer = self.buffers.get(&channel.buffer).ok_or(AudioError::new(AudioErrorType::InvalidBuffer))?;
-        if sample < 0.0 || sample >= (buffer.data.len() / buffer.bytes_per_sample as usize) as f64 {
+        if sample >= buffer.data.len() / buffer.bytes_per_sample as usize {
             return Err(AudioError::new(AudioErrorType::OutOfRange));
         }
 
-        channel.chunk = (sample / CHUNK_SIZE) as u64;
-        channel.position = if channel.chunk == 0 { sample } else { sample / channel.chunk as f64 - CHUNK_SIZE };
+        channel.position = sample;
+        channel.position_counter = 0.0;
 
         Ok(())
     }
@@ -428,10 +422,10 @@ impl AudioSystem {
     pub fn seek_seconds(&mut self, channel: u16, seconds: f64) -> Result<(), AudioError> {
         let mut channel = self.channels.get_mut(channel as usize).ok_or(AudioError::new(AudioErrorType::InvalidChannel))?;
         // I have no idea why I stored the sample rate in the channel but it's coming in useful now I guess..
-        let sample = channel.sample_rate as f64 * seconds;
+        let sample = (channel.sample_rate as f64 * seconds) as usize;
 
-        channel.chunk = (sample / CHUNK_SIZE) as u64;
-        channel.position = if channel.chunk == 0 { sample } else { sample / channel.chunk as f64 - CHUNK_SIZE };
+        channel.position = sample;
+        channel.position_counter = 0.0;
 
         Ok(())
     }
