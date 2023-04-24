@@ -1,6 +1,7 @@
 use std::ffi::CStr;
 
-use crate::{system::{AudioSystem, AudioErrorType, AudioError}, AudioFormat, ChannelProperties, AudioResult, loaders::PCM, BufferDescription};
+use mixr::{system::{AudioSystem, AudioErrorType, AudioError}, AudioFormat, ChannelProperties, AudioResult, BufferDescription};
+use mxload::{wav::Wav, SupportedFormat};
 
 #[repr(C)]
 pub struct CPCM {
@@ -107,15 +108,16 @@ fn result_to_result(result: Result<(), AudioError>) -> AudioResult {
 
 #[no_mangle]
 pub unsafe extern "C" fn mxPCMLoadWav(data: *const u8, data_length: usize) -> *mut CPCM {
-    let mut pcm = PCM::load_wav(std::slice::from_raw_parts(data, data_length)).unwrap();
-    let data = pcm.data.as_mut_ptr();
-    let len = pcm.data.len();
-    std::mem::forget(pcm.data);
+    let pcm = Wav::load_memory(std::slice::from_raw_parts(data, data_length)).unwrap();
+    let mut data = pcm.pcm_data();
+    let data_native = data.as_mut_ptr();
+    let len = data.len();
+    std::mem::forget(data);
 
     Box::into_raw(Box::new(CPCM {
-        data,
+        data: data_native,
         data_length: len,
-        format: pcm.format
+        format: pcm.format()
     }))
 }
 

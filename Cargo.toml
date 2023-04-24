@@ -2,5 +2,6 @@
 members = [
     "mixr",
     "mxload",
-    "mxplay"
+    "mxplay",
+    "mixr-native"
 ]

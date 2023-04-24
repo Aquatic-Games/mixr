@@ -9,15 +9,6 @@ license = "MIT"
 keywords = ["audio", "gamedev", "mixer", "resampler"]
 categories = ["game-development", "multimedia::audio"]
 
-[lib]
-crate-type = ["rlib", "cdylib", "staticlib"]
-
-[features]
-cmixr = []
-loaders = []
-#engine = ["loaders", "dep:sdl2"]
-#engine = ["loaders"]
-
 [profile.release]
 opt-level = 3
 debug = false

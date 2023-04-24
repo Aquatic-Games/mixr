@@ -1,9 +1,6 @@
 pub mod system;
 pub mod binary_reader;
 
-//#[cfg(feature = "cmixr")]
-//mod cmixr;
-
 #[derive(Clone, Debug, Copy, PartialEq)]
 #[repr(C)]
 pub enum FormatType {
