@@ -6,7 +6,7 @@ fn test_mixr() {
     let mut system = AudioSystem::new(48000, 16);
 
     let data = std::fs::read("/home/ollie/Music/TESTFILES/amba2-32bitfloat.raw").unwrap();
-    //let data2 = std::fs::read("/home/ollie/Music/TESTFILES/nixonspace-16bitshort.raw").unwrap();
+    //let data = std::fs::read("/home/ollie/Music/TESTFILES/nixonspace-32bitfloat.raw").unwrap();
 
     let buffer = system.create_buffer(BufferDescription {
         format: AudioFormat {
@@ -25,8 +25,9 @@ fn test_mixr() {
     }, Some(&data2));*/
 
     system.play_buffer(buffer, 0, PlayProperties {
-        speed: 1.3,
+        speed: 1.30,
         looping: true,
+        loop_start: 391670,
         ..Default::default()
     }).unwrap();
 

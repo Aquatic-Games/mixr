@@ -158,7 +158,7 @@ impl AudioSystem {
         voice.position = 0;
         voice.float_pos = 0.0;
 
-        let align = f64::ceil(properties.speed);
+        let align = f64::ceil((internal_buffer.format.sample_rate as f64 / self.sample_rate as f64) * (properties.speed));
 
         voice.speed = (internal_buffer.format.sample_rate as f64 / self.sample_rate as f64) * (properties.speed / align);
 
