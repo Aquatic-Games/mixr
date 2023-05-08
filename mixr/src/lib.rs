@@ -98,7 +98,12 @@ impl AudioSystem {
                 speed: 0.0,
 
                 properties: PlayProperties::default(),
-                sample_end: 0
+                sample_end: 0,
+
+                previous_position: 0,
+                lerp_pos: 0,
+
+                alignment: 0
             });
         }
 
@@ -141,11 +146,23 @@ impl AudioSystem {
         let mut voice = self.voices.get_mut(voice as usize).ok_or(MixrError { e_type: ErrorType::InvalidVoice, message: "Voice was out of range." })?;
         let internal_buffer = self.buffers[buffer.id].as_ref().ok_or(MixrError { e_type: ErrorType::InvalidBuffer, message: "Buffer was not valid. Has it been deleted?" })?;
 
+        if properties.looping && properties.loop_end != 0 {
+            if properties.loop_end - properties.loop_start == 0 {
+                return Err(MixrError { e_type: ErrorType::InvalidValue, message: "Loop size cannot total 0. (loop start and loop end values are the same)" });
+            } else if properties.loop_end < properties.loop_start {
+                return Err(MixrError { e_type: ErrorType::InvalidValue, message: "Loop end position cannot be less than the loop start position." });
+            }
+        }
+
         voice.buffer = Some(buffer.id);
         voice.position = 0;
         voice.float_pos = 0.0;
 
-        voice.speed = (internal_buffer.format.sample_rate as f64 / self.sample_rate as f64) * properties.speed;
+        let align = f64::ceil(properties.speed);
+
+        voice.speed = (internal_buffer.format.sample_rate as f64 / self.sample_rate as f64) * (properties.speed / align);
+
+        voice.alignment = internal_buffer.alignment * align as usize;
 
         voice.properties = properties;
 
@@ -172,7 +189,7 @@ impl AudioSystem {
                 };
 
                 let format = internal_buffer.format;
-                let alignment = internal_buffer.alignment;
+                let alignment = voice.alignment;
 
                 voice.float_pos += voice.speed;
                 let int_pos = voice.float_pos as usize;
@@ -197,10 +214,21 @@ impl AudioSystem {
                     }
                 }
 
+                if position != voice.previous_position {
+                    voice.lerp_pos = voice.previous_position;
+                    voice.previous_position = position;
+                }
+
                 let volume = (self.volume * voice.properties.volume) as f32;
 
-                let sample_l = Self::get_sample(position, &internal_buffer.data, internal_buffer.format.data_type);
-                let sample_r = Self::get_sample(position + (alignment / 2) * (format.channels - 1) as usize, &internal_buffer.data, format.data_type);
+                let mut sample_l = Self::get_sample(position, &internal_buffer.data, internal_buffer.format.data_type);
+                let mut sample_r = Self::get_sample(position + (internal_buffer.alignment / 2) * (format.channels - 1) as usize, &internal_buffer.data, format.data_type);
+
+                let prev_l = Self::get_sample(voice.lerp_pos, &internal_buffer.data, internal_buffer.format.data_type);
+                let prev_r = Self::get_sample(voice.lerp_pos + (internal_buffer.alignment / 2) * (format.channels - 1) as usize, &internal_buffer.data, internal_buffer.format.data_type);
+
+                sample_l = Self::lerp(prev_l, sample_l, voice.float_pos);
+                sample_r = Self::lerp(prev_r, sample_r, voice.float_pos);
 
                 buffer[sample_loc] += f32::clamp(sample_l * volume, -1.0, 1.0);
                 buffer[sample_loc + 1] += f32::clamp(sample_r * volume, -1.0, 1.0);
@@ -219,6 +247,11 @@ impl AudioSystem {
             DataType::F32 => unsafe { std::mem::transmute(data[position] as i32 | (data[position + 1] as i32) << 8 | (data[position + 2] as i32) << 16 | (data[position + 3] as i32) << 24) },
             DataType::F64 => todo!(),
         }
+    }
+
+    #[inline(always)]
+    fn lerp(min: f32, max: f32, amount: f64) -> f32 {
+        (((max as f64 - min as f64) * amount) + min as f64) as f32
     }
 }
 
@@ -246,5 +279,11 @@ struct Voice {
     properties: PlayProperties,
 
     // The end point in BYTES at which point mixr will either loop, or stop the voice.
-    sample_end: usize
+    sample_end: usize,
+
+    previous_position: usize,
+
+    lerp_pos: usize,
+
+    alignment: usize
 }

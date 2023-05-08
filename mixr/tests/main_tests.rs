@@ -25,7 +25,7 @@ fn test_mixr() {
     }, Some(&data2));*/
 
     system.play_buffer(buffer, 0, PlayProperties {
-        speed: 2.0,
+        speed: 1.3,
         looping: true,
         ..Default::default()
     }).unwrap();
