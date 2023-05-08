@@ -1,4 +1,19 @@
 #[derive(Debug, Clone, Copy)]
+pub enum ErrorType {
+    InvalidBuffer,
+    InvalidVoice,
+    InvalidValue,
+
+    Other
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct MixrError<'a> {
+    pub e_type:  ErrorType,
+    pub message: &'a str
+}
+
+#[derive(Debug, Clone, Copy)]
 pub enum DataType {
     I8,
     U8,
@@ -58,13 +73,6 @@ impl Default for PlayProperties {
 #[derive(Clone, Copy)]
 pub struct AudioBuffer {
     id: usize
-}
-
-struct Buffer {
-    data: Vec<u8>,
-    format: AudioFormat,
-
-    alignment: usize
 }
 
 pub struct AudioSystem {
@@ -129,9 +137,9 @@ impl AudioSystem {
         }
     }
 
-    pub fn play_buffer(&mut self, buffer: AudioBuffer, voice: u16, properties: PlayProperties) {
-        let mut voice = self.voices.get_mut(voice as usize).expect("Voice was out of range of voices!");
-        let internal_buffer = self.buffers[buffer.id].as_ref().expect("Buffer is not a valid buffer!");
+    pub fn play_buffer(&mut self, buffer: AudioBuffer, voice: u16, properties: PlayProperties) -> Result<(), MixrError> {
+        let mut voice = self.voices.get_mut(voice as usize).ok_or(MixrError { e_type: ErrorType::InvalidVoice, message: "Voice was out of range." })?;
+        let internal_buffer = self.buffers[buffer.id].as_ref().ok_or(MixrError { e_type: ErrorType::InvalidBuffer, message: "Buffer was not valid. Has it been deleted?" })?;
 
         voice.buffer = Some(buffer.id);
         voice.position = 0;
@@ -145,7 +153,9 @@ impl AudioSystem {
             if properties.loop_end == 0 { internal_buffer.data.len() } else { properties.loop_end * internal_buffer.alignment }
         } else {
             internal_buffer.data.len()
-        }
+        };
+
+        Ok(())
     }
 
     pub fn read_buffer_stereo_f32(&mut self, buffer: &mut [f32]) {
@@ -188,8 +198,8 @@ impl AudioSystem {
                 let sample_l = Self::get_sample(position, &internal_buffer.data, internal_buffer.format.data_type);
                 let sample_r = Self::get_sample(position + (alignment / 2) * (format.channels - 1) as usize, &internal_buffer.data, format.data_type);
 
-                buffer[sample_loc] = sample_l * volume;
-                buffer[sample_loc + 1] = sample_r * volume;
+                buffer[sample_loc] = f32::clamp(sample_l * volume, -1.0, 1.0);
+                buffer[sample_loc + 1] = f32::clamp(sample_r * volume, -1.0, 1.0);
             }
         }
     }
@@ -206,6 +216,13 @@ impl AudioSystem {
             DataType::F64 => todo!(),
         }
     }
+}
+
+struct Buffer {
+    data: Vec<u8>,
+    format: AudioFormat,
+
+    alignment: usize
 }
 
 struct Voice {

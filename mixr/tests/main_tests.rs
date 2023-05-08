@@ -5,7 +5,7 @@ use sdl2::audio::{AudioSpecDesired, AudioCallback};
 fn test_mixr() {
     let mut system = AudioSystem::new(48000, 16);
 
-    let data = std::fs::read("/home/ollie/Music/TESTFILES/nixonspace-32bitfloat.raw").unwrap();
+    let data = std::fs::read("/home/ollie/Music/TESTFILES/amba2-32bitfloat.raw").unwrap();
 
     let buffer = system.create_buffer(BufferDescription {
         format: AudioFormat {
@@ -16,12 +16,10 @@ fn test_mixr() {
     }, Some(&data));
 
     system.play_buffer(buffer, 0, PlayProperties {
-        speed: 1.15,
+        speed: 1.0,
         looping: true,
-        loop_start: 391406,
-        loop_end: 0,
         ..Default::default()
-    });
+    }).unwrap();
 
     let sdl = sdl2::init().unwrap();
 
