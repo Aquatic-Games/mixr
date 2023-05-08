@@ -42,12 +42,16 @@ pub struct BufferDescription {
 #[derive(Debug, Clone, Copy)]
 pub struct PlayProperties {
     pub volume: f64,
-    pub speed: f64
+    pub speed: f64,
+    
+    pub looping: bool,
+    pub loop_start: usize,
+    pub loop_end: usize
 }
 
 impl Default for PlayProperties {
     fn default() -> Self {
-        Self { volume: 1.0, speed: 1.0 }
+        Self { volume: 1.0, speed: 1.0, looping: false, loop_start: 0, loop_end: 0 }
     }
 }
 
@@ -64,6 +68,8 @@ struct Buffer {
 }
 
 pub struct AudioSystem {
+    pub volume: f64,
+
     sample_rate: u32,
 
     buffers: Vec<Option<Buffer>>,
@@ -83,11 +89,14 @@ impl AudioSystem {
 
                 speed: 0.0,
 
-                properties: PlayProperties::default()
+                properties: PlayProperties::default(),
+                sample_end: 0
             });
         }
 
         Self {
+            volume: 1.0,
+
             sample_rate,
 
             buffers: Vec::new(),
@@ -129,6 +138,14 @@ impl AudioSystem {
         voice.float_pos = 0.0;
 
         voice.speed = (internal_buffer.format.sample_rate as f64 / self.sample_rate as f64) * properties.speed;
+
+        voice.properties = properties;
+
+        voice.sample_end = if properties.looping {
+            if properties.loop_end == 0 { internal_buffer.data.len() } else { properties.loop_end * internal_buffer.alignment }
+        } else {
+            internal_buffer.data.len()
+        }
     }
 
     pub fn read_buffer_stereo_f32(&mut self, buffer: &mut [f32]) {
@@ -140,18 +157,39 @@ impl AudioSystem {
                     continue;
                 };
 
+                let format = internal_buffer.format;
+                let alignment = internal_buffer.alignment;
+
                 voice.float_pos += voice.speed;
                 let int_pos = voice.float_pos as usize;
                 voice.position += int_pos;
                 voice.float_pos -= int_pos as f64;
 
-                let position = voice.position * internal_buffer.alignment;
+                let mut position = voice.position * alignment;
+
+                if position >= voice.sample_end {
+                    if voice.properties.looping {
+                        voice.position = voice.properties.loop_start;
+                        // TODO: Don't reset float_pos to 0, reset it to a proper value for accuracy in short loops.
+                        voice.float_pos = 0.0;
+                        position = voice.position * alignment;
+                    } else {
+                        voice.buffer = None;
+                        voice.position = 0;
+                        voice.float_pos = 0.0;
+                        voice.speed = 0.0;
+
+                        continue;
+                    }
+                }
+
+                let volume = (self.volume * voice.properties.volume) as f32;
 
                 let sample_l = Self::get_sample(position, &internal_buffer.data, internal_buffer.format.data_type);
-                let sample_r = Self::get_sample(position + internal_buffer.alignment / 2, &internal_buffer.data, internal_buffer.format.data_type);
+                let sample_r = Self::get_sample(position + (alignment / 2) * (format.channels - 1) as usize, &internal_buffer.data, format.data_type);
 
-                buffer[sample_loc] = sample_l;
-                buffer[sample_loc + 1] = sample_r;
+                buffer[sample_loc] = sample_l * volume;
+                buffer[sample_loc + 1] = sample_r * volume;
             }
         }
     }
@@ -161,7 +199,7 @@ impl AudioSystem {
         match dt {
             DataType::I8 => data[position] as f32 / i8::MAX as f32,
             DataType::U8 => (data[position] as f32 / u8::MAX as f32) * 2.0 - 1.0,
-            DataType::I16 => ((data[position] as i16 | (data[position + 1] as i16) << 8) as f32 / i16::MAX as f32),
+            DataType::I16 => (data[position] as i16 | (data[position + 1] as i16) << 8) as f32 / i16::MAX as f32,
             DataType::U16 => ((data[position] as u16 | (data[position + 1] as u16) << 8) as f32 / u16::MAX as f32) * 2.0 - 1.0,
             DataType::I32 => todo!(),
             DataType::F32 => unsafe { std::mem::transmute(data[position] as i32 | (data[position + 1] as i32) << 8 | (data[position + 2] as i32) << 16 | (data[position + 3] as i32) << 24) },
@@ -184,5 +222,8 @@ struct Voice {
     speed: f64,
 
     // The current properties of this voice.
-    properties: PlayProperties
+    properties: PlayProperties,
+
+    // The end point in BYTES at which point mixr will either loop, or stop the voice.
+    sample_end: usize
 }
