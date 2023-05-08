@@ -160,6 +160,10 @@ impl AudioSystem {
 
     pub fn read_buffer_stereo_f32(&mut self, buffer: &mut [f32]) {
         for sample_loc in (0..buffer.len()).step_by(2) {
+            // 0 the buffer to make sure no garbage data is present.
+            buffer[sample_loc] = 0.0;
+            buffer[sample_loc + 1] = 0.0;
+
             for voice in &mut self.voices {
                 let internal_buffer = if let Some(buf) = voice.buffer {
                     self.buffers[buf].as_ref().unwrap()
@@ -198,8 +202,8 @@ impl AudioSystem {
                 let sample_l = Self::get_sample(position, &internal_buffer.data, internal_buffer.format.data_type);
                 let sample_r = Self::get_sample(position + (alignment / 2) * (format.channels - 1) as usize, &internal_buffer.data, format.data_type);
 
-                buffer[sample_loc] = f32::clamp(sample_l * volume, -1.0, 1.0);
-                buffer[sample_loc + 1] = f32::clamp(sample_r * volume, -1.0, 1.0);
+                buffer[sample_loc] += f32::clamp(sample_l * volume, -1.0, 1.0);
+                buffer[sample_loc + 1] += f32::clamp(sample_r * volume, -1.0, 1.0);
             }
         }
     }
