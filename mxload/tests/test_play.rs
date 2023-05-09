@@ -1,41 +1,40 @@
 use mixr::*;
 use sdl2::audio::{AudioSpecDesired, AudioCallback};
+use mxload::{stream::Wav, AudioStream};
 
 #[test]
-fn test_mixr() {
+fn test_playback() {
     let mut system = AudioSystem::new(48000, 16);
 
-    //let data = std::fs::read("/home/ollie/Music/TESTFILES/necros_-_introspection-32bitfloat.raw").unwrap();
-    let data = std::fs::read("/home/ollie/Music/TESTFILES/plokboss-32bitfloat.raw").unwrap();
+    let mut wav = Wav::from_file("/home/ollie/Music/thanks_for_the_fish.wav");
+
+    println!("{:#?}", wav.format());
+
+    let mut full_buffer = Vec::new();
+
+    let mut buf: Vec<u8> = std::iter::repeat(0).take(24000).collect();
+
+    loop {
+        let amount = wav.get_buffer(&mut buf).unwrap();
+
+        full_buffer.append(&mut buf);
+
+        if amount < 24000 {
+            break;
+        }
+
+        unsafe { buf.set_len(24000) };
+    }
 
     let buffer = system.create_buffer(BufferDescription {
-        format: AudioFormat {
-            data_type: DataType::F32,
-            sample_rate: 44100,
-            channels: 2
-        }
-    }, Some(&data));
-
-    /*let buffer2 = system.create_buffer(BufferDescription {
-        format: AudioFormat {
-            data_type: DataType::I16,
-            sample_rate: 48000,
-            channels: 2
-        }
-    }, Some(&data2));*/
+        format: wav.format()
+    }, Some(&full_buffer));
 
     system.play_buffer(buffer, 0, PlayProperties {
         speed: 1.0,
         looping: true,
-        loop_start: 391670,
         ..Default::default()
     }).unwrap();
-
-    /*system.play_buffer(buffer2, 1, PlayProperties {
-        speed: 1.0,
-        looping: true,
-        ..Default::default()
-    }).unwrap();*/
 
     let sdl = sdl2::init().unwrap();
 

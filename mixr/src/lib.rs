@@ -49,6 +49,12 @@ pub struct AudioFormat {
     pub channels: u8
 }
 
+impl Default for AudioFormat {
+    fn default() -> Self {
+        Self { data_type: DataType::F32, sample_rate: 480000, channels: 2 }
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct BufferDescription {
     pub format: AudioFormat
@@ -77,6 +83,7 @@ pub struct AudioBuffer {
 
 pub struct AudioSystem {
     pub volume: f64,
+    //pub fade_in: usize,
 
     sample_rate: u32,
 
@@ -109,6 +116,7 @@ impl AudioSystem {
 
         Self {
             volume: 1.0,
+            //fade_in: 20,
 
             sample_rate,
 
@@ -219,7 +227,7 @@ impl AudioSystem {
                     voice.previous_position = position;
                 }
 
-                let volume = (self.volume * voice.properties.volume) as f32;
+                let volume = (self.volume * voice.properties.volume/* * (voice.position as f64 / self.fade_in as f64).clamp(0.0, 1.0)*/) as f32;
 
                 let mut sample_l = Self::get_sample(position, &internal_buffer.data, internal_buffer.format.data_type);
                 let mut sample_r = Self::get_sample(position + (internal_buffer.alignment / 2) * (format.channels - 1) as usize, &internal_buffer.data, format.data_type);

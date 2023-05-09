@@ -1,14 +1,13 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
+use mixr::AudioFormat;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+pub mod stream;
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+pub trait AudioStream {
+    fn from_data(data: &[u8]) -> Self;
+
+    fn from_file(path: &str) -> Self;
+
+    fn format(&self) -> AudioFormat;
+
+    fn get_buffer(&mut self, buf: &mut [u8]) -> Result<usize, std::io::Error>;
 }
