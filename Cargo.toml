@@ -1,5 +1,6 @@
 [workspace]
 members = [
     "mixr",
-    "mxload"
+    "mxload",
+    "mxplay"
 ]

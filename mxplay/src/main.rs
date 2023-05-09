@@ -1,51 +1,48 @@
-use mixr::*;
-use sdl2::audio::{AudioSpecDesired, AudioCallback};
+use std::fs::File;
+
+use clap::Parser;
+use mixr::{AudioSystem, BufferDescription, AudioFormat, PlayProperties};
 use mxload::{stream::Wav, AudioStream};
+use sdl2::audio::{AudioSpecDesired, AudioCallback};
 
-#[test]
-fn test_playback() {
-    let mut system = AudioSystem::new(48000, 16);
+#[derive(Parser)]
+struct CliArgs {
+    #[arg(required = true)]
+    paths: Vec<String>,
 
-    let mut wav = Wav::from_file("/home/ollie/Music/necros_-_introspection.wav");
+    #[arg(short, long, default_value_t = 1.0)]
+    volume: f64,
 
-    println!("{:#?}", wav.format());
+    #[arg(short, long, default_value_t = 1.0)]
+    speed: f64,
 
-    /*let mut full_buffer = Vec::new();
+    #[arg(long, default_value_t = false)]
+    looping: bool
+}
 
-    let mut buf: Vec<u8> = std::iter::repeat(0).take(24000).collect();
+fn main() {
+    let args = CliArgs::parse();
+    let speed = args.speed;
+    let volume = args.volume;
+    let looping = args.looping;
 
-    let mut total_amount = 0;
+    let mut wav = Wav::from_file(&args.paths[0]);
+    let pcm = wav.get_pcm().unwrap();
 
-    loop {
-        let amount = wav.get_buffer(&mut buf).unwrap();
-
-        full_buffer.append(&mut buf);
-
-        total_amount += amount;
-
-        if amount < 24000 {
-            break;
-        }
-
-        unsafe { buf.set_len(24000) };
-    }
-
-    full_buffer.truncate(total_amount);*/
-
-    let full_buffer = wav.get_pcm().unwrap();
+    let mut system = AudioSystem::new(48000, 1);
 
     let buffer = system.create_buffer(BufferDescription {
         format: wav.format()
-    }, Some(&full_buffer));
+    }, Some(&pcm));
 
     system.play_buffer(buffer, 0, PlayProperties {
-        speed: 1.15,
-        looping: true,
+        speed,
+        volume,
+        looping,
         ..Default::default()
     }).unwrap();
 
     let sdl = sdl2::init().unwrap();
-
     let audio = sdl.audio().unwrap();
 
     let spec = AudioSpecDesired {
@@ -63,6 +60,7 @@ fn test_playback() {
     device.resume();
 
     ctrlc::set_handler(|| {
+        println!(); // print a newline
         std::process::exit(0);
     }).unwrap();
 
