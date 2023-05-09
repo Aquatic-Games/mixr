@@ -10,4 +10,6 @@ pub trait AudioStream {
     fn format(&self) -> AudioFormat;
 
     fn get_buffer(&mut self, buf: &mut [u8]) -> Result<usize, std::io::Error>;
+
+    fn get_pcm(&mut self) -> Result<Vec<u8>, std::io::Error>;
 }

@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 mixr = { path = "../mixr" }
-skyetils = { path = "../../skyetils" }
+skyetils = { git = "https://github.com/skyebird189/skyetils" }
 
 [dev-dependencies]
 sdl2 = "0.35.2"

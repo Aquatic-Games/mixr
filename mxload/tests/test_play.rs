@@ -6,18 +6,22 @@ use mxload::{stream::Wav, AudioStream};
 fn test_playback() {
     let mut system = AudioSystem::new(48000, 16);
 
-    let mut wav = Wav::from_file("/home/ollie/Music/thanks_for_the_fish.wav");
+    let mut wav = Wav::from_file("/home/ollie/Music/GS-9013_06.wav");
 
     println!("{:#?}", wav.format());
 
-    let mut full_buffer = Vec::new();
+    /*let mut full_buffer = Vec::new();
 
     let mut buf: Vec<u8> = std::iter::repeat(0).take(24000).collect();
+
+    let mut total_amount = 0;
 
     loop {
         let amount = wav.get_buffer(&mut buf).unwrap();
 
         full_buffer.append(&mut buf);
+
+        total_amount += amount;
 
         if amount < 24000 {
             break;
@@ -26,12 +30,16 @@ fn test_playback() {
         unsafe { buf.set_len(24000) };
     }
 
+    full_buffer.truncate(total_amount);*/
+
+    let full_buffer = wav.get_pcm().unwrap();
+
     let buffer = system.create_buffer(BufferDescription {
         format: wav.format()
     }, Some(&full_buffer));
 
     system.play_buffer(buffer, 0, PlayProperties {
-        speed: 1.0,
+        speed: 0.85,
         looping: true,
         ..Default::default()
     }).unwrap();

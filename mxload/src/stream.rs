@@ -7,7 +7,10 @@ use skyetils::binary::BinaryReader;
 pub struct Wav {
     reader: BinaryReader<File>,
 
-    format: AudioFormat
+    format: AudioFormat,
+
+    data_size: usize,
+    current_pos: usize
 }
 
 impl AudioStream for Wav {
@@ -36,6 +39,7 @@ impl AudioStream for Wav {
         }
 
         let mut format = AudioFormat::default();
+        let mut data_size = 0;
 
         loop {
             match reader.read_u32().unwrap() {
@@ -67,7 +71,7 @@ impl AudioStream for Wav {
                 }
 
                 DATA => {
-                    println!("{}", reader.position().unwrap());
+                    data_size = reader.read_u32().unwrap() as usize;
                     break;
                 }
 
@@ -81,7 +85,11 @@ impl AudioStream for Wav {
 
         Self {
             reader,
-            format
+            format,
+
+            data_size,
+
+            current_pos: 0
         }
     }
 
@@ -90,6 +98,20 @@ impl AudioStream for Wav {
     }
 
     fn get_buffer(&mut self, buf: &mut [u8]) -> Result<usize, std::io::Error> {
-        self.reader.read_to_buf(buf)
+        let read = self.reader.read_to_buf(buf)?;
+
+        let read = if self.current_pos + read >= self.data_size {
+            self.data_size - self.current_pos
+        } else {
+            read
+        };
+
+        self.current_pos += read;
+
+        Ok(read)
+    }
+
+    fn get_pcm(&mut self) -> Result<Vec<u8>, std::io::Error> {
+        self.reader.read_bytes(self.data_size)
     }
 }
