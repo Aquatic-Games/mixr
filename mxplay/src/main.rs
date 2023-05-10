@@ -1,7 +1,5 @@
-use std::fs::File;
-
 use clap::Parser;
-use mixr::{AudioSystem, BufferDescription, AudioFormat, PlayProperties};
+use mixr::{AudioSystem, BufferDescription, PlayProperties, PlayState};
 use mxload::{stream::Wav, AudioStream};
 use sdl2::audio::{AudioSpecDesired, AudioCallback};
 
@@ -74,6 +72,10 @@ fn main() {
 
     loop {
         std::thread::sleep(std::time::Duration::from_secs(1));
+
+        if system.get_voice_state(0).unwrap() != PlayState::Playing {
+            std::process::exit(0);
+        }
     }
 }
 

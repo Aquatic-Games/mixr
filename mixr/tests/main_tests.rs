@@ -5,7 +5,7 @@ use sdl2::audio::{AudioSpecDesired, AudioCallback};
 fn test_mixr() {
     let mut system = AudioSystem::new(48000, 16);
 
-    let data = std::fs::read("/home/ollie/Music/TESTFILES/necros_-_introspection-32bitfloat.raw").unwrap();
+    let data = std::fs::read("/home/ollie/Music/TESTFILES/amba2-32bitfloat.raw").unwrap();
     //let data = std::fs::read("/home/ollie/Music/TESTFILES/plokboss-32bitfloat.raw").unwrap();
 
     let buffer = system.create_buffer(BufferDescription {
@@ -25,7 +25,7 @@ fn test_mixr() {
     }, Some(&data2));*/
 
     system.play_buffer(buffer, 0, PlayProperties {
-        speed: 1.0,
+        speed: 1.5,
         looping: true,
         ..Default::default()
     }).unwrap();
@@ -58,9 +58,35 @@ fn test_mixr() {
         std::process::exit(0);
     }).unwrap();
 
+    let mut num_loops = 0;
     loop {
-        println!("{}, {}s", system.get_position_samples(0).unwrap(), system.get_position(0).unwrap());
+        let pos_secs = system.get_position(0).unwrap();
+        let state = system.get_voice_state(0).unwrap();
+
+        /*if num_loops == 2 {
+            system.set_voice_state(0, PlayState::Paused).unwrap();
+        }
+
+        if num_loops == 4 {
+            system.set_voice_state(0, PlayState::Playing).unwrap();
+        }
+
+        if num_loops == 10 {
+            system.set_voice_state(0, PlayState::Stopped).unwrap();
+        }
+
+        if num_loops == 14 {
+            system.set_voice_state(0, PlayState::Playing).unwrap();
+        }*/
+
+        println!("{:?}: {}, {}s", state, system.get_position_samples(0).unwrap(), pos_secs);
         std::thread::sleep(std::time::Duration::from_secs(1));
+
+        if state == PlayState::Stopped {
+            break;
+        }
+
+        num_loops += 1;
     }
 }
 

@@ -1,4 +1,4 @@
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ErrorType {
     InvalidBuffer,
     InvalidVoice,
@@ -16,7 +16,7 @@ pub struct MixrError<'a> {
 
 pub type MixrResult<'a, TResult> = Result<TResult, MixrError<'a>>;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum DataType {
     I8,
     U8,
@@ -45,7 +45,7 @@ impl DataType {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct AudioFormat {
     pub data_type: DataType,
     pub sample_rate: u32,
@@ -58,13 +58,13 @@ impl Default for AudioFormat {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct BufferDescription {
     pub format: AudioFormat
 }
 
 /// Various properties that denote how mixr will play back a sound.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct PlayProperties {
     /// The relative volume to play the sound at.
     /// A value of 1.0 means no change in the volume.
@@ -103,14 +103,14 @@ impl Default for PlayProperties {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum PlayState {
     Stopped,
     Paused,
     Playing
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 pub struct AudioBuffer {
     id: usize
 }
@@ -270,8 +270,20 @@ impl AudioSystem {
                 voice.position = 0;
                 voice.float_pos = 0.0;
             },
-            PlayState::Paused => voice.is_playing = false,
-            PlayState::Playing => voice.is_playing = true,
+            PlayState::Paused => {
+                if voice.buffer == usize::MAX {
+                    return Err(MixrError { e_type: ErrorType::InvalidOperation, message: "Cannot pause a stopped voice." });
+                }
+
+                voice.is_playing = false;
+            },
+            PlayState::Playing => {
+                if voice.buffer == usize::MAX {
+                    return Err(MixrError { e_type: ErrorType::InvalidOperation, message: "Cannot play a stopped voice. Use AudioSystem::play_buffer() instead." });
+                }
+
+                voice.is_playing = true;
+            },
         }
 
         Ok(())
@@ -446,7 +458,7 @@ impl AudioSystem {
             DataType::U8 => (data[position] as f32 / u8::MAX as f32) * 2.0 - 1.0,
             DataType::I16 => (data[position] as i16 | (data[position + 1] as i16) << 8) as f32 / i16::MAX as f32,
             DataType::U16 => ((data[position] as u16 | (data[position + 1] as u16) << 8) as f32 / u16::MAX as f32) * 2.0 - 1.0,
-            DataType::I32 => todo!(),
+            DataType::I32 => (data[position] as i32 | (data[position + 1] as i32) << 8 | (data[position + 2] as i32) << 16 | (data[position + 3] as i32) << 24) as f32 / i32::MAX as f32,
             DataType::F32 => unsafe { std::mem::transmute(data[position] as i32 | (data[position + 1] as i32) << 8 | (data[position + 2] as i32) << 16 | (data[position + 3] as i32) << 24) },
             DataType::F64 => todo!(),
         }

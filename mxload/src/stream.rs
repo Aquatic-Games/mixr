@@ -1,4 +1,4 @@
-use std::{io::{Read, Seek}, fs::File};
+use std::fs::File;
 
 use crate::AudioStream;
 use mixr::{AudioFormat, DataType};
