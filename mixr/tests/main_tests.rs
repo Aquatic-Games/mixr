@@ -5,16 +5,16 @@ use sdl2::audio::{AudioSpecDesired, AudioCallback};
 fn test_mixr() {
     let mut system = AudioSystem::new(48000, 16);
 
-    //let data = std::fs::read("/home/ollie/Music/TESTFILES/necros_-_introspection-32bitfloat.raw").unwrap();
-    let data = std::fs::read("/home/ollie/Music/TESTFILES/plokboss-32bitfloat.raw").unwrap();
+    let data = std::fs::read("/home/ollie/Music/TESTFILES/necros_-_introspection-32bitfloat.raw").unwrap();
+    //let data = std::fs::read("/home/ollie/Music/TESTFILES/plokboss-32bitfloat.raw").unwrap();
 
     let buffer = system.create_buffer(BufferDescription {
         format: AudioFormat {
             data_type: DataType::F32,
-            sample_rate: 44100,
+            sample_rate: 48000,
             channels: 2
         }
-    }, Some(&data));
+    }, Some(&data)).unwrap();
 
     /*let buffer2 = system.create_buffer(BufferDescription {
         format: AudioFormat {
@@ -27,7 +27,6 @@ fn test_mixr() {
     system.play_buffer(buffer, 0, PlayProperties {
         speed: 1.0,
         looping: true,
-        loop_start: 391670,
         ..Default::default()
     }).unwrap();
 
@@ -60,6 +59,7 @@ fn test_mixr() {
     }).unwrap();
 
     loop {
+        println!("{}, {}s", system.get_position_samples(0).unwrap(), system.get_position(0).unwrap());
         std::thread::sleep(std::time::Duration::from_secs(1));
     }
 }

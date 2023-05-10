@@ -6,7 +6,7 @@ use mxload::{stream::Wav, AudioStream};
 fn test_playback() {
     let mut system = AudioSystem::new(48000, 16);
 
-    let mut wav = Wav::from_file("/home/ollie/Music/necros_-_introspection.wav");
+    let mut wav = Wav::from_file("/home/ollie/Music/necros_-_introspection.wav").unwrap();
 
     println!("{:#?}", wav.format());
 
@@ -36,7 +36,7 @@ fn test_playback() {
 
     let buffer = system.create_buffer(BufferDescription {
         format: wav.format()
-    }, Some(&full_buffer));
+    }, Some(&full_buffer)).unwrap();
 
     system.play_buffer(buffer, 0, PlayProperties {
         speed: 1.15,

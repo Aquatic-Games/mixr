@@ -3,6 +3,7 @@ pub enum ErrorType {
     InvalidBuffer,
     InvalidVoice,
     InvalidValue,
+    InvalidOperation,
 
     Other
 }
@@ -102,6 +103,13 @@ impl Default for PlayProperties {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+pub enum PlayState {
+    Stopped,
+    Paused,
+    Playing
+}
+
 #[derive(Clone, Copy)]
 pub struct AudioBuffer {
     id: usize
@@ -123,7 +131,8 @@ impl AudioSystem {
 
         for _ in 0..voices {
             channels.push(Voice { 
-                buffer: None,
+                buffer: usize::MAX,
+                is_playing: false,
 
                 position: 0,
                 float_pos: 0.0,
@@ -203,9 +212,10 @@ impl AudioSystem {
             return Err(MixrError { e_type: ErrorType::InvalidValue, message: "Panning value must be between -1.0 and 1.0." });
         }
 
-        voice.buffer = Some(buffer.id);
+        voice.buffer = buffer.id;
         voice.position = properties.start_sample;
         voice.float_pos = 0.0;
+        voice.is_playing = true;
 
         let align = f64::ceil((internal_buffer.format.sample_rate as f64 / self.sample_rate as f64) * (properties.speed));
 
@@ -224,10 +234,146 @@ impl AudioSystem {
         Ok(())
     }
 
+    pub fn get_play_properties(&self, voice: u16) -> MixrResult<PlayProperties> {
+        let voice = self.voices.get(voice as usize).ok_or(MixrError { e_type: ErrorType::InvalidVoice, message: "Voice was out of range." })?;
+
+        Ok(voice.properties)
+    }
+
     pub fn set_play_properties(&mut self, voice: u16, properties: PlayProperties) -> MixrResult<()> {
         let voice = self.voices.get_mut(voice as usize).ok_or(MixrError { e_type: ErrorType::InvalidVoice, message: "Voice was out of range." })?;
 
         voice.properties = properties;
+
+        Ok(())
+    }
+
+    pub fn get_voice_state(&self, voice: u16) -> MixrResult<PlayState> {
+        let voice = self.voices.get(voice as usize).ok_or(MixrError { e_type: ErrorType::InvalidVoice, message: "Voice was out of range." })?;
+
+        if voice.is_playing {
+            Ok(PlayState::Playing)
+        } else if voice.buffer == usize::MAX {
+            Ok(PlayState::Stopped)
+        } else {
+            Ok(PlayState::Paused)
+        }
+    }
+
+    pub fn set_voice_state(&mut self, voice: u16, state: PlayState) -> MixrResult<()> {
+        let voice = self.voices.get_mut(voice as usize).ok_or(MixrError { e_type: ErrorType::InvalidVoice, message: "Voice was out of range." })?;
+
+        match state {
+            PlayState::Stopped => {
+                voice.is_playing = false;
+                voice.buffer = usize::MAX;
+                voice.position = 0;
+                voice.float_pos = 0.0;
+            },
+            PlayState::Paused => voice.is_playing = false,
+            PlayState::Playing => voice.is_playing = true,
+        }
+
+        Ok(())
+    }
+
+    pub fn get_position_samples(&self, voice: u16) -> MixrResult<usize> {
+        let voice = self.voices.get(voice as usize).ok_or(MixrError { e_type: ErrorType::InvalidVoice, message: "Voice was out of range." })?;
+
+        let buffer = if let Some(buf) = self.buffers.get(voice.buffer) {
+            buf
+        } else {
+            return Ok(0);
+        };
+
+        // The buffer that a voice is attached to may not necessarily exist in the vec, so we must check for that too.
+        let buffer = if let Some(buf) = buffer {
+            buf
+        } else {
+            return Ok(0);
+        };
+
+        Ok(voice.position * (voice.alignment / buffer.alignment))
+    }
+
+    pub fn set_position_samples(&mut self, voice: u16, position: usize) -> MixrResult<()> {
+        let voice = self.voices.get_mut(voice as usize).ok_or(MixrError { e_type: ErrorType::InvalidVoice, message: "Voice was out of range." })?;
+        
+        let buffer = if let Some(buf) = self.buffers.get(voice.buffer) {
+            buf
+        } else {
+            return Err(MixrError { e_type: ErrorType::InvalidOperation, message: "Cannot set the position of a voice that is stopped." });
+        };
+
+        // The buffer that a voice is attached to may not necessarily exist in the vec, so we must check for that too.
+        let buffer = if let Some(buf) = buffer {
+            buf
+        } else {
+            return Err(MixrError { e_type: ErrorType::InvalidOperation, message: "Cannot set the position of a voice that is stopped." });
+        };
+
+        if position >= buffer.data.len() / buffer.alignment {
+            return Err(MixrError { e_type: ErrorType::InvalidValue, message: "Position is outside of the buffer's size." });
+        }
+
+        voice.position = position;
+
+        Ok(())
+    }
+
+    pub fn get_position(&self, voice: u16) -> MixrResult<f64> {
+        let voice = self.voices.get(voice as usize).ok_or(MixrError { e_type: ErrorType::InvalidVoice, message: "Voice was out of range." })?;
+
+        let buffer = if let Some(buf) = self.buffers.get(voice.buffer) {
+            buf
+        } else {
+            return Ok(0.0);
+        };
+
+        // The buffer that a voice is attached to may not necessarily exist in the vec, so we must check for that too.
+        let buffer = if let Some(buf) = buffer {
+            buf
+        } else {
+            return Ok(0.0);
+        };
+
+        // In order to be speed accurate, we must also take the alignment into account.
+        // As such, as must divide the voice alignment by the buffer alignment. The voice alignment will ALWAYS be a multiple of the buffer alignment,
+        // and will NEVER be less than the buffer's alignment.
+        let position = ((voice.position as f64 * (voice.alignment / buffer.alignment) as f64) + voice.float_pos) / buffer.format.sample_rate as f64;
+
+        Ok(position)
+    }
+
+    pub fn set_position(&mut self, voice: u16, position: f64) -> MixrResult<()> {
+        if position < 0.0 {
+            return Err(MixrError { e_type: ErrorType::InvalidValue, message: "Position must be at least 0." });
+        }
+
+        let voice = self.voices.get_mut(voice as usize).ok_or(MixrError { e_type: ErrorType::InvalidVoice, message: "Voice was out of range." })?;
+        
+        let buffer = if let Some(buf) = self.buffers.get(voice.buffer) {
+            buf
+        } else {
+            return Err(MixrError { e_type: ErrorType::InvalidOperation, message: "Cannot set the position of a voice that is stopped." });
+        };
+
+        // The buffer that a voice is attached to may not necessarily exist in the vec, so we must check for that too.
+        let buffer = if let Some(buf) = buffer {
+            buf
+        } else {
+            return Err(MixrError { e_type: ErrorType::InvalidOperation, message: "Cannot set the position of a voice that is stopped." });
+        };
+
+        let position = position * buffer.format.sample_rate as f64;
+        let p_usize = position as usize;
+
+        if p_usize >= buffer.data.len() / buffer.alignment {
+            return Err(MixrError { e_type: ErrorType::InvalidValue, message: "Position is outside of the buffer's size." });
+        }
+
+        voice.position = p_usize;
+        voice.float_pos = position - p_usize as f64;
 
         Ok(())
     }
@@ -239,11 +385,11 @@ impl AudioSystem {
             buffer[sample_loc + 1] = 0.0;
 
             for voice in &mut self.voices {
-                let internal_buffer = if let Some(buf) = voice.buffer {
-                    self.buffers[buf].as_ref().unwrap()
-                } else {
+                if !voice.is_playing {
                     continue;
-                };
+                }
+
+                let internal_buffer = self.buffers[voice.buffer].as_ref().unwrap();
 
                 let format = internal_buffer.format;
                 let alignment = voice.alignment;
@@ -262,10 +408,10 @@ impl AudioSystem {
                         voice.float_pos = 0.0;
                         position = voice.position * alignment;
                     } else {
-                        voice.buffer = None;
+                        voice.is_playing = false;
+                        voice.buffer = usize::MAX;
                         voice.position = 0;
                         voice.float_pos = 0.0;
-                        voice.speed = 0.0;
 
                         continue;
                     }
@@ -320,8 +466,11 @@ struct Buffer {
 }
 
 struct Voice {
-    // The buffer that is playing. If None, then the voice is ignored.
-    buffer: Option<usize>,
+    // The buffer that is playing. If `is_playing` is false, this value SHOULD be usize::MAX.
+    buffer: usize,
+
+    // If true, the voice is playing. If false, then the voice is ignored.
+    is_playing: bool,
 
     // The current position (in samples) of the voice.
     position: usize,

@@ -2,7 +2,7 @@ use mxload::{stream::Wav, AudioStream};
 
 #[test]
 fn test_wav() {
-    let mut wav = Wav::from_file("/home/ollie/Music/necros_-_introspection.wav");
+    let mut wav = Wav::from_file("/home/ollie/Music/necros_-_introspection.wav").unwrap();
 
     println!("{:#?}", wav.format());
 
