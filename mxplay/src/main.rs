@@ -21,19 +21,27 @@ struct CliArgs {
 }
 
 fn main() {
+    println!("mxplay 0.1.0\npiegfx 2023");
+
     let args = CliArgs::parse();
     let speed = args.speed;
     let volume = args.volume;
     let looping = args.looping;
 
-    let mut wav = Wav::from_file(&args.paths[0]);
+    let mut wav = if let Ok(wav) = Wav::from_file(&args.paths[0]) {
+        wav
+    } else {
+        println!("Could not find file with path \"{}\"!", args.paths[0]);
+        return;
+    };
+
     let pcm = wav.get_pcm().unwrap();
 
     let mut system = AudioSystem::new(48000, 1);
 
     let buffer = system.create_buffer(BufferDescription {
         format: wav.format()
-    }, Some(&pcm));
+    }, Some(&pcm)).unwrap();
 
     system.play_buffer(buffer, 0, PlayProperties {
         speed,

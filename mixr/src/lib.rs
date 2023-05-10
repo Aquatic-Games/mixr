@@ -13,6 +13,8 @@ pub struct MixrError<'a> {
     pub message: &'a str
 }
 
+pub type MixrResult<'a, TResult> = Result<TResult, MixrError<'a>>;
+
 #[derive(Debug, Clone, Copy)]
 pub enum DataType {
     I8,
@@ -60,19 +62,43 @@ pub struct BufferDescription {
     pub format: AudioFormat
 }
 
+/// Various properties that denote how mixr will play back a sound.
 #[derive(Debug, Clone, Copy)]
 pub struct PlayProperties {
+    /// The relative volume to play the sound at.
+    /// A value of 1.0 means no change in the volume.
+    /// A value of 0.0 means the sound will play, but will not be audiable.
+    /// Values outside of this range are supported but may produce less than ideal results.
     pub volume: f64,
+
+    /// The relative speed to play the sound at.
+    /// A speed of 1.0 means the sound will play at its original speed.
+    /// A speed of 2.0 means the sound will play at double its original speed.
+    /// For best results, use values in the range of 0.5 to 2.0, however values outside this range are supported.
     pub speed: f64,
+
+    /// The Left-Right panning of the sound.
+    /// A value of 0 means central panning. A value of -1 means pan fully to the left, and a value of 1 means pan fully to the right.
+    /// Values outside of this range are invalid and will return an [`Err()`].
+    pub panning: f64,
     
+    /// If enabled, the sample will loop between `loop_start` and `loop_end`.
     pub looping: bool,
+
+    /// The starting point, in samples, of the loop. Once `loop_end` is reached, the playback position will jump to here.
     pub loop_start: usize,
-    pub loop_end: usize
+
+    /// The ending point, in samples, of the loop. Once the playback position reaches this value, it will jump back to `loop_start`.
+    /// Setting this field to a value of 0 will tell mixr you want to loop at the end of the sound.
+    pub loop_end: usize,
+
+    /// The starting point, in samples, at which to start playing the sound. All samples before this point will not be played.
+    pub start_sample: usize
 }
 
 impl Default for PlayProperties {
     fn default() -> Self {
-        Self { volume: 1.0, speed: 1.0, looping: false, loop_start: 0, loop_end: 0 }
+        Self { volume: 1.0, speed: 1.0, panning: 0.0, looping: false, loop_start: 0, loop_end: 0, start_sample: 0 }
     }
 }
 
@@ -125,7 +151,11 @@ impl AudioSystem {
         }
     }
 
-    pub fn create_buffer<T>(&mut self, description: BufferDescription, data: Option<&[T]>) -> AudioBuffer {
+    pub fn create_buffer<T>(&mut self, description: BufferDescription, data: Option<&[T]>) -> MixrResult<AudioBuffer> {
+        if description.format.channels > 2 || description.format.channels < 1 {
+            return Err(MixrError { e_type: ErrorType::InvalidValue, message: "Buffer format must have either 1 or 2 channels." });
+        }
+
         let data: Vec<u8> = if let Some(dat) = data {
             let length = dat.len() * std::mem::size_of::<T>();
             unsafe { Vec::from_raw_parts(dat.as_ptr() as *mut _, length, length) }
@@ -145,12 +175,19 @@ impl AudioSystem {
 
         self.buffers.push(Some(buffer));
 
-        AudioBuffer {
+        Ok(AudioBuffer {
             id: self.buffers.len() - 1
-        }
+        })
     }
 
-    pub fn play_buffer(&mut self, buffer: AudioBuffer, voice: u16, properties: PlayProperties) -> Result<(), MixrError> {
+    pub fn destroy_buffer(&mut self, buffer: AudioBuffer) -> MixrResult<()> {
+        let buffer = self.buffers.get_mut(buffer.id).ok_or(MixrError { e_type: ErrorType::InvalidBuffer, message: "The given buffer is invalid." })?;
+        *buffer = None;
+
+        Ok(())
+    }
+
+    pub fn play_buffer(&mut self, buffer: AudioBuffer, voice: u16, properties: PlayProperties) -> MixrResult<()> {
         let mut voice = self.voices.get_mut(voice as usize).ok_or(MixrError { e_type: ErrorType::InvalidVoice, message: "Voice was out of range." })?;
         let internal_buffer = self.buffers[buffer.id].as_ref().ok_or(MixrError { e_type: ErrorType::InvalidBuffer, message: "Buffer was not valid. Has it been deleted?" })?;
 
@@ -162,8 +199,12 @@ impl AudioSystem {
             }
         }
 
+        if properties.panning < -1.0 || properties.panning > 1.0 {
+            return Err(MixrError { e_type: ErrorType::InvalidValue, message: "Panning value must be between -1.0 and 1.0." });
+        }
+
         voice.buffer = Some(buffer.id);
-        voice.position = 0;
+        voice.position = properties.start_sample;
         voice.float_pos = 0.0;
 
         let align = f64::ceil((internal_buffer.format.sample_rate as f64 / self.sample_rate as f64) * (properties.speed));
@@ -179,6 +220,14 @@ impl AudioSystem {
         } else {
             internal_buffer.data.len()
         };
+
+        Ok(())
+    }
+
+    pub fn set_play_properties(&mut self, voice: u16, properties: PlayProperties) -> MixrResult<()> {
+        let voice = self.voices.get_mut(voice as usize).ok_or(MixrError { e_type: ErrorType::InvalidVoice, message: "Voice was out of range." })?;
+
+        voice.properties = properties;
 
         Ok(())
     }

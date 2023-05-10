@@ -5,7 +5,7 @@ pub mod stream;
 pub trait AudioStream {
     fn from_data(data: &[u8]) -> Self;
 
-    fn from_file(path: &str) -> Self;
+    fn from_file(path: &str) -> Result<Self, std::io::Error> where Self : Sized;
 
     fn format(&self) -> AudioFormat;
 

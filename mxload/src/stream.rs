@@ -18,8 +18,8 @@ impl AudioStream for Wav {
         todo!()
     }
 
-    fn from_file(path: &str) -> Self {
-        let file = File::open(path).unwrap();
+    fn from_file(path: &str) -> Result<Self, std::io::Error> {
+        let file = File::open(path)?;
 
         let mut reader = BinaryReader::new(file);
 
@@ -83,14 +83,14 @@ impl AudioStream for Wav {
             }
         }
 
-        Self {
+        Ok(Self {
             reader,
             format,
 
             data_size,
 
             current_pos: 0
-        }
+        })
     }
 
     fn format(&self) -> mixr::AudioFormat {
