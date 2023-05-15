@@ -1,6 +1,6 @@
 use std::fs::File;
 
-use crate::AudioStream;
+use crate::{AudioStream, TrackMetadata};
 use mixr::{AudioFormat, DataType};
 use skyetils::binary::BinaryReader;
 
@@ -8,6 +8,7 @@ pub struct Wav {
     reader: BinaryReader<File>,
 
     format: AudioFormat,
+    metadata: TrackMetadata,
 
     data_size: usize,
     current_pos: usize
@@ -28,6 +29,15 @@ impl AudioStream for Wav {
         const FMT : u32 = 0x20746D66;
         const DATA: u32 = 0x61746164;
 
+        // Metadata identifiers
+        const LIST: u32 = 0x5453494C;
+        const INFO: u32 = 0x4F464E49;
+        const INAM: u32 = 0x4D414E49;
+        const IART: u32 = 0x54524149;
+        const IPRD: u32 = 0x44524049;
+        const ICRD: u32 = 0x44524349;
+        const IGNR: u32 = 0x524E4749;
+
         if reader.read_u32().unwrap() != RIFF {
             panic!("Given file is not a valid wave file! (Missing RIFF header).");
         }
@@ -39,6 +49,7 @@ impl AudioStream for Wav {
         }
 
         let mut format = AudioFormat::default();
+        let mut metadata = TrackMetadata::default();
         let mut data_size = 0;
 
         loop {
@@ -73,7 +84,40 @@ impl AudioStream for Wav {
                 DATA => {
                     data_size = reader.read_u32().unwrap() as usize;
                     break;
-                }
+                },
+
+                // Read metadata info.
+                /*LIST => {
+                    let size = reader.read_u32().unwrap();
+                    let pos = reader.position().unwrap();
+
+                    while reader.position().unwrap() < pos + size as usize {
+                        match reader.read_u32().unwrap() {
+                            0 =>  { reader.read_u8().unwrap(); },
+
+                            INFO => {},
+
+                            INAM => {
+                                let size = reader.read_u32().unwrap();
+
+                                let bytes = reader.read_bytes(size as usize).unwrap();
+
+                                metadata.title = Some(String::from_utf8(bytes).unwrap());
+                            },
+
+                            _ => {
+
+
+                                let chunk_size = reader.read_u32().unwrap();
+                                println!("{chunk_size}");
+                                let curr_pos = reader.position().unwrap();
+                                reader.set_position(curr_pos + chunk_size as usize).unwrap();
+                            }
+                        }
+                    }
+
+                    println!("{}", pos + size as usize);
+                },*/
 
                 _ => {
                     let chunk_size = reader.read_u32().unwrap();
@@ -86,6 +130,7 @@ impl AudioStream for Wav {
         Ok(Self {
             reader,
             format,
+            metadata,
 
             data_size,
 
@@ -113,5 +158,9 @@ impl AudioStream for Wav {
 
     fn get_pcm(&mut self) -> Result<Vec<u8>, std::io::Error> {
         self.reader.read_bytes(self.data_size)
+    }
+
+    fn metadata(&self) -> &TrackMetadata {
+        &self.metadata
     }
 }

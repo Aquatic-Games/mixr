@@ -115,6 +115,10 @@ pub struct AudioBuffer {
     id: usize
 }
 
+pub trait AudioCallbacks {
+    fn buffer_finished(&mut self, buffer: AudioBuffer, voice: u16);
+}
+
 pub struct AudioSystem {
     pub volume: f64,
     //pub fade_in: usize,
@@ -167,7 +171,7 @@ impl AudioSystem {
 
         let data: Vec<u8> = if let Some(dat) = data {
             let length = dat.len() * std::mem::size_of::<T>();
-            unsafe { Vec::from_raw_parts(dat.as_ptr() as *mut _, length, length) }
+            unsafe { std::slice::from_raw_parts(dat.as_ptr() as *mut _, length).to_vec() }
         } else {
             Vec::new()
         };
@@ -196,6 +200,30 @@ impl AudioSystem {
         Ok(())
     }
 
+    pub fn update_buffer<T>(&mut self, buffer: AudioBuffer, format: AudioFormat, data: Option<&[T]>) -> MixrResult<()> {
+        let buffer = self.buffers.get_mut(buffer.id).ok_or(MixrError { e_type: ErrorType::InvalidBuffer, message: "The given buffer is invalid." })?;
+
+        let buffer = if let Some(buf) = buffer {
+            buf
+        } else {
+            return Err(MixrError { e_type: ErrorType::InvalidBuffer, message: "The given buffer is invalid." });
+        };
+
+        buffer.data = if let Some(dat) = data {
+            let length = dat.len() * std::mem::size_of::<T>();
+            unsafe { std::slice::from_raw_parts(dat.as_ptr() as *mut _, length).to_vec() }
+        } else {
+            Vec::new()
+        };
+
+        buffer.format = format;
+
+        let alignment = (format.data_type.bytes() * format.channels) as usize;
+        buffer.alignment = alignment;
+
+        Ok(())
+    }
+
     pub fn play_buffer(&mut self, buffer: AudioBuffer, voice: u16, properties: PlayProperties) -> MixrResult<()> {
         let mut voice = self.voices.get_mut(voice as usize).ok_or(MixrError { e_type: ErrorType::InvalidVoice, message: "Voice was out of range." })?;
         let internal_buffer = self.buffers[buffer.id].as_ref().ok_or(MixrError { e_type: ErrorType::InvalidBuffer, message: "Buffer was not valid. Has it been deleted?" })?;
@@ -215,6 +243,10 @@ impl AudioSystem {
         voice.buffer = buffer.id;
         voice.position = properties.start_sample;
         voice.float_pos = 0.0;
+
+        voice.previous_position = 0;
+        voice.lerp_pos = 0;
+
         voice.is_playing = true;
 
         let align = f64::ceil((internal_buffer.format.sample_rate as f64 / self.sample_rate as f64) * (properties.speed));

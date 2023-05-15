@@ -1,7 +1,11 @@
+use std::collections::VecDeque;
+
 use clap::Parser;
+use crossterm::*;
 use mixr::{AudioSystem, BufferDescription, PlayProperties, PlayState};
 use mxload::{stream::Wav, AudioStream};
 use sdl2::audio::{AudioSpecDesired, AudioCallback};
+use std::io::{stdout, Write};
 
 #[derive(Parser)]
 struct CliArgs {
@@ -26,12 +30,23 @@ fn main() {
     let volume = args.volume;
     let looping = args.looping;
 
-    let mut wav = if let Ok(wav) = Wav::from_file(&args.paths[0]) {
+    let mut files = VecDeque::from(args.paths);
+
+    let first_file = files.pop_front().unwrap();
+    let mut wav = if let Ok(wav) = Wav::from_file(&first_file) {
         wav
     } else {
-        println!("Could not find file with path \"{}\"!", args.paths[0]);
+        println!("Could not find file with path \"{}\"!", first_file);
         return;
     };
+
+    execute!(
+        stdout(),
+        cursor::Hide,
+        terminal::Clear(terminal::ClearType::All)
+    ).unwrap();
+
+    terminal::enable_raw_mode().unwrap();
 
     let pcm = wav.get_pcm().unwrap();
 
@@ -41,12 +56,14 @@ fn main() {
         format: wav.format()
     }, Some(&pcm)).unwrap();
 
-    system.play_buffer(buffer, 0, PlayProperties {
+    let properties = PlayProperties {
         speed,
         volume,
         looping,
         ..Default::default()
-    }).unwrap();
+    };
+
+    system.play_buffer(buffer, 0, properties).unwrap();
 
     let sdl = sdl2::init().unwrap();
     let audio = sdl.audio().unwrap();
@@ -54,36 +71,98 @@ fn main() {
     let spec = AudioSpecDesired {
         freq: Some(48000),
         channels: Some(2),
-        samples: Some(512),
+        samples: Some(8192),
     };
 
-    let device = audio.open_playback(None, &spec, |_| {
+    let mut device = audio.open_playback(None, &spec, |_| {
         Audio {
-            system: &mut system
+            system
         }
     }).unwrap();
 
     device.resume();
 
     ctrlc::set_handler(|| {
+        execute!(
+            stdout(),
+            cursor::Show
+        ).unwrap();
         println!(); // print a newline
         std::process::exit(0);
     }).unwrap();
 
     loop {
-        std::thread::sleep(std::time::Duration::from_secs(1));
+        let event = if event::poll(std::time::Duration::from_millis(500)).unwrap() {
+            Some(event::read().unwrap())
+        } else {
+            None
+        };
 
-        if system.get_voice_state(0).unwrap() != PlayState::Playing {
-            std::process::exit(0);
+        let mut guard = device.lock();
+        let system = &mut guard.system;
+
+        let curr_secs = system.get_position(0).unwrap() as usize;
+        let state = system.get_voice_state(0).unwrap();
+
+        if let Some(event) = event {
+            match event {
+                event::Event::Key(k) => {
+                    match k.code {
+                        event::KeyCode::Char('p') => {
+                            system.set_voice_state(0, if state == PlayState::Playing { PlayState::Paused } else { PlayState::Playing }).unwrap();
+                        },
+
+                        event::KeyCode::Char('q') => { break; },
+
+                        _ => {}
+                    }
+                },
+
+                _ => {}
+            }
+        }
+
+        queue!(
+            stdout(),
+            cursor::MoveTo(0, 0),
+            style::Print(format!("{state:?} {:0>2}:{:0>2}:{:0>2}", curr_secs / 60 / 60, (curr_secs / 60) % 60, curr_secs % 60))
+        ).unwrap();
+        
+        stdout().flush().unwrap();
+
+        if system.get_voice_state(0).unwrap() == PlayState::Stopped {
+            let path = if let Some(f) = files.pop_front() {
+                f
+            } else {
+                break;
+            };
+
+            let mut wav = if let Ok(wav) = Wav::from_file(&path) {
+                wav
+            } else {
+                println!("Could not find file with path \"{}\"!", path);
+                break;
+            };
+
+            system.update_buffer(buffer, wav.format(), Some(&wav.get_pcm().unwrap())).unwrap();
+            system.play_buffer(buffer, 0, properties).unwrap();
         }
     }
+
+    terminal::disable_raw_mode().unwrap();
+    println!();
+    execute!(
+        stdout(),
+        cursor::Show,
+        terminal::Clear(terminal::ClearType::All)
+    ).unwrap();
 }
 
-struct Audio<'a> {
-    system: &'a mut AudioSystem
+struct Audio {
+    system: AudioSystem
 }
 
-impl AudioCallback for Audio<'_> {
+impl AudioCallback for Audio {
     type Channel = f32;
 
     fn callback(&mut self, buf: &mut [Self::Channel]) {

@@ -12,3 +12,4 @@ ctrlc = "3.2.5"
 
 mixr = { path = "../mixr" }
 mxload = { path = "../mxload" }
+crossterm = "0.26.1"
