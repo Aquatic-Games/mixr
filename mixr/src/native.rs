@@ -49,6 +49,18 @@ impl DataType {
             DataType::F64 => crate::DataType::F64,
         }
     }
+
+    pub fn from_mixr(data_type: crate::DataType) -> Self {
+        match data_type {
+            crate::DataType::I8 =>  DataType::I8,
+            crate::DataType::U8 =>  DataType::U8,
+            crate::DataType::I16 => DataType::I16,
+            crate::DataType::U16 => DataType::U16,
+            crate::DataType::I32 => DataType::I32,
+            crate::DataType::F32 => DataType::F32,
+            crate::DataType::F64 => DataType::F64,
+        }
+    }
 }
 
 #[repr(C)]
@@ -64,6 +76,14 @@ impl AudioFormat {
             data_type: self.data_type.to_mixr(),
             sample_rate: self.sample_rate,
             channels: self.channels
+        }
+    }
+
+    pub fn from_mixr(format: crate::AudioFormat) -> Self {
+        Self {
+            data_type: DataType::from_mixr(format.data_type),
+            sample_rate: format.sample_rate,
+            channels: format.channels
         }
     }
 }
@@ -180,8 +200,26 @@ pub unsafe extern fn mxStreamFree(stream: Stream) {
 }
 
 #[no_mangle]
-pub unsafe extern fn mxStreamWavGetPcm(stream: Stream, data: *mut *mut c_void, length: *mut usize) {
+pub unsafe extern fn mxStreamWavGetFormat(stream: Stream, format: *mut AudioFormat) {
     let stream: Box<Wav> = Box::from_raw(stream as *mut _);
 
-    let pcm = stream.get_pcm()
+    let fmt = AudioFormat::from_mixr(stream.format());
+
+    *format = fmt;
+
+    Box::into_raw(stream);
+}
+
+// TODO: This API, not sure I like it.
+#[no_mangle]
+pub unsafe extern fn mxStreamWavGetPcm(stream: Stream, data: *mut c_void, length: *mut usize) {
+    let mut stream: Box<Wav> = Box::from_raw(stream as *mut _);
+
+    *length = stream.pcm_length();
+
+    if data != std::ptr::null_mut() {
+        stream.get_buffer(std::slice::from_raw_parts_mut(data as *mut _, *length)).unwrap();
+    }
+
+    Box::into_raw(stream);
 }

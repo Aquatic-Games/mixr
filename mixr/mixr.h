@@ -78,6 +78,12 @@ void mxReadBufferStereoF32(AudioSystem *system, float *buffer, uintptr_t length)
 
 Stream mxStreamLoadWav(const char *path);
 
+void mxStreamFree(Stream stream);
+
+void mxStreamWavGetFormat(Stream stream, AudioFormat *format);
+
+void mxStreamWavGetPcm(Stream stream, void *data, uintptr_t *length);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif // __cplusplus

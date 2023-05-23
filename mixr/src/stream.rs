@@ -15,6 +15,8 @@ pub trait AudioStream {
     fn get_buffer(&mut self, buf: &mut [u8]) -> Result<usize, std::io::Error>;
 
     fn get_pcm(&mut self) -> Result<Vec<u8>, std::io::Error>;
+
+    fn pcm_length(&self) -> usize;
 }
 
 #[derive(Debug, Clone, Default)]
@@ -180,6 +182,10 @@ impl AudioStream for Wav {
 
     fn get_pcm(&mut self) -> Result<Vec<u8>, std::io::Error> {
         self.reader.read_bytes(self.data_size)
+    }
+
+    fn pcm_length(&self) -> usize {
+        self.data_size
     }
 
     fn metadata(&self) -> &TrackMetadata {
