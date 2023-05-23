@@ -3,7 +3,11 @@ name = "mixr"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+crate-type = ["lib", "staticlib", "cdylib"]
+
+[dependencies]
+skyetils = { git = "https://github.com/skyebird189/skyetils" }
 
 [dev-dependencies]
 sdl2 = "0.35.2"

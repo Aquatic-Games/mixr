@@ -2,8 +2,7 @@ use std::collections::VecDeque;
 
 use clap::Parser;
 use crossterm::*;
-use mixr::{AudioSystem, BufferDescription, PlayProperties, PlayState};
-use mxload::{stream::Wav, AudioStream};
+use mixr::{AudioSystem, BufferDescription, PlayProperties, PlayState, stream::{Wav, AudioStream}};
 use sdl2::audio::{AudioSpecDesired, AudioCallback};
 use std::io::{stdout, Write};
 

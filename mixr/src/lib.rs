@@ -1,3 +1,6 @@
+pub mod stream;
+pub mod native;
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ErrorType {
     InvalidBuffer,
@@ -111,6 +114,7 @@ pub enum PlayState {
 }
 
 #[derive(Clone, Copy, PartialEq)]
+#[repr(C)]
 pub struct AudioBuffer {
     id: usize
 }
