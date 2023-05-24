@@ -11,6 +11,8 @@ pub enum MixrResult {
     InvalidValue,
     InvalidOperation,
 
+    FileNotFound,
+
     Other
 }
 
@@ -336,7 +338,18 @@ pub unsafe extern fn mxReadBufferStereoF32(system: &mut AudioSystem, buffer: *mu
 
 #[no_mangle]
 pub unsafe extern fn mxStreamLoadWav(path: *const c_char, stream: *mut *mut Stream) -> MixrResult {
-    let wav = Wav::from_file(CStr::from_ptr(path).to_str().unwrap()).unwrap();
+    let wav = Wav::from_file(CStr::from_ptr(path).to_str().unwrap());
+
+    let wav = match wav {
+        Ok(wav) => wav,
+        Err(err) => {
+            if err.kind() == std::io::ErrorKind::NotFound {
+                return MixrResult::FileNotFound
+            } else {
+                return MixrResult::Other
+            }
+        }
+    };
 
     let mx_stream = Stream {
         stream: Box::new(wav)
