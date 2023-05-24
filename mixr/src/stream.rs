@@ -45,6 +45,11 @@ impl AudioStream for Wav {
 
     fn from_file(path: &str) -> Result<Self, std::io::Error> {
         let file = File::open(path)?;
+        if let Ok(metadata) = file.metadata() {
+            if metadata.is_dir() {
+                return Err(std::io::Error::new(std::io::ErrorKind::InvalidData, "Given file is a directory."));
+            }
+        }
 
         let mut reader = BinaryReader::new(file);
 
@@ -63,13 +68,13 @@ impl AudioStream for Wav {
         const IGNR: u32 = 0x524E4749;
 
         if reader.read_u32().unwrap() != RIFF {
-            panic!("Given file is not a valid wave file! (Missing RIFF header).");
+            return Err(std::io::Error::new(std::io::ErrorKind::InvalidData, "Given file is not a valid wave file! (Missing RIFF header)."));
         }
 
         reader.read_u32().unwrap(); // file size
 
         if reader.read_u32().unwrap() != WAVE {
-            panic!("Given file is not a valid wave file! (Missing WAVE header).");
+            return Err(std::io::Error::new(std::io::ErrorKind::InvalidData, "Given file is not a valid wave file! (Missing WAVE header)."));
         }
 
         let mut format = AudioFormat::default();
@@ -80,7 +85,7 @@ impl AudioStream for Wav {
             match reader.read_u32().unwrap() {
                 FMT => {
                     if reader.read_u32().unwrap() != 16 {
-                        panic!("Malformed fmt header.");
+                        return Err(std::io::Error::new(std::io::ErrorKind::InvalidData, "Malformed fmt header."));
                     }
 
                     let fmt_type = reader.read_u16().unwrap();
@@ -99,7 +104,7 @@ impl AudioStream for Wav {
                         (1, 16) => DataType::I16,
                         (1, 32) => DataType::I32,
                         (3, 32) => DataType::F32,
-                        _ => panic!("Unsupported audio format.")
+                        _ => return Err(std::io::Error::new(std::io::ErrorKind::InvalidData, "Unsupported audio format."))
                     };
 
                     format = AudioFormat { data_type, sample_rate, channels: channels as u8 };
