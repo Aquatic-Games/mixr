@@ -3,7 +3,7 @@ use std::ffi::{c_void, c_char, CStr};
 use crate::{AudioSystem, AudioBuffer, stream::{Wav, AudioStream}};
 
 #[repr(C)]
-pub enum AudioResult {
+pub enum MixrResult {
     Ok,
 
     InvalidBuffer,
@@ -14,7 +14,7 @@ pub enum AudioResult {
     Other
 }
 
-impl AudioResult {
+impl MixrResult {
     pub fn from_mixr(result: crate::MixrError) -> Self {
         match result.e_type {
             crate::ErrorType::InvalidBuffer => Self::InvalidBuffer,
@@ -124,6 +124,43 @@ impl PlayProperties {
             start_sample: self.start_sample
         }
     }
+
+    pub fn from_mixr(properties: crate::PlayProperties) -> Self {
+        Self {
+            volume: properties.volume,
+            speed: properties.speed,
+            panning: properties.panning,
+            looping: properties.looping,
+            loop_start: properties.loop_start,
+            loop_end: properties.loop_end,
+            start_sample: properties.start_sample
+        }
+    }
+}
+
+#[repr(C)]
+pub enum PlayState {
+    Stopped,
+    Paused,
+    Playing
+}
+
+impl PlayState {
+    pub fn to_mixr(&self) -> crate::PlayState {
+        match self {
+            PlayState::Stopped => crate::PlayState::Stopped,
+            PlayState::Paused => crate::PlayState::Paused,
+            PlayState::Playing => crate::PlayState::Playing,
+        }
+    }
+
+    pub fn from_mixr(state: crate::PlayState) -> Self {
+        match state {
+            crate::PlayState::Stopped => Self::Stopped,
+            crate::PlayState::Paused => Self::Paused,
+            crate::PlayState::Playing => PlayState::Playing,
+        }
+    }
 }
 
 pub struct Stream {
@@ -143,7 +180,7 @@ pub unsafe extern fn mxDestroySystem(system: &mut AudioSystem) {
 }
 
 #[no_mangle]
-pub unsafe extern fn mxCreateBuffer(system: &mut AudioSystem, description: BufferDescription, data: *const c_void, length: usize, buffer: *mut AudioBuffer) -> AudioResult {
+pub unsafe extern fn mxCreateBuffer(system: &mut AudioSystem, description: BufferDescription, data: *const c_void, length: usize, buffer: *mut AudioBuffer) -> MixrResult {
     // If data is nullptr, that is equivalent to there being no data. mixr itself cannot handle nullpts, so we must use `None` instead.
     let data = if data == std::ptr::null() {
         None
@@ -155,30 +192,138 @@ pub unsafe extern fn mxCreateBuffer(system: &mut AudioSystem, description: Buffe
 
     let buf = match buf {
         Ok(buf) => buf,
-        Err(err) => return AudioResult::from_mixr(err),
+        Err(err) => return MixrResult::from_mixr(err),
     };
 
     *buffer = buf;
-    AudioResult::Ok
+    MixrResult::Ok
 }
 
 #[no_mangle]
-pub unsafe extern fn mxDestroyBuffer(system: &mut AudioSystem, buffer: AudioBuffer) -> AudioResult {
+pub unsafe extern fn mxDestroyBuffer(system: &mut AudioSystem, buffer: AudioBuffer) -> MixrResult {
     let result = system.destroy_buffer(buffer);
 
     match result {
-        Ok(_) => AudioResult::Ok,
-        Err(err) => AudioResult::from_mixr(err),
+        Ok(_) => MixrResult::Ok,
+        Err(err) => MixrResult::from_mixr(err),
     }
 }
 
 #[no_mangle]
-pub unsafe extern fn mxPlayBuffer(system: &mut AudioSystem, buffer: AudioBuffer, voice: u16, properties: PlayProperties) -> AudioResult {
+pub unsafe extern fn mxUpdateBuffer(system: &mut AudioSystem, buffer: AudioBuffer, format: AudioFormat, data: *const c_void, length: usize) -> MixrResult {
+    let data = if data == std::ptr::null() {
+        None
+    } else {
+        Some(std::slice::from_raw_parts(data as *const u8, length))
+    };
+
+    let result = system.update_buffer(buffer, format.to_mixr(), data);
+
+    match result {
+        Ok(_) => MixrResult::Ok,
+        Err(err) => MixrResult::from_mixr(err),
+    }
+}
+
+#[no_mangle]
+pub unsafe extern fn mxPlayBuffer(system: &mut AudioSystem, buffer: AudioBuffer, voice: u16, properties: PlayProperties) -> MixrResult {
     let result = system.play_buffer(buffer, voice, properties.to_mixr());
 
     match result {
-        Ok(_) => AudioResult::Ok,
-        Err(err) => AudioResult::from_mixr(err),
+        Ok(_) => MixrResult::Ok,
+        Err(err) => MixrResult::from_mixr(err),
+    }
+}
+
+#[no_mangle]
+pub unsafe extern fn mxGetPlayProperties(system: &mut AudioSystem, voice: u16, properties: *mut PlayProperties) -> MixrResult {
+    let props = system.get_play_properties(voice);
+
+    let props = match props {
+        Ok(props) => PlayProperties::from_mixr(props),
+        Err(err) => return MixrResult::from_mixr(err),
+    };
+
+    *properties = props;
+    MixrResult::Ok
+}
+
+#[no_mangle]
+pub unsafe extern fn mxSetPlayProperties(system: &mut AudioSystem, voice: u16, properties: PlayProperties) -> MixrResult {
+    let result = system.set_play_properties(voice, properties.to_mixr());
+
+    match result {
+        Ok(_) => MixrResult::Ok,
+        Err(err) => MixrResult::from_mixr(err),
+    }
+}
+
+#[no_mangle]
+pub unsafe extern fn mxGetVoiceState(system: &mut AudioSystem, voice: u16, state: *mut PlayState) -> MixrResult {
+    let mx_state = system.get_voice_state(voice);
+
+    let mx_state = match mx_state {
+        Ok(state) => PlayState::from_mixr(state),
+        Err(err) => return MixrResult::from_mixr(err),
+    };
+
+    *state = mx_state;
+    MixrResult::Ok
+}
+
+#[no_mangle]
+pub unsafe extern fn mxSetVoiceState(system: &mut AudioSystem, voice: u16, state: PlayState) -> MixrResult {
+    let result = system.set_voice_state(voice, state.to_mixr());
+
+    match result {
+        Ok(_) => MixrResult::Ok,
+        Err(err) => MixrResult::from_mixr(err),
+    }
+}
+
+#[no_mangle]
+pub unsafe extern fn mxGetPositionSamples(system: &mut AudioSystem, voice: u16, position: *mut usize) -> MixrResult {
+    let pos = system.get_position_samples(voice);
+
+    let pos = match pos {
+        Ok(pos) => pos,
+        Err(err) => return MixrResult::from_mixr(err),
+    };
+
+    *position = pos;
+    MixrResult::Ok
+}
+
+#[no_mangle]
+pub unsafe extern fn mxSetPositionSamples(system: &mut AudioSystem, voice: u16, position: usize) -> MixrResult {
+    let result = system.set_position_samples(voice, position);
+
+    match result {
+        Ok(_) => MixrResult::Ok,
+        Err(err) => MixrResult::from_mixr(err)
+    }
+}
+
+#[no_mangle]
+pub unsafe extern fn mxGetPosition(system: &mut AudioSystem, voice: u16, position: *mut f64) -> MixrResult {
+    let pos = system.get_position(voice);
+
+    let pos = match pos {
+        Ok(pos) => pos,
+        Err(err) => return MixrResult::from_mixr(err),
+    };
+
+    *position = pos;
+    MixrResult::Ok
+}
+
+#[no_mangle]
+pub unsafe extern fn mxSetPosition(system: &mut AudioSystem, voice: u16, position: f64) -> MixrResult {
+    let result = system.set_position(voice, position);
+
+    match result {
+        Ok(_) => MixrResult::Ok,
+        Err(err) => MixrResult::from_mixr(err),
     }
 }
 
@@ -190,7 +335,7 @@ pub unsafe extern fn mxReadBufferStereoF32(system: &mut AudioSystem, buffer: *mu
 }
 
 #[no_mangle]
-pub unsafe extern fn mxStreamLoadWav(path: *const c_char, stream: *mut *mut Stream) -> AudioResult {
+pub unsafe extern fn mxStreamLoadWav(path: *const c_char, stream: *mut *mut Stream) -> MixrResult {
     let wav = Wav::from_file(CStr::from_ptr(path).to_str().unwrap()).unwrap();
 
     let mx_stream = Stream {
@@ -199,7 +344,7 @@ pub unsafe extern fn mxStreamLoadWav(path: *const c_char, stream: *mut *mut Stre
 
     *stream = Box::into_raw(Box::new(mx_stream));
 
-    AudioResult::Ok
+    MixrResult::Ok
 }
 
 #[no_mangle]

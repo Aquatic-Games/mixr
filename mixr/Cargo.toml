@@ -9,6 +9,9 @@ crate-type = ["lib", "staticlib", "cdylib"]
 [dependencies]
 skyetils = { git = "https://github.com/skyebird189/skyetils" }
 
+[build-dependencies]
+cbindgen = "0.24.3"
+
 [dev-dependencies]
 sdl2 = "0.35.2"
 ctrlc = "3.2.5"

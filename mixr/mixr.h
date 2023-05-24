@@ -7,15 +7,6 @@
 #include <stdlib.h>
 
 typedef enum {
-  AUDIO_RESULT_OK,
-  AUDIO_RESULT_INVALID_BUFFER,
-  AUDIO_RESULT_INVALID_VOICE,
-  AUDIO_RESULT_INVALID_VALUE,
-  AUDIO_RESULT_INVALID_OPERATION,
-  AUDIO_RESULT_OTHER,
-} AudioResult;
-
-typedef enum {
   DATA_TYPE_I8,
   DATA_TYPE_U8,
   DATA_TYPE_I16,
@@ -24,6 +15,21 @@ typedef enum {
   DATA_TYPE_F32,
   DATA_TYPE_F64,
 } DataType;
+
+typedef enum {
+  MIXR_RESULT_OK,
+  MIXR_RESULT_INVALID_BUFFER,
+  MIXR_RESULT_INVALID_VOICE,
+  MIXR_RESULT_INVALID_VALUE,
+  MIXR_RESULT_INVALID_OPERATION,
+  MIXR_RESULT_OTHER,
+} MixrResult;
+
+typedef enum {
+  PLAY_STATE_STOPPED,
+  PLAY_STATE_PAUSED,
+  PLAY_STATE_PLAYING,
+} PlayState;
 
 typedef struct AudioSystem AudioSystem;
 
@@ -61,22 +67,44 @@ AudioSystem *mxCreateSystem(uint32_t sample_rate, uint16_t voices);
 
 void mxDestroySystem(AudioSystem *system);
 
-AudioResult mxCreateBuffer(AudioSystem *system,
-                           BufferDescription description,
-                           const void *data,
-                           uintptr_t length,
-                           AudioBuffer *buffer);
+MixrResult mxCreateBuffer(AudioSystem *system,
+                          BufferDescription description,
+                          const void *data,
+                          uintptr_t length,
+                          AudioBuffer *buffer);
 
-AudioResult mxDestroyBuffer(AudioSystem *system, AudioBuffer buffer);
+MixrResult mxDestroyBuffer(AudioSystem *system, AudioBuffer buffer);
 
-AudioResult mxPlayBuffer(AudioSystem *system,
-                         AudioBuffer buffer,
-                         uint16_t voice,
-                         PlayProperties properties);
+MixrResult mxUpdateBuffer(AudioSystem *system,
+                          AudioBuffer buffer,
+                          AudioFormat format,
+                          const void *data,
+                          uintptr_t length);
+
+MixrResult mxPlayBuffer(AudioSystem *system,
+                        AudioBuffer buffer,
+                        uint16_t voice,
+                        PlayProperties properties);
+
+MixrResult mxGetPlayProperties(AudioSystem *system, uint16_t voice, PlayProperties *properties);
+
+MixrResult mxSetPlayProperties(AudioSystem *system, uint16_t voice, PlayProperties properties);
+
+MixrResult mxGetVoiceState(AudioSystem *system, uint16_t voice, PlayState *state);
+
+MixrResult mxSetVoiceState(AudioSystem *system, uint16_t voice, PlayState state);
+
+MixrResult mxGetPositionSamples(AudioSystem *system, uint16_t voice, uintptr_t *position);
+
+MixrResult mxSetPositionSamples(AudioSystem *system, uint16_t voice, uintptr_t position);
+
+MixrResult mxGetPosition(AudioSystem *system, uint16_t voice, double *position);
+
+MixrResult mxSetPosition(AudioSystem *system, uint16_t voice, double position);
 
 void mxReadBufferStereoF32(AudioSystem *system, float *buffer, uintptr_t length);
 
-AudioResult mxStreamLoadWav(const char *path, Stream **stream);
+MixrResult mxStreamLoadWav(const char *path, Stream **stream);
 
 void mxStreamFree(Stream *stream);
 
