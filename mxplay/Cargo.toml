@@ -6,9 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-mixr = { path = "../mixr" }
-mxload = { path = "../mxload" }
+clap = { version = "4.2.7", features = ["derive"] }
 sdl2 = { version = "0.35.2", features = ["bundled"] }
-libc = "0.2.138"
-ctrlc = "3.2.4"
-clap = { version = "4.0.32", features = ["derive"] }
+ctrlc = "3.2.5"
+
+mixr = { path = "../mixr" }
+crossterm = "0.26.1"

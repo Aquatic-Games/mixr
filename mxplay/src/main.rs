@@ -1,14 +1,14 @@
-// mixr, piegfx 2023.
-// Play a wave file.
-// Simply input your path, and the program will run until the sound has finished.
+use std::collections::VecDeque;
 
 use clap::Parser;
-use mixr::{self, ChannelProperties, BufferDescription, DataType, system::AudioSystem};
-use mxload::SupportedFormat;
+use crossterm::*;
+use mixr::{AudioSystem, BufferDescription, PlayProperties, PlayState, stream::{Wav, AudioStream}};
 use sdl2::audio::{AudioSpecDesired, AudioCallback};
+use std::io::{stdout, Write};
 
 #[derive(Parser)]
-struct CommandArgs {
+struct CliArgs {
+    #[arg(required = true)]
     paths: Vec<String>,
 
     #[arg(short, long, default_value_t = 1.0)]
@@ -17,127 +17,154 @@ struct CommandArgs {
     #[arg(short, long, default_value_t = 1.0)]
     speed: f64,
 
-    #[arg(short, long, default_value_t = 0.5)]
-    panning: f64,
-
     #[arg(long, default_value_t = false)]
     looping: bool
 }
 
 fn main() {
-    println!("mxplay 0.1.0\n(C) piegfx 2023");
+    println!("mxplay 0.1.0\npiegfx 2023");
 
-    const SAMPLE_RATE: i32 = 48000;
-    let mut system: AudioSystem = AudioSystem::new(SAMPLE_RATE, 1);
-
-    let args = CommandArgs::parse();
-    let path = args.paths[0].as_str();
-    let volume = args.volume;
+    let args = CliArgs::parse();
     let speed = args.speed;
-    let panning = args.panning;
+    let volume = args.volume;
     let looping = args.looping;
 
-    println!("Loading \"{path}\"...");
+    let mut files = VecDeque::from(args.paths);
 
-    let file = if let Ok(data) = std::fs::read(path) {
-        data
+    let first_file = files.pop_front().unwrap();
+    let mut wav = if let Ok(wav) = Wav::from_file(&first_file) {
+        wav
     } else {
-        println!("Failed to find file \"{path}\".");
+        println!("Could not find file with path \"{}\"!", first_file);
         return;
     };
 
-    let wav = mxload::wav::Wav::load_memory(&file).unwrap();
-    //let wav = mxload::module::Module::load_memory(&file).unwrap();
-    let buffer = system.create_buffer(BufferDescription { data_type: DataType::Pcm, format: wav.format() }, Some(&wav.pcm_data()));
+    execute!(
+        stdout(),
+        cursor::Hide,
+        terminal::Clear(terminal::ClearType::All)
+    ).unwrap();
 
-    let properties = ChannelProperties {
-        volume,
+    terminal::enable_raw_mode().unwrap();
+
+    let pcm = wav.get_pcm().unwrap();
+
+    let mut system = AudioSystem::new(48000, 1);
+
+    let buffer = system.create_buffer(BufferDescription {
+        format: wav.format()
+    }, Some(&pcm)).unwrap();
+
+    let properties = PlayProperties {
         speed,
-        panning,
-        looping: if args.paths.len() == 1 { looping } else { false },
-        interpolation: mixr::InterpolationType::Linear,
-        loop_start: 0,
-        loop_end: -1,
+        volume,
+        looping,
+        ..Default::default()
     };
 
     system.play_buffer(buffer, 0, properties).unwrap();
 
-    println!("Playing \"{path}\"");
-
     let sdl = sdl2::init().unwrap();
     let audio = sdl.audio().unwrap();
 
-    let desired_spec = AudioSpecDesired {
-        freq: Some(SAMPLE_RATE),
+    let spec = AudioSpecDesired {
+        freq: Some(48000),
         channels: Some(2),
-        samples: Some(8192)
+        samples: Some(8192),
     };
 
-    let device = audio.open_playback(None, &desired_spec, |_| {
+    let mut device = audio.open_playback(None, &spec, |_| {
         Audio {
-            properties,
-            looping,
-            current_path: 0,
-            paths: args.paths,
-            system: &mut system
+            system
         }
     }).unwrap();
 
     device.resume();
 
     ctrlc::set_handler(|| {
-        println!();
-        std::process::exit(0)
+        execute!(
+            stdout(),
+            cursor::Show
+        ).unwrap();
+        println!(); // print a newline
+        std::process::exit(0);
     }).unwrap();
 
     loop {
-        std::thread::sleep(std::time::Duration::from_secs(1));
-        if !system.is_playing(0) {
-            std::process::exit(0);
-        }
-    }
-}
+        let event = if event::poll(std::time::Duration::from_millis(500)).unwrap() {
+            Some(event::read().unwrap())
+        } else {
+            None
+        };
 
-struct Audio<'a> {
-    properties: ChannelProperties,
-    looping: bool,
-    system: &'a mut AudioSystem,
-    current_path: usize,
-    paths: Vec<String>
-}
+        let mut guard = device.lock();
+        let system = &mut guard.system;
 
-impl<'a> AudioCallback for Audio<'a> {
-    type Channel = f32;
+        let curr_secs = system.get_position(0).unwrap() as usize;
+        let state = system.get_voice_state(0).unwrap();
 
-    fn callback(&mut self, out: &mut [Self::Channel]) {
-        self.system.advance_buffer(out);
+        if let Some(event) = event {
+            match event {
+                event::Event::Key(k) => {
+                    match k.code {
+                        event::KeyCode::Char('p') => {
+                            system.set_voice_state(0, if state == PlayState::Playing { PlayState::Paused } else { PlayState::Playing }).unwrap();
+                        },
 
-        while let Some((channel, buffer)) = self.system.pop_finished_buffer() {
-            self.system.delete_buffer(buffer).unwrap();
-            self.current_path += 1;
-            if self.current_path >= self.paths.len() {
-                if self.looping {
-                    self.current_path = 0;
-                } else {
-                    return;
-                }
+                        event::KeyCode::Char('q') => { break; },
+
+                        _ => {}
+                    }
+                },
+
+                _ => {}
             }
-            let path = &self.paths[self.current_path];
+        }
 
-            println!("Loading \"{path}\"...");
+        queue!(
+            stdout(),
+            cursor::MoveTo(0, 0),
+            style::Print(format!("{state:?} {:0>2}:{:0>2}:{:0>2}", curr_secs / 60 / 60, (curr_secs / 60) % 60, curr_secs % 60))
+        ).unwrap();
+        
+        stdout().flush().unwrap();
 
-            let file = if let Ok(data) = std::fs::read(path) {
-                data
+        if system.get_voice_state(0).unwrap() == PlayState::Stopped {
+            let path = if let Some(f) = files.pop_front() {
+                f
             } else {
-                println!("Failed to find file \"{path}\".");
-                return;
+                break;
             };
 
-            let wav = mxload::wav::Wav::load_memory(&file).unwrap();
-            let buffer = self.system.create_buffer(BufferDescription { data_type: DataType::Pcm, format: wav.format() }, Some(&wav.pcm_data()));
-            self.system.play_buffer(buffer, channel, self.properties).unwrap();
+            let mut wav = if let Ok(wav) = Wav::from_file(&path) {
+                wav
+            } else {
+                println!("Could not find file with path \"{}\"!", path);
+                break;
+            };
 
-            println!("Playing \"{path}\"");
+            system.update_buffer(buffer, wav.format(), Some(&wav.get_pcm().unwrap())).unwrap();
+            system.play_buffer(buffer, 0, properties).unwrap();
         }
+    }
+
+    terminal::disable_raw_mode().unwrap();
+    println!();
+    execute!(
+        stdout(),
+        cursor::Show,
+        terminal::Clear(terminal::ClearType::All)
+    ).unwrap();
+}
+
+struct Audio {
+    system: AudioSystem
+}
+
+impl AudioCallback for Audio {
+    type Channel = f32;
+
+    fn callback(&mut self, buf: &mut [Self::Channel]) {
+        self.system.read_buffer_stereo_f32(buf);
     }
 }

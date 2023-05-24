@@ -1,18 +1,17 @@
 [package]
 name = "mixr"
-description = "An audio resampler & mixer."
-version = "0.4.0"
+version = "0.1.0"
 edition = "2021"
-readme = "README.md"
-repository = "https://github.com/piegfx/mixr"
-license = "MIT"
-keywords = ["audio", "gamedev", "mixer", "resampler"]
-categories = ["game-development", "multimedia::audio"]
 
-[profile.release]
-opt-level = 3
-debug = false
-overflow-checks = false
-debug-assertions = false
-strip = true
-lto = true
+[lib]
+crate-type = ["lib", "staticlib", "cdylib"]
+
+[dependencies]
+skyetils = { git = "https://github.com/skyebird189/skyetils" }
+
+[build-dependencies]
+cbindgen = "0.24.3"
+
+[dev-dependencies]
+sdl2 = "0.35.2"
+ctrlc = "3.2.5"
