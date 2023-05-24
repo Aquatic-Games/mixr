@@ -27,6 +27,8 @@ typedef enum {
 
 typedef struct AudioSystem AudioSystem;
 
+typedef struct Stream Stream;
+
 typedef struct {
   DataType dataType;
   uint32_t sampleRate;
@@ -51,8 +53,6 @@ typedef struct {
   uintptr_t startSample;
 } PlayProperties;
 
-typedef void *Stream;
-
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
@@ -76,13 +76,13 @@ AudioResult mxPlayBuffer(AudioSystem *system,
 
 void mxReadBufferStereoF32(AudioSystem *system, float *buffer, uintptr_t length);
 
-Stream mxStreamLoadWav(const char *path);
+AudioResult mxStreamLoadWav(const char *path, Stream **stream);
 
-void mxStreamFree(Stream stream);
+void mxStreamFree(Stream *stream);
 
-void mxStreamWavGetFormat(Stream stream, AudioFormat *format);
+void mxStreamGetFormat(Stream *stream, AudioFormat *format);
 
-void mxStreamWavGetPcm(Stream stream, void *data, uintptr_t *length);
+void mxStreamGetPcm(Stream *stream, void *data, uintptr_t *length);
 
 #ifdef __cplusplus
 } // extern "C"

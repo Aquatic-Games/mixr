@@ -126,7 +126,9 @@ impl PlayProperties {
     }
 }
 
-type Stream = *mut c_void;
+pub struct Stream {
+    stream: Box<dyn AudioStream>
+}
 
 #[no_mangle]
 pub unsafe extern fn mxCreateSystem(sample_rate: u32, voices: u16) -> *mut AudioSystem {
@@ -188,38 +190,40 @@ pub unsafe extern fn mxReadBufferStereoF32(system: &mut AudioSystem, buffer: *mu
 }
 
 #[no_mangle]
-pub unsafe extern fn mxStreamLoadWav(path: *const c_char) -> Stream {
+pub unsafe extern fn mxStreamLoadWav(path: *const c_char, stream: *mut *mut Stream) -> AudioResult {
     let wav = Wav::from_file(CStr::from_ptr(path).to_str().unwrap()).unwrap();
 
-    Box::into_raw(Box::new(wav)) as *mut _
+    let mx_stream = Stream {
+        stream: Box::new(wav)
+    };
+
+    *stream = Box::into_raw(Box::new(mx_stream));
+
+    AudioResult::Ok
 }
 
 #[no_mangle]
-pub unsafe extern fn mxStreamFree(stream: Stream) {
+pub unsafe extern fn mxStreamFree(stream: &mut Stream) {
     std::mem::drop(Box::from_raw(stream));
 }
 
 #[no_mangle]
-pub unsafe extern fn mxStreamWavGetFormat(stream: Stream, format: *mut AudioFormat) {
-    let stream: Box<Wav> = Box::from_raw(stream as *mut _);
-
+pub unsafe extern fn mxStreamGetFormat(stream: &mut Stream, format: *mut AudioFormat) {
+    let stream = &stream.stream;
     let fmt = AudioFormat::from_mixr(stream.format());
 
     *format = fmt;
-
-    Box::into_raw(stream);
 }
 
-// TODO: This API, not sure I like it.
 #[no_mangle]
-pub unsafe extern fn mxStreamWavGetPcm(stream: Stream, data: *mut c_void, length: *mut usize) {
-    let mut stream: Box<Wav> = Box::from_raw(stream as *mut _);
+pub unsafe extern fn mxStreamGetPcm(stream: &mut Stream, data: *mut c_void, length: *mut usize) {
+    let stream = &mut stream.stream;
 
     *length = stream.pcm_length();
 
+    // Only attempt to set the stream data if the pointer is not null.
     if data != std::ptr::null_mut() {
+        // To avoid memory allocations, we just call get_buffer on the full pointer.
         stream.get_buffer(std::slice::from_raw_parts_mut(data as *mut _, *length)).unwrap();
     }
-
-    Box::into_raw(stream);
 }

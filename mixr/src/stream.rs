@@ -4,7 +4,7 @@ use crate::{AudioFormat, DataType};
 use skyetils::binary::BinaryReader;
 
 pub trait AudioStream {
-    fn from_data(data: &[u8]) -> Self;
+    fn from_data(data: &[u8]) -> Self where Self : Sized;
 
     fn from_file(path: &str) -> Result<Self, std::io::Error> where Self : Sized;
 
