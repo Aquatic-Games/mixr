@@ -11,3 +11,7 @@ impl AudioEngine {
         }
     }
 }
+
+pub struct Sound<'a> {
+    engine: &'a AudioEngine
+}

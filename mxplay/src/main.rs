@@ -1,7 +1,7 @@
 use std::collections::VecDeque;
 
 use clap::Parser;
-use crossterm::*;
+use crossterm::{*, style::Stylize};
 use mixr::{AudioSystem, BufferDescription, PlayProperties, PlayState, stream::{Wav, AudioStream}};
 use sdl2::audio::{AudioSpecDesired, AudioCallback};
 use std::io::{stdout, Write};
@@ -22,7 +22,7 @@ struct CliArgs {
 }
 
 fn main() {
-    println!("mxplay 0.1.0\npiegfx 2023");
+    println!("mxplay 0.1.0\npiegfx 2023\n\n\n\n");
 
     let args = CliArgs::parse();
     let speed = args.speed;
@@ -41,8 +41,7 @@ fn main() {
 
     execute!(
         stdout(),
-        cursor::Hide,
-        terminal::Clear(terminal::ClearType::All)
+        cursor::Hide
     ).unwrap();
 
     terminal::enable_raw_mode().unwrap();
@@ -91,7 +90,7 @@ fn main() {
     }).unwrap();
 
     loop {
-        let event = if event::poll(std::time::Duration::from_millis(500)).unwrap() {
+        let event = if event::poll(std::time::Duration::from_millis(100)).unwrap() {
             Some(event::read().unwrap())
         } else {
             None
@@ -108,10 +107,20 @@ fn main() {
                 event::Event::Key(k) => {
                     match k.code {
                         event::KeyCode::Char('p') => {
-                            system.set_voice_state(0, if state == PlayState::Playing { PlayState::Paused } else { PlayState::Playing }).unwrap();
+                            let state = if state == PlayState::Playing {
+                                PlayState::Paused
+                            } else {
+                                PlayState::Playing
+                            };
+                            
+                            system.set_voice_state(0, state).unwrap();
                         },
 
                         event::KeyCode::Char('q') => { break; },
+
+                        event::KeyCode::Char('c') if k.modifiers == event::KeyModifiers::CONTROL => {
+                            break;
+                        },
 
                         _ => {}
                     }
@@ -121,10 +130,22 @@ fn main() {
             }
         }
 
+        let (cols, rows) = terminal::size().unwrap();
+
         queue!(
             stdout(),
-            cursor::MoveTo(0, 0),
-            style::Print(format!("{state:?} {:0>2}:{:0>2}:{:0>2}", curr_secs / 60 / 60, (curr_secs / 60) % 60, curr_secs % 60))
+            cursor::MoveTo(0, rows - 4),
+            style::Print(format!("{state:?}    ")),
+            cursor::MoveTo(0, rows - 3),
+            style::Print(format!("{:0>2}:{:0>2}:{:0>2}", curr_secs / 60 / 60, (curr_secs / 60) % 60, curr_secs % 60)),
+
+            cursor::MoveTo(0, rows - 1),
+
+            style::PrintStyledContent(style::style("Q").underlined()),
+            style::Print("uit "),
+
+            style::PrintStyledContent(style::style("P").underlined()),
+            style::Print("ause "),
         ).unwrap();
         
         stdout().flush().unwrap();
@@ -153,7 +174,6 @@ fn main() {
     execute!(
         stdout(),
         cursor::Show,
-        terminal::Clear(terminal::ClearType::All)
     ).unwrap();
 }
 

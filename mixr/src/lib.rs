@@ -1,4 +1,5 @@
 pub mod stream;
+pub mod device;
 pub mod engine;
 pub mod native;
 
@@ -58,7 +59,7 @@ pub struct AudioFormat {
 
 impl Default for AudioFormat {
     fn default() -> Self {
-        Self { data_type: DataType::F32, sample_rate: 480000, channels: 2 }
+        Self { data_type: DataType::F32, sample_rate: 48000, channels: 2 }
     }
 }
 
@@ -486,6 +487,10 @@ impl AudioSystem {
                 buffer[sample_loc + 1] += f32::clamp(sample_r * volume, -1.0, 1.0);
             }
         }
+    }
+
+    pub fn num_voices(&self) -> u16 {
+        self.voices.len() as u16
     }
 
     #[inline(always)]

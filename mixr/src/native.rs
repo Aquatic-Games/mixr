@@ -337,6 +337,11 @@ pub unsafe extern fn mxReadBufferStereoF32(system: &mut AudioSystem, buffer: *mu
 }
 
 #[no_mangle]
+pub unsafe extern fn mxGetNumVoices(system: &mut AudioSystem) -> u16 {
+    system.num_voices()
+}
+
+#[no_mangle]
 pub unsafe extern fn mxStreamLoadWav(path: *const c_char, stream: *mut *mut Stream) -> MixrResult {
     let wav = Wav::from_file(CStr::from_ptr(path).to_str().unwrap());
 
