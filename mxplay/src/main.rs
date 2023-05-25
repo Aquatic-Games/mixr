@@ -29,9 +29,10 @@ fn main() {
     let volume = args.volume;
     let looping = args.looping;
 
-    let mut files = VecDeque::from(args.paths);
+    let files = &args.paths;
+    let mut current_track = 0;
 
-    let first_file = files.pop_front().unwrap();
+    let first_file = files.get(current_track).unwrap();
     let mut wav = if let Ok(wav) = Wav::from_file(&first_file) {
         wav
     } else {
@@ -80,15 +81,6 @@ fn main() {
 
     device.resume();
 
-    ctrlc::set_handler(|| {
-        execute!(
-            stdout(),
-            cursor::Show
-        ).unwrap();
-        println!(); // print a newline
-        std::process::exit(0);
-    }).unwrap();
-
     loop {
         let event = if event::poll(std::time::Duration::from_millis(100)).unwrap() {
             Some(event::read().unwrap())
@@ -101,6 +93,8 @@ fn main() {
 
         let curr_secs = system.get_position(0).unwrap() as usize;
         let state = system.get_voice_state(0).unwrap();
+
+        let mut go_back = false;
 
         if let Some(event) = event {
             match event {
@@ -122,6 +116,29 @@ fn main() {
                             break;
                         },
 
+                        event::KeyCode::Char('n') => {
+                            system.set_voice_state(0, PlayState::Stopped).unwrap();
+                        },
+
+                        event::KeyCode::Char('v') => {
+                            if curr_secs >= 1 {
+                                system.set_position_samples(0, 0).unwrap();
+                            } else {
+                                go_back = true;
+                                system.set_voice_state(0, PlayState::Stopped).unwrap();
+                            }
+                        }
+
+                        event::KeyCode::Char('f') => {
+                            let position = system.get_position(0).unwrap();
+                            system.set_position(0, position + 0.5).unwrap();
+                        }
+
+                        event::KeyCode::Char('d') => {
+                            let position = system.get_position(0).unwrap();
+                            system.set_position(0, f64::max(position - 0.5, 0.0)).unwrap();
+                        }
+
                         _ => {}
                     }
                 },
@@ -134,6 +151,14 @@ fn main() {
 
         queue!(
             stdout(),
+
+            cursor::MoveTo(0, rows - 7),
+            terminal::Clear(terminal::ClearType::FromCursorDown),
+
+            style::Print("mxplay 0.1.0"),
+            cursor::MoveTo(0, rows - 6),
+            style::Print("piegfx 2023"),
+
             cursor::MoveTo(0, rows - 4),
             style::Print(format!("{state:?}    ")),
             cursor::MoveTo(0, rows - 3),
@@ -146,12 +171,34 @@ fn main() {
 
             style::PrintStyledContent(style::style("P").underlined()),
             style::Print("ause "),
+
+            style::PrintStyledContent(style::style("N").underlined()),
+            style::Print("ext "),
+
+            style::Print("Pre"),
+            style::PrintStyledContent(style::style("v").underlined()),
+            style::Print("ious "),
+
+            style::PrintStyledContent(style::style("F").underlined()),
+            style::Print("Forward "),
+
+            style::Print("Rewin"),
+            style::PrintStyledContent(style::style("d").underlined()),
+            style::Print(" "),
         ).unwrap();
         
         stdout().flush().unwrap();
 
         if system.get_voice_state(0).unwrap() == PlayState::Stopped {
-            let path = if let Some(f) = files.pop_front() {
+            if go_back {
+                if current_track != 0 {
+                    current_track -= 1;
+                }
+            } else {
+                current_track += 1;
+            }
+
+            let path = if let Some(f) = files.get(current_track) {
                 f
             } else {
                 break;
