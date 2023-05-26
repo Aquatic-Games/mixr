@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 pub mod stream;
 pub mod device;
 pub mod engine;
@@ -155,7 +157,8 @@ impl AudioSystem {
                 previous_position: 0,
                 lerp_pos: 0,
 
-                alignment: 0
+                alignment: 0,
+                queued_buffers: VecDeque::new()
             });
         }
 
@@ -272,6 +275,10 @@ impl AudioSystem {
         Ok(())
     }
 
+    //pub fn queue_buffer(&mut self, buffer: AudioBuffer, voice: u16) -> MixrResult<()> {
+
+    //}
+
     pub fn get_play_properties(&self, voice: u16) -> MixrResult<PlayProperties> {
         let voice = self.voices.get(voice as usize).ok_or(MixrError { e_type: ErrorType::InvalidVoice, message: "Voice was out of range." })?;
 
@@ -280,8 +287,21 @@ impl AudioSystem {
 
     pub fn set_play_properties(&mut self, voice: u16, properties: PlayProperties) -> MixrResult<()> {
         let voice = self.voices.get_mut(voice as usize).ok_or(MixrError { e_type: ErrorType::InvalidVoice, message: "Voice was out of range." })?;
+        let internal_buffer = self.buffers[voice.buffer].as_ref().ok_or(MixrError { e_type: ErrorType::InvalidBuffer, message: "Buffer was not valid. Has it been deleted?" })?;
+
+        let align = f64::ceil((internal_buffer.format.sample_rate as f64 / self.sample_rate as f64) * (properties.speed));
+
+        voice.speed = (internal_buffer.format.sample_rate as f64 / self.sample_rate as f64) * (properties.speed / align);
+
+        voice.alignment = internal_buffer.alignment * align as usize;
 
         voice.properties = properties;
+
+        voice.sample_end = if properties.looping {
+            if properties.loop_end == 0 { internal_buffer.data.len() } else { properties.loop_end * internal_buffer.alignment }
+        } else {
+            internal_buffer.data.len()
+        };
 
         Ok(())
     }
@@ -366,7 +386,7 @@ impl AudioSystem {
             return Err(MixrError { e_type: ErrorType::InvalidValue, message: "Position is outside of the buffer's size." });
         }
 
-        voice.position = position;
+        voice.position = position / (voice.alignment / buffer.alignment);
 
         Ok(())
     }
@@ -422,7 +442,7 @@ impl AudioSystem {
             return Err(MixrError { e_type: ErrorType::InvalidValue, message: "Position is outside of the buffer's size." });
         }
 
-        voice.position = p_usize;
+        voice.position = p_usize / (voice.alignment / buffer.alignment);
         voice.float_pos = position - p_usize as f64;
 
         Ok(())
@@ -455,8 +475,13 @@ impl AudioSystem {
                     if voice.properties.looping {
                         voice.position = voice.properties.loop_start;
                         // TODO: Don't reset float_pos to 0, reset it to a proper value for accuracy in short loops.
-                        voice.float_pos = 0.0;
+                        //voice.float_pos = 0.0;
                         position = voice.position * alignment;
+                    } else if voice.queued_buffers.len() > 0 {
+                        voice.buffer = voice.queued_buffers.pop_front().unwrap();
+                        voice.position = 0;
+                        voice.previous_position = 0;
+                        voice.lerp_pos = 0;       
                     } else {
                         voice.is_playing = false;
                         voice.buffer = usize::MAX;
@@ -545,5 +570,7 @@ struct Voice {
 
     lerp_pos: usize,
 
-    alignment: usize
+    alignment: usize,
+
+    queued_buffers: VecDeque<usize>
 }

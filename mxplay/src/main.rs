@@ -62,7 +62,9 @@ fn main() {
         ..Default::default()
     };
 
-    system.play_buffer(buffer, 0, properties).unwrap();
+    const VOICE: u16 = 0;
+
+    system.play_buffer(buffer, VOICE, properties).unwrap();
 
     let sdl = sdl2::init().unwrap();
     let audio = sdl.audio().unwrap();
@@ -91,8 +93,8 @@ fn main() {
         let mut guard = device.lock();
         let system = &mut guard.system;
 
-        let curr_secs = system.get_position(0).unwrap() as usize;
-        let state = system.get_voice_state(0).unwrap();
+        let curr_secs = system.get_position(VOICE).unwrap() as usize;
+        let state = system.get_voice_state(VOICE).unwrap();
 
         let mut go_back = false;
 
@@ -107,7 +109,7 @@ fn main() {
                                 PlayState::Playing
                             };
                             
-                            system.set_voice_state(0, state).unwrap();
+                            system.set_voice_state(VOICE, state).unwrap();
                         },
 
                         event::KeyCode::Char('q') => { break; },
@@ -117,27 +119,41 @@ fn main() {
                         },
 
                         event::KeyCode::Char('n') => {
-                            system.set_voice_state(0, PlayState::Stopped).unwrap();
+                            system.set_voice_state(VOICE, PlayState::Stopped).unwrap();
                         },
 
                         event::KeyCode::Char('v') => {
                             if curr_secs >= 1 {
-                                system.set_position_samples(0, 0).unwrap();
+                                system.set_position_samples(VOICE, 0).unwrap();
                             } else {
                                 go_back = true;
-                                system.set_voice_state(0, PlayState::Stopped).unwrap();
+                                system.set_voice_state(VOICE, PlayState::Stopped).unwrap();
                             }
-                        }
+                        },
 
                         event::KeyCode::Char('f') => {
-                            let position = system.get_position(0).unwrap();
-                            system.set_position(0, position + 0.5).unwrap();
-                        }
+                            let position = system.get_position(VOICE).unwrap();
+                            system.set_position(VOICE, position + 0.5).unwrap();
+                        },
 
                         event::KeyCode::Char('d') => {
-                            let position = system.get_position(0).unwrap();
-                            system.set_position(0, f64::max(position - 0.5, 0.0)).unwrap();
-                        }
+                            let position = system.get_position(VOICE).unwrap();
+                            system.set_position(VOICE, f64::max(position - 0.5, 0.0)).unwrap();
+                        },
+
+                        event::KeyCode::Char('u') => {
+                            let mut props = system.get_play_properties(VOICE).unwrap();
+                            props.speed += 0.01;
+
+                            system.set_play_properties(VOICE, props).unwrap();
+                        },
+
+                        event::KeyCode::Char('y') => {
+                            let mut props = system.get_play_properties(VOICE).unwrap();
+                            props.speed -= 0.01;
+
+                            system.set_play_properties(VOICE, props).unwrap();
+                        },
 
                         _ => {}
                     }
@@ -189,7 +205,7 @@ fn main() {
         
         stdout().flush().unwrap();
 
-        if system.get_voice_state(0).unwrap() == PlayState::Stopped {
+        if system.get_voice_state(VOICE).unwrap() == PlayState::Stopped {
             if go_back {
                 if current_track != 0 {
                     current_track -= 1;
@@ -207,12 +223,12 @@ fn main() {
             let mut wav = if let Ok(wav) = Wav::from_file(&path) {
                 wav
             } else {
-                println!("Could not find file with path \"{}\"!", path);
-                break;
+                //println!("Could not load file with path \"{}\"!", path);
+                continue;
             };
 
             system.update_buffer(buffer, wav.format(), Some(&wav.get_pcm().unwrap())).unwrap();
-            system.play_buffer(buffer, 0, properties).unwrap();
+            system.play_buffer(buffer, VOICE, properties).unwrap();
         }
     }
 
