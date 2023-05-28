@@ -118,7 +118,6 @@ pub enum PlayState {
 }
 
 #[derive(Clone, Copy, PartialEq)]
-#[repr(C)]
 pub struct AudioBuffer {
     id: usize
 }
@@ -289,6 +288,8 @@ impl AudioSystem {
         let voice = self.voices.get_mut(voice as usize).ok_or(MixrError { e_type: ErrorType::InvalidVoice, message: "Voice was out of range." })?;
         let internal_buffer = self.buffers[voice.buffer].as_ref().ok_or(MixrError { e_type: ErrorType::InvalidBuffer, message: "Buffer was not valid. Has it been deleted?" })?;
 
+        let current_alignment = voice.alignment;
+
         let align = f64::ceil((internal_buffer.format.sample_rate as f64 / self.sample_rate as f64) * (properties.speed));
 
         voice.speed = (internal_buffer.format.sample_rate as f64 / self.sample_rate as f64) * (properties.speed / align);
@@ -302,6 +303,14 @@ impl AudioSystem {
         } else {
             internal_buffer.data.len()
         };
+
+        if voice.alignment != current_alignment {
+            if voice.alignment > current_alignment {
+                voice.position /= voice.alignment / internal_buffer.alignment;
+            } else {
+                voice.position *= current_alignment / voice.alignment;
+            }
+        }
 
         Ok(())
     }
