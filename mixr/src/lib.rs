@@ -526,10 +526,16 @@ impl AudioSystem {
                         //voice.float_pos = 0.0;
                         position = voice.position * alignment;
                     } else {
+                        let current_buffer = voice.buffer;
+
                         voice.is_playing = false;
                         voice.buffer = usize::MAX;
                         voice.position = 0;
                         voice.float_pos = 0.0;
+
+                        if let Some(callback) = &mut self.callback {
+                            callback.buffer_finished(AudioBuffer { id: current_buffer }, index);
+                        }
 
                         continue;
                     }
