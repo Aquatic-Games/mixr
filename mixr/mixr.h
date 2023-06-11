@@ -87,6 +87,8 @@ MxResult mxPlayBuffer(MxAudioSystem *system,
                       uint16_t voice,
                       MxPlayProperties properties);
 
+MxResult mxQueueBuffer(MxAudioSystem *system, MxAudioBuffer buffer, uint16_t voice);
+
 MxResult mxGetPlayProperties(MxAudioSystem *system, uint16_t voice, MxPlayProperties *properties);
 
 MxResult mxSetPlayProperties(MxAudioSystem *system, uint16_t voice, MxPlayProperties properties);

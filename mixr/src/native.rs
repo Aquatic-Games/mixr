@@ -248,6 +248,16 @@ pub unsafe extern fn mxPlayBuffer(system: &mut MxAudioSystem, buffer: MxAudioBuf
 }
 
 #[no_mangle]
+pub unsafe extern fn mxQueueBuffer(system: &mut MxAudioSystem, buffer: MxAudioBuffer, voice: u16) -> MxResult {
+    let result = system.system.queue_buffer(crate::AudioBuffer { id: buffer.id }, voice);
+
+    match result {
+        Ok(_) => MxResult::Ok,
+        Err(err) => MxResult::from_mixr(err)
+    }
+}
+
+#[no_mangle]
 pub unsafe extern fn mxGetPlayProperties(system: &mut MxAudioSystem, voice: u16, properties: *mut MxPlayProperties) -> MxResult {
     let props = system.system.get_play_properties(voice);
 

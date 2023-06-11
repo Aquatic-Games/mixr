@@ -7,7 +7,7 @@ edition = "2021"
 crate-type = ["lib", "staticlib", "cdylib"]
 
 [dependencies]
-sdl2 = { version = "0.35.2", features = ["bundled"] }
+#sdl2 = { version = "0.35.2", features = ["bundled"] }
 skyetils = { git = "https://github.com/skyebird189/skyetils" }
 
 [build-dependencies]
