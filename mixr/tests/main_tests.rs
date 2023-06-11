@@ -4,6 +4,7 @@ use sdl2::audio::{AudioSpecDesired, AudioCallback};
 #[test]
 fn test_mixr() {
     let mut system = AudioSystem::new(48000, 16);
+    system.set_callback(Box::new(CallbackTest {}));
 
     let data1 = std::fs::read("/home/skye/Music/TESTFILES/dedune-start-32bitfloat.raw").unwrap();
     let data2 = std::fs::read("/home/skye/Music/TESTFILES/nixonspace-16bitshort.raw").unwrap();
@@ -101,5 +102,13 @@ impl AudioCallback for Audio<'_> {
 
     fn callback(&mut self, buf: &mut [Self::Channel]) {
         self.system.read_buffer_stereo_f32(buf);
+    }
+}
+
+struct CallbackTest;
+
+impl AudioCallbacks for CallbackTest {
+    fn buffer_finished(&mut self, buffer: AudioBuffer, voice: u16) {
+        println!("Callback");
     }
 }

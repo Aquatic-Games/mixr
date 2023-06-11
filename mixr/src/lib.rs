@@ -133,7 +133,9 @@ pub struct AudioSystem {
     sample_rate: u32,
 
     buffers: Vec<Option<Buffer>>,
-    voices: Vec<Voice>
+    voices: Vec<Voice>,
+
+    callback: Option<Box<dyn AudioCallbacks + Send>>
 }
 
 impl AudioSystem {
@@ -168,7 +170,9 @@ impl AudioSystem {
             sample_rate,
 
             buffers: Vec::new(),
-            voices: channels
+            voices: channels,
+
+            callback: None
         }
     }
 
@@ -462,12 +466,17 @@ impl AudioSystem {
         Ok(())
     }
 
+    pub fn set_callback(&mut self, callback: Box<dyn AudioCallbacks + Send>) {
+        self.callback = Some(callback)
+    }
+
     pub fn read_buffer_stereo_f32(&mut self, buffer: &mut [f32]) {
         for sample_loc in (0..buffer.len()).step_by(2) {
             // 0 the buffer to make sure no garbage data is present.
             buffer[sample_loc] = 0.0;
             buffer[sample_loc + 1] = 0.0;
 
+            let mut index = 0;
             for voice in &mut self.voices {
                 if !voice.is_playing {
                     continue;
@@ -487,6 +496,7 @@ impl AudioSystem {
 
                 if position >= voice.sample_end {
                     if voice.queued_buffers.len() > 0 {
+                        let current_buffer = voice.buffer;
 
                         // Pop a new buffer and reset the voice.
                         voice.buffer = voice.queued_buffers.pop_front().unwrap();
@@ -501,10 +511,15 @@ impl AudioSystem {
                         let align = f64::ceil((internal_buffer.format.sample_rate as f64 / self.sample_rate as f64) * (voice.properties.speed));
 
                         voice.speed = (internal_buffer.format.sample_rate as f64 / self.sample_rate as f64) * (voice.properties.speed / align);
-                        
+
                         voice.alignment = internal_buffer.alignment * align as usize;
 
                         position = voice.position * alignment;
+                        
+                        if let Some(callback) = &mut self.callback {
+                            callback.buffer_finished(AudioBuffer { id: current_buffer }, index);
+                        }
+
                     } else if voice.properties.looping {
                         voice.position = voice.properties.loop_start;
                         // TODO: Don't reset float_pos to 0, reset it to a proper value for accuracy in short loops.
@@ -538,6 +553,8 @@ impl AudioSystem {
 
                 buffer[sample_loc] += f32::clamp(sample_l * volume, -1.0, 1.0);
                 buffer[sample_loc + 1] += f32::clamp(sample_r * volume, -1.0, 1.0);
+
+                index += 1;
             }
         }
     }

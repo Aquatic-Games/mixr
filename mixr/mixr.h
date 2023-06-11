@@ -103,6 +103,8 @@ MxResult mxGetPosition(MxAudioSystem *system, uint16_t voice, double *position);
 
 MxResult mxSetPosition(MxAudioSystem *system, uint16_t voice, double position);
 
+void mxSetBufferFinishedCallback(MxAudioSystem *system, void (*callback)(MxAudioBuffer, uint16_t));
+
 void mxReadBufferStereoF32(MxAudioSystem *system, float *buffer, uintptr_t length);
 
 uint16_t mxGetNumVoices(MxAudioSystem *system);

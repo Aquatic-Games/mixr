@@ -1,6 +1,6 @@
 use std::ffi::{c_void, c_char, CStr};
 
-use crate::stream::{Wav, AudioStream};
+use crate::{stream::{Wav, AudioStream}, AudioCallbacks};
 
 pub struct MxAudioSystem {
     system: crate::AudioSystem
@@ -340,6 +340,13 @@ pub unsafe extern fn mxSetPosition(system: &mut MxAudioSystem, voice: u16, posit
 }
 
 #[no_mangle]
+pub unsafe extern fn mxSetBufferFinishedCallback(system: &mut MxAudioSystem, callback: extern fn(MxAudioBuffer, u16)) {
+    let cb = Callback { callback };
+
+    system.system.set_callback(Box::new(cb));
+}
+
+#[no_mangle]
 pub unsafe extern fn mxReadBufferStereoF32(system: &mut MxAudioSystem, buffer: *mut f32, length: usize) {
     let slice = std::slice::from_raw_parts_mut(buffer, length);
 
@@ -398,5 +405,17 @@ pub unsafe extern fn mxStreamGetPcm(stream: &mut MxStream, data: *mut c_void, le
     if data != std::ptr::null_mut() {
         // To avoid memory allocations, we just call get_buffer on the full pointer.
         stream.get_buffer(std::slice::from_raw_parts_mut(data as *mut _, *length)).unwrap();
+    }
+}
+
+struct Callback {
+    callback: unsafe extern fn(MxAudioBuffer, u16)
+}
+
+impl AudioCallbacks for Callback {
+    fn buffer_finished(&mut self, buffer: crate::AudioBuffer, voice: u16) {
+        unsafe {
+            (self.callback)(MxAudioBuffer { id: buffer.id }, voice);
+        }
     }
 }
