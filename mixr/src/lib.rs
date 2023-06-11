@@ -274,9 +274,14 @@ impl AudioSystem {
         Ok(())
     }
 
-    //pub fn queue_buffer(&mut self, buffer: AudioBuffer, voice: u16) -> MixrResult<()> {
+    pub fn queue_buffer(&mut self, buffer: AudioBuffer, voice: u16) -> MixrResult<()> {
+        let mut voice = self.voices.get_mut(voice as usize).ok_or(MixrError { e_type: ErrorType::InvalidVoice, message: "Voice was out of range." })?;
+        let internal_buffer = self.buffers[buffer.id].as_ref().ok_or(MixrError { e_type: ErrorType::InvalidBuffer, message: "Buffer was not valid. Has it been deleted?" })?;
 
-    //}
+        voice.queued_buffers.push_back(buffer.id);
+
+        Ok(())
+    }
 
     pub fn get_play_properties(&self, voice: u16) -> MixrResult<PlayProperties> {
         let voice = self.voices.get(voice as usize).ok_or(MixrError { e_type: ErrorType::InvalidVoice, message: "Voice was out of range." })?;
@@ -481,16 +486,30 @@ impl AudioSystem {
                 let mut position = voice.position * alignment;
 
                 if position >= voice.sample_end {
-                    if voice.properties.looping {
+                    if voice.queued_buffers.len() > 0 {
+
+                        // Pop a new buffer and reset the voice.
+                        voice.buffer = voice.queued_buffers.pop_front().unwrap();
+                        voice.position = 0;
+                        voice.previous_position = 0;
+                        voice.lerp_pos = 0;
+
+                        let internal_buffer = self.buffers[voice.buffer].as_ref().unwrap();
+
+                        voice.sample_end = internal_buffer.data.len();
+
+                        let align = f64::ceil((internal_buffer.format.sample_rate as f64 / self.sample_rate as f64) * (voice.properties.speed));
+
+                        voice.speed = (internal_buffer.format.sample_rate as f64 / self.sample_rate as f64) * (voice.properties.speed / align);
+                        
+                        voice.alignment = internal_buffer.alignment * align as usize;
+
+                        position = voice.position * alignment;
+                    } else if voice.properties.looping {
                         voice.position = voice.properties.loop_start;
                         // TODO: Don't reset float_pos to 0, reset it to a proper value for accuracy in short loops.
                         //voice.float_pos = 0.0;
                         position = voice.position * alignment;
-                    } else if voice.queued_buffers.len() > 0 {
-                        voice.buffer = voice.queued_buffers.pop_front().unwrap();
-                        voice.position = 0;
-                        voice.previous_position = 0;
-                        voice.lerp_pos = 0;       
                     } else {
                         voice.is_playing = false;
                         voice.buffer = usize::MAX;

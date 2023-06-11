@@ -5,30 +5,32 @@ use sdl2::audio::{AudioSpecDesired, AudioCallback};
 fn test_mixr() {
     let mut system = AudioSystem::new(48000, 16);
 
-    let data = std::fs::read("/home/ollie/Music/TESTFILES/amba2-32bitfloat.raw").unwrap();
-    //let data = std::fs::read("/home/ollie/Music/TESTFILES/plokboss-32bitfloat.raw").unwrap();
+    let data1 = std::fs::read("/home/skye/Music/TESTFILES/dedune-start-32bitfloat.raw").unwrap();
+    let data2 = std::fs::read("/home/skye/Music/TESTFILES/nixonspace-16bitshort.raw").unwrap();
 
-    let buffer = system.create_buffer(BufferDescription {
+    let buffer1 = system.create_buffer(BufferDescription {
         format: AudioFormat {
             data_type: DataType::F32,
-            sample_rate: 48000,
+            sample_rate: 44100,
             channels: 2
         }
-    }, Some(&data)).unwrap();
+    }, Some(&data1)).unwrap();
 
-    /*let buffer2 = system.create_buffer(BufferDescription {
+    let buffer2 = system.create_buffer(BufferDescription {
         format: AudioFormat {
             data_type: DataType::I16,
             sample_rate: 48000,
             channels: 2
         }
-    }, Some(&data2));*/
+    }, Some(&data2)).unwrap();
 
-    system.play_buffer(buffer, 0, PlayProperties {
-        speed: 1.5,
+    system.play_buffer(buffer1, 0, PlayProperties {
+        speed: 1.0,
         looping: true,
         ..Default::default()
     }).unwrap();
+
+    system.queue_buffer(buffer2, 0).unwrap();
 
     /*system.play_buffer(buffer2, 1, PlayProperties {
         speed: 1.0,
