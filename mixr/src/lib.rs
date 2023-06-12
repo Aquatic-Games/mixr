@@ -482,9 +482,6 @@ impl AudioSystem {
                     continue;
                 }
 
-                let internal_buffer = self.buffers[voice.buffer].as_ref().unwrap();
-
-                let format = internal_buffer.format;
                 let alignment = voice.alignment;
 
                 voice.float_pos += voice.speed;
@@ -540,6 +537,9 @@ impl AudioSystem {
                         continue;
                     }
                 }
+
+                let internal_buffer = self.buffers[voice.buffer].as_ref().unwrap();
+                let format = internal_buffer.format;
 
                 if position != voice.previous_position {
                     voice.lerp_pos = voice.previous_position;
