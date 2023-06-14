@@ -28,6 +28,7 @@ fn test_mixr() {
     system.play_buffer(buffer1, 0, PlayProperties {
         speed: 1.0,
         looping: true,
+        panning: 0.0,
         ..Default::default()
     }).unwrap();
 

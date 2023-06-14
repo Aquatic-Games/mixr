@@ -547,6 +547,7 @@ impl AudioSystem {
                 }
 
                 let volume = (self.volume * voice.properties.volume/* * (voice.position as f64 / self.fade_in as f64).clamp(0.0, 1.0)*/) as f32;
+                let panning = voice.properties.panning as f32;
 
                 let mut sample_l = Self::get_sample(position, &internal_buffer.data, internal_buffer.format.data_type);
                 let mut sample_r = Self::get_sample(position + (internal_buffer.alignment / 2) * (format.channels - 1) as usize, &internal_buffer.data, format.data_type);
@@ -554,8 +555,8 @@ impl AudioSystem {
                 let prev_l = Self::get_sample(voice.lerp_pos, &internal_buffer.data, internal_buffer.format.data_type);
                 let prev_r = Self::get_sample(voice.lerp_pos + (internal_buffer.alignment / 2) * (format.channels - 1) as usize, &internal_buffer.data, internal_buffer.format.data_type);
 
-                sample_l = Self::lerp(prev_l, sample_l, voice.float_pos);
-                sample_r = Self::lerp(prev_r, sample_r, voice.float_pos);
+                sample_l = Self::lerp(prev_l, sample_l, voice.float_pos) * f32::clamp(1.0 - panning, 0.0, 1.0);
+                sample_r = Self::lerp(prev_r, sample_r, voice.float_pos) * f32::clamp(panning + 1.0, 0.0, 1.0);
 
                 buffer[sample_loc] += f32::clamp(sample_l * volume, -1.0, 1.0);
                 buffer[sample_loc + 1] += f32::clamp(sample_r * volume, -1.0, 1.0);
