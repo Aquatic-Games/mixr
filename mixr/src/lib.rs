@@ -206,8 +206,20 @@ impl AudioSystem {
     }
 
     pub fn destroy_buffer(&mut self, buffer: AudioBuffer) -> MixrResult<()> {
-        let buffer = self.buffers.get_mut(buffer.id).ok_or(MixrError { e_type: ErrorType::InvalidBuffer, message: "The given buffer is invalid." })?;
-        *buffer = None;
+        let internal_buffer = self.buffers.get_mut(buffer.id).ok_or(MixrError { e_type: ErrorType::InvalidBuffer, message: "The given buffer is invalid." })?;
+
+        // Stop any and all voices that are playing the buffer.
+        // This is a reasonably expensive operation but it prevents a panic later.
+        for voice in &mut self.voices {
+            if voice.buffer == buffer.id {
+                voice.is_playing = false;
+                voice.buffer = usize::MAX;
+                voice.position = 0;
+                voice.float_pos = 0.0;
+            }
+        }
+
+        *internal_buffer = None;
 
         Ok(())
     }
