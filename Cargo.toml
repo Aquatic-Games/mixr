@@ -3,3 +3,9 @@ members = [
     "mixr",
     "mxplay"
 ]
+
+[profile.release]
+opt-level = 3
+overflow-checks = false
+strip = true
+lto = true
