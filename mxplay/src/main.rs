@@ -2,7 +2,7 @@ use std::collections::VecDeque;
 
 use clap::Parser;
 use crossterm::{*, style::Stylize};
-use mixr::{AudioSystem, BufferDescription, PlayProperties, PlayState, stream::{Wav, AudioStream}};
+use mixr::{AudioSystem, BufferDescription, PlayProperties, PlayState, stream::{Wav, AudioStream}, AudioBuffer};
 use sdl2::audio::{AudioSpecDesired, AudioCallback};
 use std::io::{stdout, Write};
 
@@ -24,34 +24,36 @@ struct CliArgs {
 fn main() {
     println!("mxplay 0.1.0\npiegfx 2023\n\n\n\n");
 
-    let args = CliArgs::parse();
+    /*let mut args = CliArgs::parse();
     let speed = args.speed;
     let volume = args.volume;
-    let looping = args.looping;
+    let looping = args.looping;*/
 
-    let files = &args.paths;
+    //let files = args.paths;
+    let files = vec!["/home/skye/Music/S3D/03 Richard Jacques - Green Grove, Act One.wav".to_string()];
+
     let mut current_track = 0;
 
-    let first_file = files.get(current_track).unwrap();
+    /*let first_file = files.get(current_track).unwrap();
     let mut wav = if let Ok(wav) = Wav::from_file(&first_file) {
         wav
     } else {
         println!("Could not find file with path \"{}\"!", first_file);
         return;
-    };
+    };*/
 
-    execute!(
+    /*execute!(
         stdout(),
         cursor::Hide
-    ).unwrap();
+    ).unwrap();*/
 
-    terminal::enable_raw_mode().unwrap();
+    //terminal::enable_raw_mode().unwrap();
 
-    let pcm = wav.get_pcm().unwrap();
+    //let pcm = wav.get_pcm().unwrap();
 
     let mut system = AudioSystem::new(48000, 1);
 
-    let buffer = system.create_buffer(BufferDescription {
+    /*let buffer = system.create_buffer(BufferDescription {
         format: wav.format()
     }, Some(&pcm)).unwrap();
 
@@ -60,11 +62,11 @@ fn main() {
         volume,
         looping,
         ..Default::default()
-    };
+    };*/
 
     const VOICE: u16 = 0;
 
-    system.play_buffer(buffer, VOICE, properties).unwrap();
+    //system.play_buffer(buffer, VOICE, properties).unwrap();
 
     let sdl = sdl2::init().unwrap();
     let audio = sdl.audio().unwrap();
@@ -76,24 +78,22 @@ fn main() {
     };
 
     let mut device = audio.open_playback(None, &spec, |_| {
-        Audio {
-            system
-        }
+        Audio::new(system, files)
     }).unwrap();
 
     device.resume();
 
     loop {
-        let event = if event::poll(std::time::Duration::from_millis(100)).unwrap() {
+        /*let event = if event::poll(std::time::Duration::from_millis(100)).unwrap() {
             Some(event::read().unwrap())
         } else {
             None
-        };
+        };*/
 
         let mut guard = device.lock();
         let system = &mut guard.system;
 
-        let curr_secs = system.get_position(VOICE).unwrap() as usize;
+        /*let curr_secs = system.get_position(VOICE).unwrap() as usize;
         let state = system.get_voice_state(VOICE).unwrap();
 
         let mut go_back = false;
@@ -214,7 +214,7 @@ fn main() {
                 current_track += 1;
             }
 
-            let path = if let Some(f) = files.get(current_track) {
+            /*let path = if let Some(f) = files.get(current_track) {
                 f
             } else {
                 break;
@@ -228,20 +228,65 @@ fn main() {
             };
 
             system.update_buffer(buffer, wav.format(), Some(&wav.get_pcm().unwrap())).unwrap();
-            system.play_buffer(buffer, VOICE, properties).unwrap();
-        }
+            system.play_buffer(buffer, VOICE, properties).unwrap();*/
+        }*/
     }
 
-    terminal::disable_raw_mode().unwrap();
+    /*terminal::disable_raw_mode().unwrap();
     println!();
     execute!(
         stdout(),
         cursor::Show,
-    ).unwrap();
+    ).unwrap();*/
 }
 
+const NUM_BUFFERS: usize = 100;
+const BUFFER_SIZE: usize = 24000;
+const VOICE: u16 = 0;
+
 struct Audio {
-    system: AudioSystem
+    system: AudioSystem,
+
+    files: Vec<String>,
+
+    buffers: Vec<AudioBuffer>,
+    curr_buffer: usize,
+    buffer_data: Vec<u8>,
+
+    current_stream: Box<dyn AudioStream>
+}
+
+impl Audio {
+    pub fn new(mut system: AudioSystem, files: Vec<String>) -> Self {
+        let mut buffers = Vec::with_capacity(NUM_BUFFERS);
+
+        let mut buffer_data = Vec::with_capacity(BUFFER_SIZE);
+        // force the vec to have the correct length as we will be overwriting the data immediately.
+        unsafe { buffer_data.set_len(BUFFER_SIZE) };
+
+        let mut current_stream = Wav::from_file(files[0].as_str()).unwrap();
+
+        for _ in 0..NUM_BUFFERS {
+            current_stream.get_buffer(&mut buffer_data).unwrap();
+
+            let buffer = system.create_buffer(BufferDescription { format: current_stream.format() }, Some(&buffer_data)).unwrap();
+            buffers.push(buffer);
+        }
+
+        system.play_buffer(buffers[0], VOICE, PlayProperties::default()).unwrap();
+        for i in 1..NUM_BUFFERS {
+            system.queue_buffer(buffers[i], VOICE).unwrap();
+        }
+
+        Self {
+            system,
+            files,
+            buffers,
+            buffer_data,
+            curr_buffer: 0,
+            current_stream: Box::new(current_stream)
+        }
+    }
 }
 
 impl AudioCallback for Audio {
