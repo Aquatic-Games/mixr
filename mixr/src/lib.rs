@@ -128,6 +128,9 @@ pub trait AudioCallbacks {
 
 pub struct AudioSystem {
     pub volume: f64,
+
+    // TODO: Hack, actually do this properly.
+    pub buffer_finished: bool,
     //pub fade_in: usize,
 
     sample_rate: u32,
@@ -165,6 +168,7 @@ impl AudioSystem {
 
         Self {
             volume: 1.0,
+            buffer_finished: false,
             //fade_in: 20,
 
             sample_rate,
@@ -525,6 +529,7 @@ impl AudioSystem {
 
                         position = voice.position * alignment;
                         
+                        self.buffer_finished = true;
                         if let Some(callback) = &mut self.callback {
                             callback.buffer_finished(AudioBuffer { id: current_buffer }, index);
                         }
@@ -542,6 +547,7 @@ impl AudioSystem {
                         voice.position = 0;
                         voice.float_pos = 0.0;
 
+                        self.buffer_finished = true;
                         if let Some(callback) = &mut self.callback {
                             callback.buffer_finished(AudioBuffer { id: current_buffer }, index);
                         }

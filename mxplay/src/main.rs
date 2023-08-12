@@ -30,7 +30,7 @@ fn main() {
     let looping = args.looping;*/
 
     //let files = args.paths;
-    let files = vec!["/home/skye/Music/S3D/03 Richard Jacques - Green Grove, Act One.wav".to_string()];
+    let files = vec!["/home/skye/Music/weird ambient thing.wav".to_string(), "/home/skye/Music/SCD/2-03 Stardust Speedway 'G' Mix JP.wav".to_string()];
 
     let mut current_track = 0;
 
@@ -74,7 +74,7 @@ fn main() {
     let spec = AudioSpecDesired {
         freq: Some(48000),
         channels: Some(2),
-        samples: Some(8192),
+        samples: Some(1024),
     };
 
     let mut device = audio.open_playback(None, &spec, |_| {
@@ -82,6 +82,11 @@ fn main() {
     }).unwrap();
 
     device.resume();
+
+    ctrlc::set_handler(|| {
+        println!();
+        std::process::exit(0);
+    });
 
     loop {
         /*let event = if event::poll(std::time::Duration::from_millis(100)).unwrap() {
@@ -240,14 +245,15 @@ fn main() {
     ).unwrap();*/
 }
 
-const NUM_BUFFERS: usize = 100;
-const BUFFER_SIZE: usize = 24000;
+const NUM_BUFFERS: usize = 2;
+const BUFFER_SIZE: usize = 48000;
 const VOICE: u16 = 0;
 
 struct Audio {
     system: AudioSystem,
 
     files: Vec<String>,
+    current_file: usize,
 
     buffers: Vec<AudioBuffer>,
     curr_buffer: usize,
@@ -273,7 +279,9 @@ impl Audio {
             buffers.push(buffer);
         }
 
-        system.play_buffer(buffers[0], VOICE, PlayProperties::default()).unwrap();
+        let mut props = PlayProperties::default();
+        props.looping = true;
+        system.play_buffer(buffers[0], VOICE, props).unwrap();
         for i in 1..NUM_BUFFERS {
             system.queue_buffer(buffers[i], VOICE).unwrap();
         }
@@ -281,6 +289,7 @@ impl Audio {
         Self {
             system,
             files,
+            current_file: 0,
             buffers,
             buffer_data,
             curr_buffer: 0,
@@ -294,5 +303,33 @@ impl AudioCallback for Audio {
 
     fn callback(&mut self, buf: &mut [Self::Channel]) {
         self.system.read_buffer_stereo_f32(buf);
+
+        println!("cb");
+
+        if self.system.buffer_finished {
+            self.system.buffer_finished = false;
+
+            let decoded = self.current_stream.get_buffer(&mut self.buffer_data).unwrap();
+
+            println!("{decoded}");
+
+            if decoded < BUFFER_SIZE {
+                self.current_file += 1;
+                if self.current_file >= self.files.len() {
+                    std::process::exit(0);
+                }
+
+                self.current_stream = Box::new(Wav::from_file(self.files[self.current_file].as_str()).unwrap());
+                self.current_stream.get_buffer(&mut self.buffer_data).unwrap();
+            }
+
+            self.system.update_buffer(self.buffers[self.curr_buffer], self.current_stream.format(), Some(&self.buffer_data[..decoded])).unwrap();
+            self.system.queue_buffer(self.buffers[self.curr_buffer], VOICE).unwrap();
+
+            self.curr_buffer += 1;
+            if self.curr_buffer >= self.buffers.len() {
+                self.curr_buffer = 0;
+            }
+        }
     }
 }
