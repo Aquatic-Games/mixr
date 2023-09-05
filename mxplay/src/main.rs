@@ -1,6 +1,6 @@
 use clap::Parser;
 use sdl2::audio::{AudioCallback, AudioSpecDesired};
-use mixr::{AudioBuffer, AudioSystem, BufferDescription, PlayProperties};
+use mixr::{AudioBuffer, AudioSystem, BufferDescription, PlayProperties, PlayState};
 use mixr::stream::{AudioStream, Stream};
 
 #[derive(Parser)]
@@ -14,15 +14,17 @@ struct CliArgs {
     #[arg(short, long, default_value_t = 1.0)]
     speed: f64,
 
-    #[arg(long, default_value_t = false)]
-    looping: bool
+    //#[arg(long, default_value_t = false)]
+    //repeat: bool
 }
 
 fn main() {
-    let paths = vec![
-        "/home/skye/Music/an-back.ogg".to_string(),
+    /*let paths = vec![
+        "/home/skye/Music/house2.ogg".to_string(),
         "/home/skye/Music/SCD/1-20 Quartz Quadrant 'G' Mix JP.wav".to_string()
-    ];
+    ];*/
+
+    let args = CliArgs::parse();
 
     let desired = AudioSpecDesired {
         freq: Some(SAMPLE_RATE as i32),
@@ -34,12 +36,13 @@ fn main() {
     let audio = sdl.audio().unwrap();
 
     let device = audio.open_playback(None, &desired, |_| {
-        Audio::new(paths)
+        Audio::new(args)
     }).unwrap();
 
     device.resume();
 
     ctrlc::set_handler(|| {
+        println!();
         std::process::exit(0);
     }).unwrap();
 
@@ -57,16 +60,26 @@ struct Audio {
     system: AudioSystem,
     paths: Vec<String>,
 
+    play_properties: PlayProperties,
+
     buffer: AudioBuffer,
 
     current_sound: usize
 }
 
 impl Audio {
-    pub fn new(paths: Vec<String>) -> Self {
+    pub fn new(args: CliArgs) -> Self {
+        let paths = args.paths;
+
         if paths.is_empty() {
             panic!("Empty path provided.");
         }
+
+        let play_properties = PlayProperties {
+            volume: args.volume,
+            speed: args.speed,
+            ..Default::default()
+        };
 
         let mut system = AudioSystem::new(SAMPLE_RATE, 1);
 
@@ -75,11 +88,13 @@ impl Audio {
         let pcm = stream.get_pcm().unwrap();
 
         let buffer = system.create_buffer(BufferDescription { format }, Some(&pcm)).unwrap();
-        system.play_buffer(buffer, VOICE, PlayProperties::default()).unwrap();
+        system.play_buffer(buffer, VOICE, play_properties).unwrap();
 
         Self {
             system,
             paths,
+
+            play_properties,
 
             buffer,
 
@@ -93,6 +108,26 @@ impl AudioCallback for Audio {
 
     fn callback(&mut self, buf: &mut [Self::Channel]) {
         self.system.read_buffer_stereo_f32(buf);
+
+        // !! TERRIBLE !!
+        // TODO: Proper audio streaming
+        // TODO: Threading
+        if self.system.get_voice_state(VOICE).unwrap() == PlayState::Stopped {
+            self.current_sound += 1;
+
+            // TODO: Don't do this utter garbage!!!
+            if self.current_sound >= self.paths.len() {
+                std::process::exit(0);
+            }
+
+            let path = &self.paths[self.current_sound];
+            let mut stream = Stream::from_file(path.as_str()).unwrap();
+            let format = stream.format();
+            let pcm = stream.get_pcm().unwrap();
+
+            self.system.update_buffer(self.buffer, format, Some(&pcm)).unwrap();
+            self.system.play_buffer(self.buffer, VOICE, self.play_properties).unwrap();
+        }
     }
 }
 
