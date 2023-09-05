@@ -239,7 +239,8 @@ impl AudioStream for Wav {
 }
 
 struct Vorbis {
-    vorbis: *mut StbVorbis
+    vorbis: *mut StbVorbis,
+    format: AudioFormat
 }
 
 impl AudioStream for Vorbis {
@@ -259,20 +260,23 @@ impl AudioStream for Vorbis {
                 return Err(Error::new(ErrorKind::InvalidData, format!("Failed to load vorbis. Error code {error}.")));
             }
 
+            let info = stb_vorbis_get_info(vorbis);
+
+            let format = AudioFormat {
+                data_type: DataType::F32,
+                sample_rate: info.sample_rate,
+                channels: info.channels as u8,
+            };
+
             Ok(Self {
-                vorbis
+                vorbis,
+                format
             })
         }
     }
 
     fn format(&self) -> AudioFormat {
-        let info = unsafe { stb_vorbis_get_info(self.vorbis) };
-
-        AudioFormat {
-            data_type: DataType::F32,
-            sample_rate: info.sample_rate,
-            channels: info.channels as u8,
-        }
+        self.format
     }
 
     fn metadata(&self) -> &TrackMetadata {
@@ -281,7 +285,11 @@ impl AudioStream for Vorbis {
 
     fn get_buffer(&mut self, buf: &mut [u8]) -> Result<usize, Error> {
         unsafe {
-            Ok(stb_vorbis_get_samples_float_interleaved(self.vorbis, 2, buf.as_mut_ptr() as *mut _, (buf.len() / 4) as c_int) as usize)
+            let amount = stb_vorbis_get_samples_float_interleaved(self.vorbis, self.format.channels as c_int, buf.as_mut_ptr() as *mut _, (buf.len() / 4) as c_int) as usize * self.format.channels as usize;
+            if amount < buf.len() / 4 {
+                panic!("expected {}, got {amount}.", buf.len() / 4);
+            }
+            Ok(amount)
         }
     }
 
@@ -296,7 +304,7 @@ impl AudioStream for Vorbis {
 
     fn pcm_length(&self) -> usize {
         // multiply by 4 as I believe pcm_length should be in bytes not samples.
-        unsafe { stb_vorbis_stream_length_in_samples(self.vorbis) as usize * 4 }
+        unsafe { stb_vorbis_stream_length_in_samples(self.vorbis) as usize * 4 * self.format.channels as usize }
     }
 }
 
