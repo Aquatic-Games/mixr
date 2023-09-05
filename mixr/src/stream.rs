@@ -40,10 +40,24 @@ impl AudioStream for Stream {
     }
 
     fn from_file(path: &str) -> Result<Self, Error> where Self: Sized {
-        let stream = Vorbis::from_file(path)?;
+        let file = File::open(path)?;
+        let mut reader = BinaryReader::new(file);
+        let id = reader.read_u32().unwrap();
+
+        const RIFF: u32 = 0x46464952;
+        const OGGS: u32 = 0x5367674F;
+
+        // TODO: This is not very thorough. It should work for valid files, but doesn't do any extra
+        // checking. This should be improved.
+        let stream = match id {
+            RIFF => Box::new(Wav::from_file(path).unwrap()) as Box<dyn AudioStream>,
+            OGGS => Box::new(Vorbis::from_file(path).unwrap()) as Box<dyn AudioStream>,
+
+            _ => return Err(Error::new(ErrorKind::Unsupported, "Unsupported audio format provided."))
+        };
 
         Ok(Self {
-            stream: Box::new(stream)
+            stream
         })
     }
 
@@ -287,7 +301,7 @@ impl AudioStream for Vorbis {
         unsafe {
             let amount = stb_vorbis_get_samples_float_interleaved(self.vorbis, self.format.channels as c_int, buf.as_mut_ptr() as *mut _, (buf.len() / 4) as c_int) as usize * self.format.channels as usize;
             if amount < buf.len() / 4 {
-                panic!("expected {}, got {amount}.", buf.len() / 4);
+                return Err(Error::new(ErrorKind::InvalidData, format!("expected {}, got {amount}.", buf.len() / 4)));
             }
             Ok(amount)
         }

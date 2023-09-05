@@ -20,7 +20,7 @@ struct CliArgs {
 
 fn main() {
     let paths = vec![
-        "/home/skye/Music/house2.ogg".to_string(),
+        "/home/skye/Music/an-back.ogg".to_string(),
         "/home/skye/Music/SCD/1-20 Quartz Quadrant 'G' Mix JP.wav".to_string()
     ];
 
