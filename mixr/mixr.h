@@ -111,7 +111,11 @@ void mxReadBufferStereoF32(MxAudioSystem *system, float *buffer, uintptr_t lengt
 
 uint16_t mxGetNumVoices(MxAudioSystem *system);
 
-MxResult mxStreamLoadWav(const char *path, MxStream **stream);
+MxResult mxStreamLoadFile(const char *path, MxStream **stream);
+
+MxResult mxStreamLoadWavFile(const char *path, MxStream **stream);
+
+MxResult mxStreamLoadVorbisFile(const char *path, MxStream **stream);
 
 void mxStreamFree(MxStream *stream);
 

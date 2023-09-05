@@ -1,6 +1,7 @@
 use std::ffi::{c_void, c_char, CStr};
 
-use crate::{stream::{Wav, AudioStream}, AudioCallbacks};
+use crate::{stream::{AudioStream, Stream, Wav}, AudioCallbacks};
+use crate::stream::Vorbis;
 
 pub struct MxAudioSystem {
     system: crate::AudioSystem
@@ -369,27 +370,18 @@ pub unsafe extern fn mxGetNumVoices(system: &mut MxAudioSystem) -> u16 {
 }
 
 #[no_mangle]
-pub unsafe extern fn mxStreamLoadWav(path: *const c_char, stream: *mut *mut MxStream) -> MxResult {
-    let wav = Wav::from_file(CStr::from_ptr(path).to_str().unwrap());
+pub unsafe extern fn mxStreamLoadFile(path: *const c_char, stream: *mut *mut MxStream) -> MxResult {
+    load_stream_file::<Stream>(path, stream)
+}
 
-    let wav = match wav {
-        Ok(wav) => wav,
-        Err(err) => {
-            if err.kind() == std::io::ErrorKind::NotFound {
-                return MxResult::FileNotFound
-            } else {
-                return MxResult::Other
-            }
-        }
-    };
+#[no_mangle]
+pub unsafe extern fn mxStreamLoadWavFile(path: *const c_char, stream: *mut *mut MxStream) -> MxResult {
+    load_stream_file::<Wav>(path, stream)
+}
 
-    let mx_stream = MxStream {
-        stream: Box::new(wav)
-    };
-
-    *stream = Box::into_raw(Box::new(mx_stream));
-
-    MxResult::Ok
+#[no_mangle]
+pub unsafe extern fn mxStreamLoadVorbisFile(path: *const c_char, stream: *mut *mut MxStream) -> MxResult {
+    load_stream_file::<Vorbis>(path, stream)
 }
 
 #[no_mangle]
@@ -428,4 +420,27 @@ impl AudioCallbacks for Callback {
             (self.callback)(MxAudioBuffer { id: buffer.id }, voice);
         }
     }
+}
+
+unsafe fn load_stream_file<T: AudioStream + 'static>(path: *const c_char, stream: *mut *mut MxStream) -> MxResult {
+    let a_stream = T::from_file(CStr::from_ptr(path).to_str().unwrap());
+
+    let a_stream = match a_stream {
+        Ok(a_stream) => Box::new(a_stream) as Box<dyn AudioStream>,
+        Err(err) => {
+            if err.kind() == std::io::ErrorKind::NotFound {
+                return MxResult::FileNotFound
+            } else {
+                return MxResult::Other
+            }
+        }
+    };
+
+    let mx_stream = MxStream {
+        stream: a_stream
+    };
+
+    *stream = Box::into_raw(Box::new(mx_stream));
+
+    MxResult::Ok
 }

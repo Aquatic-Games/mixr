@@ -1,6 +1,7 @@
-use std::ffi::{c_char, c_float, c_int, c_uint, c_void, CString};
+use std::ffi::{c_int, CString};
 use std::fs::File;
 use std::io::{Error, ErrorKind};
+use stb_vorbis::*;
 
 use crate::{AudioFormat, DataType};
 use skyetils::binary::BinaryReader;
@@ -252,7 +253,7 @@ impl AudioStream for Wav {
     }
 }
 
-struct Vorbis {
+pub struct Vorbis {
     vorbis: *mut StbVorbis,
     format: AudioFormat
 }
@@ -333,28 +334,33 @@ impl Drop for Vorbis {
 unsafe impl Send for Vorbis {}
 unsafe impl Sync for Vorbis {}
 
-#[repr(C)]
-struct StbVorbisInfo {
-    pub sample_rate: c_uint,
-    pub channels: c_int,
+/// cbindgen:ignore
+mod stb_vorbis {
+    use std::ffi::{c_char, c_float, c_int, c_uint, c_void};
 
-    pub setup_memory_required: c_uint,
-    pub setup_temp_memory_required: c_uint,
-    pub temp_memory_required: c_uint,
+    #[repr(C)]
+    pub struct StbVorbisInfo {
+        pub sample_rate: c_uint,
+        pub channels: c_int,
 
-    pub max_frame_size: c_int
-}
+        pub setup_memory_required: c_uint,
+        pub setup_temp_memory_required: c_uint,
+        pub temp_memory_required: c_uint,
 
-type StbVorbis = c_void;
+        pub max_frame_size: c_int
+    }
 
-extern "C" {
-    fn stb_vorbis_open_filename(filename: *const c_char, error: *mut c_int, stb_vorbis_alloc: *const c_void) -> *mut StbVorbis;
+    pub type StbVorbis = c_void;
 
-    fn stb_vorbis_close(f: *mut StbVorbis);
+    extern "C" {
+        pub fn stb_vorbis_open_filename(filename: *const c_char, error: *mut c_int, stb_vorbis_alloc: *const c_void) -> *mut StbVorbis;
 
-    fn stb_vorbis_get_info(f: *mut StbVorbis) -> StbVorbisInfo;
+        pub fn stb_vorbis_close(f: *mut StbVorbis);
 
-    fn stb_vorbis_stream_length_in_samples(f: *mut StbVorbis) -> c_uint;
+        pub fn stb_vorbis_get_info(f: *mut StbVorbis) -> StbVorbisInfo;
 
-    fn stb_vorbis_get_samples_float_interleaved(f: *mut StbVorbis, channels: c_int, buffer: *mut c_float, num_floats: c_int) -> c_int;
+        pub fn stb_vorbis_stream_length_in_samples(f: *mut StbVorbis) -> c_uint;
+
+        pub fn stb_vorbis_get_samples_float_interleaved(f: *mut StbVorbis, channels: c_int, buffer: *mut c_float, num_floats: c_int) -> c_int;
+    }
 }
