@@ -1,7 +1,7 @@
 use clap::Parser;
 use sdl2::audio::{AudioCallback, AudioSpecDesired};
 use mixr::{AudioBuffer, AudioSystem, BufferDescription, PlayProperties};
-use mixr::stream::{AudioStream, Wav};
+use mixr::stream::{AudioStream, Stream};
 
 #[derive(Parser)]
 struct CliArgs {
@@ -20,7 +20,7 @@ struct CliArgs {
 
 fn main() {
     let paths = vec![
-        "/home/skye/Music/house2.wav".to_string(),
+        "/home/skye/Music/house2.ogg".to_string(),
         "/home/skye/Music/SCD/1-20 Quartz Quadrant 'G' Mix JP.wav".to_string()
     ];
 
@@ -70,9 +70,9 @@ impl Audio {
 
         let mut system = AudioSystem::new(SAMPLE_RATE, 1);
 
-        let mut wav = Wav::from_file(paths[0].as_str()).unwrap();
-        let pcm = wav.get_pcm().unwrap();
-        let format = wav.format();
+        let mut stream = Stream::from_file(paths[0].as_str()).unwrap();
+        let format = stream.format();
+        let pcm = stream.get_pcm().unwrap();
 
         let buffer = system.create_buffer(BufferDescription { format }, Some(&pcm)).unwrap();
         system.play_buffer(buffer, VOICE, PlayProperties::default()).unwrap();

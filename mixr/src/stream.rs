@@ -1,4 +1,6 @@
+use std::ffi::{c_char, c_float, c_int, c_uint, c_void, CString};
 use std::fs::File;
+use std::io::{Error, ErrorKind};
 
 use crate::{AudioFormat, DataType};
 use skyetils::binary::BinaryReader;
@@ -26,6 +28,44 @@ pub struct TrackMetadata {
     pub album:  Option<String>,
     pub year:   Option<String>,
     pub genre:  Option<String>
+}
+
+pub struct Stream {
+    stream: Box<dyn AudioStream>
+}
+
+impl AudioStream for Stream {
+    fn from_data(data: &[u8]) -> Self where Self: Sized {
+        todo!()
+    }
+
+    fn from_file(path: &str) -> Result<Self, Error> where Self: Sized {
+        let stream = Vorbis::from_file(path)?;
+
+        Ok(Self {
+            stream: Box::new(stream)
+        })
+    }
+
+    fn format(&self) -> AudioFormat {
+        self.stream.format()
+    }
+
+    fn metadata(&self) -> &TrackMetadata {
+        self.stream.metadata()
+    }
+
+    fn get_buffer(&mut self, buf: &mut [u8]) -> Result<usize, Error> {
+        self.stream.get_buffer(buf)
+    }
+
+    fn get_pcm(&mut self) -> Result<Vec<u8>, Error> {
+        self.stream.get_pcm()
+    }
+
+    fn pcm_length(&self) -> usize {
+        self.stream.pcm_length()
+    }
 }
 
 pub struct Wav {
@@ -196,4 +236,103 @@ impl AudioStream for Wav {
     fn metadata(&self) -> &TrackMetadata {
         &self.metadata
     }
+}
+
+struct Vorbis {
+    vorbis: *mut StbVorbis
+}
+
+impl AudioStream for Vorbis {
+    fn from_data(data: &[u8]) -> Self where Self: Sized {
+        todo!()
+    }
+
+    fn from_file(path: &str) -> Result<Self, Error> where Self: Sized {
+        let path = CString::new(path).unwrap();
+        let c_path = path.as_c_str();
+
+        unsafe {
+            let mut error = 0;
+            let vorbis = stb_vorbis_open_filename(c_path.as_ptr(), &mut error, std::ptr::null());
+
+            if vorbis == std::ptr::null_mut() {
+                return Err(Error::new(ErrorKind::InvalidData, format!("Failed to load vorbis. Error code {error}.")));
+            }
+
+            Ok(Self {
+                vorbis
+            })
+        }
+    }
+
+    fn format(&self) -> AudioFormat {
+        let info = unsafe { stb_vorbis_get_info(self.vorbis) };
+
+        AudioFormat {
+            data_type: DataType::F32,
+            sample_rate: info.sample_rate,
+            channels: info.channels as u8,
+        }
+    }
+
+    fn metadata(&self) -> &TrackMetadata {
+        todo!()
+    }
+
+    fn get_buffer(&mut self, buf: &mut [u8]) -> Result<usize, Error> {
+        unsafe {
+            Ok(stb_vorbis_get_samples_float_interleaved(self.vorbis, 2, buf.as_mut_ptr() as *mut _, (buf.len() / 4) as c_int) as usize)
+        }
+    }
+
+    fn get_pcm(&mut self) -> Result<Vec<u8>, Error> {
+        let length = self.pcm_length();
+        let mut vec = Vec::with_capacity(length);
+        unsafe { vec.set_len(length) };
+        self.get_buffer(&mut vec)?;
+
+        Ok(vec)
+    }
+
+    fn pcm_length(&self) -> usize {
+        // multiply by 4 as I believe pcm_length should be in bytes not samples.
+        unsafe { stb_vorbis_stream_length_in_samples(self.vorbis) as usize * 4 }
+    }
+}
+
+impl Drop for Vorbis {
+    fn drop(&mut self) {
+        unsafe {
+            stb_vorbis_close(self.vorbis);
+        }
+    }
+}
+
+unsafe impl Send for Vorbis {}
+unsafe impl Sync for Vorbis {}
+
+#[repr(C)]
+struct StbVorbisInfo {
+    pub sample_rate: c_uint,
+    pub channels: c_int,
+
+    pub setup_memory_required: c_uint,
+    pub setup_temp_memory_required: c_uint,
+    pub temp_memory_required: c_uint,
+
+    pub max_frame_size: c_int
+}
+
+type StbVorbis = c_void;
+
+extern "C" {
+    fn stb_vorbis_open_filename(filename: *const c_char, error: *mut c_int, stb_vorbis_alloc: *const c_void) -> *mut StbVorbis;
+
+    fn stb_vorbis_close(f: *mut StbVorbis);
+
+    fn stb_vorbis_get_info(f: *mut StbVorbis) -> StbVorbisInfo;
+
+    fn stb_vorbis_stream_length_in_samples(f: *mut StbVorbis) -> c_uint;
+
+    fn stb_vorbis_get_samples_float_interleaved(f: *mut StbVorbis, channels: c_int, buffer: *mut c_float, num_floats: c_int) -> c_int;
 }
