@@ -216,6 +216,10 @@ impl AudioSystem {
         // This is a reasonably expensive operation but it prevents a panic later.
         for voice in &mut self.voices {
             if voice.buffer == buffer.id {
+                // must clear queued buffers otherwise the voice will continue to try and play
+                // them later.
+                voice.queued_buffers.clear();
+
                 voice.is_playing = false;
                 voice.buffer = usize::MAX;
                 voice.position = 0;
@@ -357,6 +361,10 @@ impl AudioSystem {
 
         match state {
             PlayState::Stopped => {
+                // clear all queued buffers so that it doesn't try to resume playing them later.
+                // stopping a voice acts exactly like a complete reset of the voice.
+                voice.queued_buffers.clear();
+
                 voice.is_playing = false;
                 voice.buffer = usize::MAX;
                 voice.position = 0;
