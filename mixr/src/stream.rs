@@ -301,9 +301,9 @@ impl AudioStream for Vorbis {
     fn get_buffer(&mut self, buf: &mut [u8]) -> Result<usize, Error> {
         unsafe {
             let amount = stb_vorbis_get_samples_float_interleaved(self.vorbis, self.format.channels as c_int, buf.as_mut_ptr() as *mut _, (buf.len() / 4) as c_int) as usize * self.format.channels as usize;
-            if amount < buf.len() / 4 {
-                return Err(Error::new(ErrorKind::InvalidData, format!("expected {}, got {amount}.", buf.len() / 4)));
-            }
+            //if amount < buf.len() / 4 {
+            //    return Err(Error::new(ErrorKind::InvalidData, format!("expected {}, got {amount}.", buf.len() / 4)));
+            //}
             Ok(amount)
         }
     }
