@@ -398,6 +398,15 @@ pub unsafe extern fn mxStreamGetFormat(stream: &mut MxStream, format: *mut MxAud
 }
 
 #[no_mangle]
+pub unsafe extern fn mxStreamGetBuffer(stream: &mut MxStream, buffer: *mut u8, length: usize) {
+    let stream = &mut stream.stream;
+
+    let mut slice = std::slice::from_raw_parts_mut(buffer, length);
+
+    stream.get_buffer(&mut slice).unwrap();
+}
+
+#[no_mangle]
 pub unsafe extern fn mxStreamGetPcm(stream: &mut MxStream, data: *mut c_void, length: *mut usize) {
     let stream = &mut stream.stream;
 
