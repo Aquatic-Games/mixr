@@ -398,12 +398,12 @@ pub unsafe extern fn mxStreamGetFormat(stream: &mut MxStream, format: *mut MxAud
 }
 
 #[no_mangle]
-pub unsafe extern fn mxStreamGetBuffer(stream: &mut MxStream, buffer: *mut u8, length: usize) {
+pub unsafe extern fn mxStreamGetBuffer(stream: &mut MxStream, buffer: *mut u8, length: usize) -> usize {
     let stream = &mut stream.stream;
 
     let mut slice = std::slice::from_raw_parts_mut(buffer, length);
 
-    stream.get_buffer(&mut slice).unwrap();
+    stream.get_buffer(&mut slice).unwrap()
 }
 
 #[no_mangle]
