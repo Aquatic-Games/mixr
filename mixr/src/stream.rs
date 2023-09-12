@@ -365,7 +365,7 @@ impl AudioStream for Vorbis {
     }
 
     fn restart(&mut self) {
-       unsafe { stb_vorbis_seek_start(self.vorbis); }
+        unsafe { stb_vorbis_seek_start(self.vorbis); }
     }
 }
 

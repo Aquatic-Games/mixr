@@ -121,7 +121,15 @@ void mxStreamFree(MxStream *stream);
 
 void mxStreamGetFormat(MxStream *stream, MxAudioFormat *format);
 
+uintptr_t mxStreamGetBuffer(MxStream *stream, uint8_t *buffer, uintptr_t length);
+
 void mxStreamGetPcm(MxStream *stream, void *data, uintptr_t *length);
+
+void mxStreamSeek(MxStream *stream, double position);
+
+void mxStreamSeekSamples(MxStream *stream, uintptr_t position);
+
+void mxStreamRestart(MxStream *stream);
 
 #ifdef __cplusplus
 } // extern "C"
