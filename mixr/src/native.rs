@@ -188,7 +188,8 @@ pub unsafe extern fn mxCreateSystem(sample_rate: u32, voices: u16) -> *mut MxAud
 }
 
 #[no_mangle]
-pub unsafe extern fn mxDestroySystem(system: &mut MxAudioSystem) {
+pub unsafe extern fn mxDestroySystem(system: *mut MxAudioSystem) {
+    let system = Box::from_raw(system);
     std::mem::drop(system)
 }
 
@@ -417,6 +418,27 @@ pub unsafe extern fn mxStreamGetPcm(stream: &mut MxStream, data: *mut c_void, le
         // To avoid memory allocations, we just call get_buffer on the full pointer.
         stream.get_buffer(std::slice::from_raw_parts_mut(data as *mut _, *length)).unwrap();
     }
+}
+
+#[no_mangle]
+pub unsafe extern fn mxStreamSeek(stream: &mut MxStream, position: f64) {
+    let stream = &mut stream.stream;
+
+    stream.seek(position);
+}
+
+#[no_mangle]
+pub unsafe extern fn mxStreamSeekSamples(stream: &mut MxStream, position: usize) {
+    let stream = &mut stream.stream;
+
+    stream.seek_samples(position);
+}
+
+#[no_mangle]
+pub unsafe extern fn mxStreamRestart(stream: &mut MxStream) {
+    let stream = &mut stream.stream;
+
+    stream.restart();
 }
 
 struct Callback {

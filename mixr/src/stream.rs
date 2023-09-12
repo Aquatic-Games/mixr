@@ -20,6 +20,12 @@ pub trait AudioStream: Send + Sync {
     fn get_pcm(&mut self) -> Result<Vec<u8>, std::io::Error>;
 
     fn pcm_length(&self) -> usize;
+
+    fn seek(&mut self, position: f64);
+
+    fn seek_samples(&mut self, position: usize);
+
+    fn restart(&mut self);
 }
 
 #[derive(Debug, Clone, Default)]
@@ -81,6 +87,18 @@ impl AudioStream for Stream {
     fn pcm_length(&self) -> usize {
         self.stream.pcm_length()
     }
+
+    fn seek(&mut self, position: f64) {
+        self.stream.seek(position)
+    }
+
+    fn seek_samples(&mut self, position: usize) {
+        self.stream.seek_samples(position)
+    }
+
+    fn restart(&mut self) {
+        self.stream.restart()
+    }
 }
 
 pub struct Wav {
@@ -90,7 +108,8 @@ pub struct Wav {
     metadata: TrackMetadata,
 
     data_size: usize,
-    current_pos: usize
+    data_start_pos: usize,
+    current_pos: usize,
 }
 
 impl AudioStream for Wav {
@@ -135,6 +154,7 @@ impl AudioStream for Wav {
         let mut format = AudioFormat::default();
         let mut metadata = TrackMetadata::default();
         let mut data_size = 0;
+        let mut data_start_pos = 0;
 
         loop {
             match reader.read_u32().unwrap() {
@@ -167,6 +187,7 @@ impl AudioStream for Wav {
 
                 DATA => {
                     data_size = reader.read_u32().unwrap() as usize;
+                    data_start_pos = reader.position().unwrap();
                     break;
                 },
 
@@ -217,7 +238,7 @@ impl AudioStream for Wav {
             metadata,
 
             data_size,
-
+            data_start_pos,
             current_pos: 0
         })
     }
@@ -250,6 +271,19 @@ impl AudioStream for Wav {
 
     fn metadata(&self) -> &TrackMetadata {
         &self.metadata
+    }
+
+    fn seek(&mut self, position: f64) {
+        todo!()
+    }
+
+    fn seek_samples(&mut self, position: usize) {
+        todo!()
+    }
+
+    fn restart(&mut self) {
+        self.current_pos = 0;
+        self.reader.set_position(self.data_start_pos).unwrap();
     }
 }
 
@@ -321,6 +355,18 @@ impl AudioStream for Vorbis {
         // multiply by 4 as I believe pcm_length should be in bytes not samples.
         unsafe { stb_vorbis_stream_length_in_samples(self.vorbis) as usize * 4 * self.format.channels as usize }
     }
+
+    fn seek(&mut self, position: f64) {
+        todo!()
+    }
+
+    fn seek_samples(&mut self, position: usize) {
+        unsafe { stb_vorbis_seek(self.vorbis, position as _); }
+    }
+
+    fn restart(&mut self) {
+       unsafe { stb_vorbis_seek_start(self.vorbis); }
+    }
 }
 
 impl Drop for Vorbis {
@@ -362,5 +408,9 @@ mod stb_vorbis {
         pub fn stb_vorbis_stream_length_in_samples(f: *mut StbVorbis) -> c_uint;
 
         pub fn stb_vorbis_get_samples_float_interleaved(f: *mut StbVorbis, channels: c_int, buffer: *mut c_float, num_floats: c_int) -> c_int;
+
+        pub fn stb_vorbis_seek_start(f: *mut StbVorbis) -> c_int;
+
+        pub fn stb_vorbis_seek(f: *mut StbVorbis, sample_number: c_uint) -> c_int;
     }
 }
