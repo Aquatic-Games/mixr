@@ -6,6 +6,9 @@ set(CMAKE_CXX_STANDARD 17)
 add_library(mixr STATIC
         include/mixr/mixr.hpp
         src/Context.cpp
-        include/mixr/Context.h)
+        include/mixr/Context.h
+        src/Impl/Impl.cpp
+        src/Impl/Impl.h
+)
 
 target_include_directories(mixr PRIVATE include)

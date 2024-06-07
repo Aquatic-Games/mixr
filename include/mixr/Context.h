@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 
 namespace mixr {
 
@@ -8,7 +9,7 @@ namespace mixr {
     private:
         class Impl;
 
-        Impl _impl;
+        std::unique_ptr<Impl> _impl;
 
     public:
         Context(uint32_t sampleRate);
