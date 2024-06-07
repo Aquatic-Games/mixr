@@ -10,6 +10,8 @@ add_library(mixr STATIC
         src/Impl/Impl.cpp
         src/Impl/Impl.h
         include/mixr/AudioFormat.h
+        src/AudioBuffer.cpp
+        include/mixr/AudioBuffer.h
 )
 
 target_include_directories(mixr PRIVATE include)

@@ -3,6 +3,9 @@
 #include <cstdint>
 #include <memory>
 
+#include "AudioFormat.h"
+#include "AudioBuffer.h"
+
 namespace mixr {
 
     class Context {
@@ -13,6 +16,8 @@ namespace mixr {
 
     public:
         Context(uint32_t sampleRate);
+
+        std::unique_ptr<AudioBuffer> CreateBuffer(const AudioFormat& format, void* data, size_t dataLength);
     };
 
 }
