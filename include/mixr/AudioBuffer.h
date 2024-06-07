@@ -9,7 +9,8 @@ namespace mixr {
         size_t _id;
         Context* _context;
 
-
+        AudioBuffer(size_t id, Context* context);
+        ~AudioBuffer();
     };
 
 }
