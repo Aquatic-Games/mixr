@@ -4,18 +4,21 @@
 #include <memory>
 
 #include "AudioFormat.h"
-#include "AudioBuffer.h"
 
 namespace mixr {
 
+    class Impl;
+
+    class AudioBuffer;
+    class AudioSource;
+
     class Context {
     private:
-        class Impl;
-
         std::unique_ptr<Impl> _impl;
 
     public:
-        Context(uint32_t sampleRate);
+        explicit Context(uint32_t sampleRate);
+        ~Context();
 
         std::unique_ptr<AudioBuffer> CreateBuffer(const AudioFormat& format, void* data, size_t dataLength);
     };

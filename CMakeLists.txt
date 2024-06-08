@@ -14,4 +14,7 @@ add_library(mixr STATIC
         include/mixr/AudioBuffer.h
 )
 
-target_include_directories(mixr PRIVATE include)
+target_include_directories(mixr PUBLIC include)
+
+add_executable(mixrtest tests/main.cpp)
+target_link_libraries(mixrtest PRIVATE mixr)

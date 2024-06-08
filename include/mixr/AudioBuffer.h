@@ -2,14 +2,17 @@
 
 #include <cstdint>
 
+#include "Context.h"
+
 namespace mixr {
 
     class AudioBuffer {
     private:
-        class Impl;
-
         size_t _id;
         Impl* _impl;
+
+    public:
+        AudioBuffer(size_t id, Impl* impl);
     };
 
 }

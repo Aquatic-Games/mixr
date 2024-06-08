@@ -1,17 +1,30 @@
 #pragma once
 
 #include <cstdint>
+#include <vector>
 
 #include "mixr/Context.h"
+#include "mixr/AudioFormat.h"
 
 namespace mixr {
 
-    class Context::Impl {
+    struct Buffer {
+        std::vector<uint8_t> Data;
+        AudioFormat Format;
+
+        uint8_t ByteAlign;
+    };
+
+    class Impl {
     private:
         uint32_t _sampleRate;
 
+        std::vector<Buffer> _buffers;
+
     public:
-        Impl(uint32_t sampleRate);
+        explicit Impl(uint32_t sampleRate);
+
+        size_t CreateBuffer(const AudioFormat& format, uint8_t* data, size_t dataLength);
     };
 
-} // mixr
+}
