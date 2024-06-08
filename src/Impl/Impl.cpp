@@ -32,4 +32,15 @@ namespace mixr {
 
         return index;
     }
+
+    size_t Impl::CreateSource() {
+        Source source {
+            .QueuedBuffers = std::queue<size_t>()
+        };
+
+        size_t index = _sources.size();
+        _sources.push_back(source);
+
+        return index;
+    }
 }

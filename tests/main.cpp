@@ -17,5 +17,7 @@ int main() {
     std::unique_ptr<Context> context = std::make_unique<Context>(48000);
     auto buffer = context->CreateBuffer(format, data.data(), data.size());
 
+    auto source = context->CreateSource();
+
     return 0;
 }
