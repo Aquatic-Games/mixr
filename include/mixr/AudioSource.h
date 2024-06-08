@@ -13,6 +13,12 @@ namespace mixr {
 
     public:
         AudioSource(size_t id, Impl* impl);
+
+        inline size_t ID() {
+            return _id;
+        }
+
+        void SubmitBuffer(AudioBuffer* buffer);
     };
 
 }

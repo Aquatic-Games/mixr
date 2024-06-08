@@ -18,6 +18,7 @@ int main() {
     auto buffer = context->CreateBuffer(format, data.data(), data.size());
 
     auto source = context->CreateSource();
+    source->SubmitBuffer(buffer.get());
 
     return 0;
 }

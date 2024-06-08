@@ -32,6 +32,8 @@ namespace mixr {
 
         size_t CreateBuffer(const AudioFormat& format, uint8_t* data, size_t dataLength);
         size_t CreateSource();
+
+        void SubmitBufferToSource(size_t sourceId, size_t bufferId);
     };
 
 }

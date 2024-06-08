@@ -43,4 +43,8 @@ namespace mixr {
 
         return index;
     }
+
+    void Impl::SubmitBufferToSource(size_t sourceId, size_t bufferId) {
+        _sources[sourceId].QueuedBuffers.push(bufferId);
+    }
 }
