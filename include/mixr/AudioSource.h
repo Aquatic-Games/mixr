@@ -21,6 +21,10 @@ namespace mixr {
 
         void SubmitBuffer(AudioBuffer* buffer);
 
+        void SetSpeed(double speed);
+        void SetVolume(float volume);
+        void SetLooping(bool looping);
+
         void Play();
         void Stop();
     };

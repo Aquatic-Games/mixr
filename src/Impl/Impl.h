@@ -23,6 +23,9 @@ namespace mixr {
         std::queue<size_t> QueuedBuffers;
 
         bool Playing;
+        double Speed;
+        float Volume;
+        bool Looping;
 
         size_t Position;
         double FinePosition;
@@ -35,6 +38,7 @@ namespace mixr {
     class Impl {
     private:
         uint32_t _sampleRate;
+        float _masterVolume;
 
         std::vector<Buffer> _buffers;
         std::vector<Source> _sources;
@@ -45,9 +49,14 @@ namespace mixr {
         size_t CreateBuffer(const AudioFormat& format, uint8_t* data, size_t dataLength);
         size_t CreateSource();
 
+        void SetMasterVolume(float volume);
+
         void SourceSubmitBuffer(size_t sourceId, size_t bufferId);
         void SourcePlay(size_t sourceId);
         void SourceStop(size_t sourceId);
+        void SourceSetSpeed(size_t sourceId, double speed);
+        void SourceSetVolume(size_t sourceId, float volume);
+        void SourceSetLooping(size_t sourceId, bool looping);
 
         void MixToStereoF32Buffer(float* buffer, size_t bufferLength);
     };

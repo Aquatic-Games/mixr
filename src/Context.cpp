@@ -8,6 +8,8 @@ namespace mixr {
         _impl = std::make_unique<Impl>(sampleRate);
     }
 
+    Context::~Context() = default;
+
     std::unique_ptr<AudioBuffer> Context::CreateBuffer(const AudioFormat& format, void* data, size_t dataLength) {
         size_t index = _impl->CreateBuffer(format, static_cast<uint8_t*>(data), dataLength);
         return std::make_unique<AudioBuffer>(index, _impl.get());
@@ -18,5 +20,7 @@ namespace mixr {
         return std::make_unique<AudioSource>(index, _impl.get());
     }
 
-    Context::~Context() = default;
+    void Context::SetMasterVolume(float volume) {
+        _impl->SetMasterVolume(volume);
+    }
 }

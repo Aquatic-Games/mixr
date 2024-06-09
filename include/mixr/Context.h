@@ -23,6 +23,8 @@ namespace mixr {
 
         std::unique_ptr<AudioBuffer> CreateBuffer(const AudioFormat& format, void* data, size_t dataLength);
         std::unique_ptr<AudioSource> CreateSource();
+
+        void SetMasterVolume(float volume);
     };
 
 }

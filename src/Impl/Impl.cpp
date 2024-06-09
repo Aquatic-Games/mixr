@@ -4,6 +4,7 @@
 namespace mixr {
     Impl::Impl(uint32_t sampleRate) {
         _sampleRate = sampleRate;
+        _masterVolume = 1.0f;
     }
 
     size_t Impl::CreateBuffer(const AudioFormat& format, uint8_t* data, size_t dataLength) {
@@ -55,6 +56,9 @@ namespace mixr {
             .QueuedBuffers = std::queue<size_t>(),
 
             .Playing = false,
+            .Speed = 1.0,
+            .Volume = 1.0f,
+            .Looping = false,
 
             .Position = 0,
             .FinePosition = 0.0,
@@ -68,6 +72,10 @@ namespace mixr {
         _sources.push_back(source);
 
         return index;
+    }
+
+    void Impl::SetMasterVolume(float volume) {
+        _masterVolume = volume;
     }
 
     void Impl::SourceSubmitBuffer(size_t sourceId, size_t bufferId) {
@@ -87,6 +95,18 @@ namespace mixr {
 
     void Impl::SourceStop(size_t sourceId) {
         _sources[sourceId].Playing = false;
+    }
+
+    void Impl::SourceSetSpeed(size_t sourceId, double speed) {
+        _sources[sourceId].Speed = speed;
+    }
+
+    void Impl::SourceSetVolume(size_t sourceId, float volume) {
+        _sources[sourceId].Volume = volume;
+    }
+
+    void Impl::SourceSetLooping(size_t sourceId, bool looping) {
+        _sources[sourceId].Looping = looping;
     }
 
     inline float GetSample(const uint8_t* data, size_t index, DataType dataType) {
@@ -138,13 +158,14 @@ namespace mixr {
                 float lastSampleL = source->LastSampleL;
                 float lastSampleR = source->LastSampleR;
 
-                float outSampleL = Lerp(lastSampleL, sampleL, (float) source->FinePosition);
-                float outSampleR = Lerp(lastSampleR, sampleR, (float) source->FinePosition);
+                float outSampleL = Lerp(lastSampleL, sampleL, (float) source->FinePosition) * source->Volume;
+                float outSampleR = Lerp(lastSampleR, sampleR, (float) source->FinePosition) * source->Volume;
 
                 buffer[i + 0] += Clamp(outSampleL, -1.0f, 1.0f);
                 buffer[i + 1] += Clamp(outSampleR, -1.0f, 1.0f);
 
-                source->FinePosition += buf->SpeedCorrection;
+                source->FinePosition += buf->SpeedCorrection * source->Speed;
+
                 int intPos = (int) source->FinePosition;
                 source->Position += intPos;
                 source->FinePosition -= intPos;
@@ -156,9 +177,16 @@ namespace mixr {
                 }
 
                 if (source->Position >= buf->LengthInSamples) {
-                    source->Playing = false;
+                    if (source->Looping) {
+                        source->Position = 0;
+                    } else {
+                        source->Playing = false;
+                    }
                 }
             }
+
+            buffer[i + 0] = Clamp(buffer[i + 0] * _masterVolume, -1.0f, 1.0f);
+            buffer[i + 1] = Clamp(buffer[i + 1] * _masterVolume, -1.0f, 1.0f);
         }
     }
 }

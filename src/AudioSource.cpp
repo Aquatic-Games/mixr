@@ -12,6 +12,18 @@ namespace mixr {
         _impl->SourceSubmitBuffer(_id, buffer->ID());
     }
 
+    void AudioSource::SetSpeed(double speed) {
+        _impl->SourceSetSpeed(_id, speed);
+    }
+
+    void AudioSource::SetVolume(float volume) {
+        _impl->SourceSetVolume(_id, volume);
+    }
+
+    void AudioSource::SetLooping(bool looping) {
+        _impl->SourceSetLooping(_id, looping);
+    }
+
     void AudioSource::Play() {
         _impl->SourcePlay(_id);
     }
