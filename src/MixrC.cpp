@@ -25,3 +25,10 @@ size_t mxContextCreateBuffer(MxContext *context, MxAudioFormat *format, uint8_t*
     size_t index = impl->CreateBuffer(fmt, data, dataLength);
     return index;
 }
+
+size_t mxContextCreateSource(MxContext *context) {
+    Impl* impl = (Impl*) context;
+
+    size_t index = impl->CreateSource();
+    return index;
+}

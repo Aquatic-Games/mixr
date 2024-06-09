@@ -32,6 +32,8 @@ extern "C" {
 
     size_t mxContextCreateBuffer(MxContext *context, MxAudioFormat *format, uint8_t* data, size_t dataLength);
 
+    size_t mxContextCreateSource(MxContext *context);
+
 #ifdef __cplusplus
 }
 #endif
