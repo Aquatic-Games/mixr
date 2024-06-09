@@ -26,8 +26,6 @@ int main() {
 
     while (true) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
-
-        std::cout << "AAA" << std::endl;
     }
 
     return 0;

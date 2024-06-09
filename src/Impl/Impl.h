@@ -13,12 +13,17 @@ namespace mixr {
         std::vector<uint8_t> Data;
         AudioFormat Format;
 
-        uint8_t ByteAlign;
+        int ByteAlign;
+        int StereoAlign;
         double SpeedCorrection;
     };
 
     struct Source {
         std::queue<size_t> QueuedBuffers;
+
+        bool Playing;
+
+        size_t Position;
     };
 
     class Impl {
