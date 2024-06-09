@@ -55,7 +55,11 @@ namespace mixr {
             .Playing = false,
 
             .Position = 0,
-            .FinePosition = 0.0
+            .FinePosition = 0.0,
+
+            .LastPosition = 0,
+            .LastSampleL = 0.0f,
+            .LastSampleR = 0.0f
         };
 
         size_t index = _sources.size();
@@ -101,6 +105,10 @@ namespace mixr {
         return value <= min ? min : value >= max ? max : value;
     }
 
+    inline float Lerp(float a, float b, float multiplier) {
+        return multiplier * (b - a) + a;
+    }
+
     void Impl::MixToStereoF32Buffer(float* buffer, size_t bufferLength) {
         for (int i = 0; i < bufferLength; i += 2) {
             buffer[i + 0] = 0;
@@ -122,13 +130,25 @@ namespace mixr {
                 float sampleL = GetSample(bufferData, bytePosition, format->DataType);
                 float sampleR = GetSample(bufferData, bytePosition + buf->StereoAlign, format->DataType);
 
-                buffer[i + 0] = Clamp(sampleL, -1.0f, 1.0f);
-                buffer[i + 1] = Clamp(sampleR, -1.0f, 1.0f);
+                float lastSampleL = source->LastSampleL;
+                float lastSampleR = source->LastSampleR;
+
+                float outSampleL = Lerp(lastSampleL, sampleL, (float) source->FinePosition);
+                float outSampleR = Lerp(lastSampleR, sampleR, (float) source->FinePosition);
+
+                buffer[i + 0] = Clamp(outSampleL, -1.0f, 1.0f);
+                buffer[i + 1] = Clamp(outSampleR, -1.0f, 1.0f);
 
                 source->FinePosition += buf->SpeedCorrection;
                 int intPos = (int) source->FinePosition;
                 source->Position += intPos;
                 source->FinePosition -= intPos;
+
+                if (source->Position != source->LastPosition) {
+                    source->LastPosition = source->Position;
+                    source->LastSampleL = sampleL;
+                    source->LastSampleR = sampleR;
+                }
             }
         }
     }

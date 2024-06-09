@@ -25,6 +25,10 @@ namespace mixr {
 
         size_t Position;
         double FinePosition;
+
+        size_t LastPosition;
+        float LastSampleL;
+        float LastSampleR;
     };
 
     class Impl {
