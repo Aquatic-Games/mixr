@@ -7,15 +7,15 @@
 using namespace mixr;
 
 int main() {
-    std::ifstream file(R"(C:\Users\ollie\Music\TESTFILES\Always There-32bitfloat.raw)", std::ios::binary);
+    std::ifstream file(R"(C:\Users\ollie\Music\TESTFILES\house2-i32.raw)", std::ios::binary);
     std::vector<uint8_t> data(std::istreambuf_iterator<char>{file}, {});
 
     auto device = std::make_unique<Device::SdlDevice>(48000);
     Context* context = device->Context();
 
     AudioFormat format {
-        .DataType = DataType::F32,
-        .SampleRate = 44100,
+        .DataType = DataType::I32,
+        .SampleRate = 48000,
         .Channels = Channels::Stereo
     };
 

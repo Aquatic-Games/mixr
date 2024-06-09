@@ -87,11 +87,11 @@ namespace mixr {
     inline float GetSample(const uint8_t* data, size_t index, DataType dataType) {
         switch (dataType) {
             case DataType::U8:
-                return 0;
+                return (float) (int8_t) (data[index] - INT8_MAX) / (float) INT8_MAX;
             case DataType::I16:
-                return 0;
+                return (float) (int16_t) (data[index + 0] | data[index + 1] << 8) / (float) INT16_MAX;
             case DataType::I32:
-                return 0;
+                return (float) (data[index + 0] | (data[index + 1] << 8) | (data[index + 2] << 16) | (data[index + 3] << 24)) / (float) INT32_MAX;
             case DataType::F32: {
                 uint32_t value = (data[index + 0] | (data[index + 1] << 8) | (data[index + 2] << 16) | (data[index + 3] << 24));
                 return *(float*) &value;
