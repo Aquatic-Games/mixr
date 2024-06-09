@@ -35,6 +35,11 @@ namespace mixr {
         size_t CreateSource();
 
         void SubmitBufferToSource(size_t sourceId, size_t bufferId);
+
+        void MixToStereoF32Buffer(float* buffer, size_t bufferLength)
+        {
+
+        }
     };
 
 }

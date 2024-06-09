@@ -14,6 +14,8 @@ add_library(mixr STATIC
         include/mixr/AudioBuffer.h
         src/AudioSource.cpp
         include/mixr/AudioSource.h
+        src/AudioDevice.cpp
+        include/mixr/AudioDevice.h
 )
 
 target_include_directories(mixr PUBLIC include)

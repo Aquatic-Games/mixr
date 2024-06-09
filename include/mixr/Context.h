@@ -9,7 +9,11 @@
 
 namespace mixr {
 
+    class AudioDevice;
+
     class Context {
+        friend class AudioDevice;
+
     private:
         std::unique_ptr<Impl> _impl;
 
