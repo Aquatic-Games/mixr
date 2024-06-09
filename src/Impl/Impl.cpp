@@ -50,4 +50,11 @@ namespace mixr {
     void Impl::SubmitBufferToSource(size_t sourceId, size_t bufferId) {
         _sources[sourceId].QueuedBuffers.push(bufferId);
     }
+
+    void Impl::MixToStereoF32Buffer(float* buffer, size_t bufferLength) {
+        for (int i = 0; i < bufferLength; i += 2) {
+            buffer[i + 0] = 0;
+            buffer[i + 1] = 0;
+        }
+    }
 }
