@@ -37,6 +37,14 @@ int main() {
     MxContext* context;
     mxCreateContext(48000, &context);
 
+    MxAudioFormat format {
+        .DataType = MX_DATA_TYPE_F32,
+        .SampleRate = 44100,
+        .Channels = MX_CHANNELS_STEREO
+    };
+
+    size_t buffer = mxContextCreateBuffer(context, &format, data.data(), data.size());
+
     /*while (true) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }*/
