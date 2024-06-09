@@ -9,6 +9,9 @@ extern "C" {
 
     typedef struct MxContext MxContext;
 
+    typedef size_t MxAudioBuffer;
+    typedef size_t MxAudioSource;
+
     typedef enum {
         MX_DATA_TYPE_U8,
         MX_DATA_TYPE_I16,
@@ -30,9 +33,11 @@ extern "C" {
     void mxCreateContext(uint32_t sampleRate, MxContext **pContext);
     void mxDestroyContext(MxContext *context);
 
-    size_t mxContextCreateBuffer(MxContext *context, MxAudioFormat *format, uint8_t* data, size_t dataLength);
+    MxAudioBuffer mxContextCreateBuffer(MxContext *context, MxAudioFormat *format, uint8_t* data, size_t dataLength);
 
-    size_t mxContextCreateSource(MxContext *context);
+    MxAudioSource mxContextCreateSource(MxContext *context);
+    void mxSourceSubmitBuffer(MxContext *context, MxAudioSource source, MxAudioBuffer buffer);
+    void mxSourcePlay(MxContext *context, MxAudioSource source);
 
 #ifdef __cplusplus
 }

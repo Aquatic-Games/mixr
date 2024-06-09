@@ -43,9 +43,11 @@ int main() {
         .Channels = MX_CHANNELS_STEREO
     };
 
-    size_t buffer = mxContextCreateBuffer(context, &format, data.data(), data.size());
+    MxAudioBuffer buffer = mxContextCreateBuffer(context, &format, data.data(), data.size());
 
-    size_t source = mxContextCreateSource(context);
+    MxAudioSource source = mxContextCreateSource(context);
+    mxSourceSubmitBuffer(context, source, buffer);
+    mxSourcePlay(context, source);
 
     /*while (true) {
         std::this_thread::sleep_for(std::chrono::seconds(1));

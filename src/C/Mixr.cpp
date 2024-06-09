@@ -1,6 +1,6 @@
 #include "mixr/mixr.h"
 
-#include "Impl/Impl.h"
+#include "../Impl/Impl.h"
 
 using namespace mixr;
 
@@ -13,7 +13,7 @@ void mxDestroyContext(MxContext *context) {
     delete (Impl*) context;
 }
 
-size_t mxContextCreateBuffer(MxContext *context, MxAudioFormat *format, uint8_t* data, size_t dataLength) {
+MxAudioBuffer mxContextCreateBuffer(MxContext *context, MxAudioFormat *format, uint8_t* data, size_t dataLength) {
     Impl* impl = (Impl*) context;
 
     AudioFormat fmt {
@@ -26,9 +26,21 @@ size_t mxContextCreateBuffer(MxContext *context, MxAudioFormat *format, uint8_t*
     return index;
 }
 
-size_t mxContextCreateSource(MxContext *context) {
+MxAudioSource mxContextCreateSource(MxContext *context) {
     Impl* impl = (Impl*) context;
 
     size_t index = impl->CreateSource();
     return index;
+}
+
+void mxSourceSubmitBuffer(MxContext *context, MxAudioSource source, MxAudioBuffer buffer) {
+    Impl* impl = (Impl*) context;
+
+    impl->SourceSubmitBuffer(source, buffer);
+}
+
+void mxSourcePlay(MxContext *context, MxAudioSource source) {
+    Impl* impl = (Impl*) context;
+
+    impl->SourcePlay(source);
 }
