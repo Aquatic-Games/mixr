@@ -35,9 +35,11 @@ extern "C" {
     void mxDestroyContext(MxContext *context);
 
     // TODO: Move this to a separate file
+    // TODO: This implementation is temporary. This should be done properly at some point.
     void mxCreateSDLDevice(uint32_t sampleRate, uint16_t periodSize, MxDevice **pDevice);
-    void mxSDLDeviceGetContext(MxDevice *device, MxContext **pContext);
-    void mxDestroySDLDevice(MxDevice *mxDevice);
+
+    void mxDeviceGetContext(MxDevice *device, MxContext **pContext);
+    void mxDestroyDevice(MxDevice *device);
 
     MxAudioBuffer mxContextCreateBuffer(MxContext *context, MxAudioFormat *format, uint8_t* data, size_t dataLength);
 
