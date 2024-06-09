@@ -20,5 +20,8 @@ add_library(mixr STATIC
 
 target_include_directories(mixr PUBLIC include)
 
+add_subdirectory(lib/SDL)
+target_link_libraries(mixr PUBLIC SDL2-static)
+
 add_executable(mixrtest tests/main.cpp)
 target_link_libraries(mixrtest PRIVATE mixr)
