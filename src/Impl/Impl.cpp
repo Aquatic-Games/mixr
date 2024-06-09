@@ -24,7 +24,10 @@ namespace mixr {
             .Data = std::vector<uint8_t>(data, data + dataLength),
             .Format = format,
 
-            .ByteAlign = byteAlign
+            .ByteAlign = byteAlign,
+            // Corrects for the sample rate - if the Mixer sample rate is 48khz, and the buffer sample rate is 44.1khz,
+            // then this value will be 0.91xyzw, causing the mixer to play the buffer slightly slower to correct the speed.
+            .SpeedCorrection = static_cast<float>(format.SampleRate) / static_cast<float>(_sampleRate)
         };
 
         size_t index = _buffers.size();

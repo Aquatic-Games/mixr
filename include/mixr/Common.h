@@ -4,6 +4,8 @@
 
 namespace mixr {
 
+    class Impl;
+
     enum class DataType {
         U8,
         I16,

@@ -9,7 +9,7 @@ add_library(mixr STATIC
         include/mixr/Context.h
         src/Impl/Impl.cpp
         src/Impl/Impl.h
-        include/mixr/AudioFormat.h
+        include/mixr/Common.h
         src/AudioBuffer.cpp
         include/mixr/AudioBuffer.h
         src/AudioSource.cpp

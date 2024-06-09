@@ -5,7 +5,7 @@
 #include <queue>
 
 #include "mixr/Context.h"
-#include "mixr/AudioFormat.h"
+#include "mixr/Common.h"
 
 namespace mixr {
 
@@ -14,6 +14,7 @@ namespace mixr {
         AudioFormat Format;
 
         uint8_t ByteAlign;
+        double SpeedCorrection;
     };
 
     struct Source {

@@ -3,14 +3,11 @@
 #include <cstdint>
 #include <memory>
 
-#include "AudioFormat.h"
+#include "Common.h"
+#include "AudioBuffer.h"
+#include "AudioSource.h"
 
 namespace mixr {
-
-    class Impl;
-
-    class AudioBuffer;
-    class AudioSource;
 
     class Context {
     private:
