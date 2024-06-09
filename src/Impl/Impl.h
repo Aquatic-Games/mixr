@@ -12,6 +12,7 @@ namespace mixr {
     struct Buffer {
         std::vector<uint8_t> Data;
         AudioFormat Format;
+        size_t LengthInSamples;
 
         int ByteAlign;
         int StereoAlign;

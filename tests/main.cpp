@@ -7,14 +7,14 @@
 using namespace mixr;
 
 int main() {
-    std::ifstream file(R"(C:\Users\ollie\Music\TESTFILES\house2-i32.raw)", std::ios::binary);
+    std::ifstream file(R"(C:\Users\ollie\Music\TESTFILES\nixonspace-16bitshort.raw)", std::ios::binary);
     std::vector<uint8_t> data(std::istreambuf_iterator<char>{file}, {});
 
     auto device = std::make_unique<Device::SdlDevice>(48000);
     Context* context = device->Context();
 
     AudioFormat format {
-        .DataType = DataType::I32,
+        .DataType = DataType::I16,
         .SampleRate = 48000,
         .Channels = Channels::Stereo
     };
@@ -24,6 +24,10 @@ int main() {
     auto source = context->CreateSource();
     source->SubmitBuffer(buffer.get());
     source->Play();
+
+    //auto source2 = context->CreateSource();
+    //source2->SubmitBuffer(buffer.get());
+    //source2->Play();
 
     while (true) {
         std::this_thread::sleep_for(std::chrono::seconds(1));

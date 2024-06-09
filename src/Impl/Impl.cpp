@@ -1,3 +1,4 @@
+#include <iostream>
 #include "Impl.h"
 
 namespace mixr {
@@ -34,6 +35,7 @@ namespace mixr {
         Buffer buffer {
             .Data = std::vector<uint8_t>(data, data + dataLength),
             .Format = format,
+            .LengthInSamples = dataLength / (byteAlign * channels),
 
             .ByteAlign = byteAlign,
             .StereoAlign = byteAlign * (channels - 1),
@@ -76,6 +78,9 @@ namespace mixr {
         Source* source = &_sources[sourceId];
 
         source->Position = 0;
+        source->LastPosition = 0;
+        source->LastSampleL = 0.0f;
+        source->LastSampleR = 0.0f;
         source->FinePosition = 0.0;
         source->Playing = true;
     }
@@ -136,8 +141,8 @@ namespace mixr {
                 float outSampleL = Lerp(lastSampleL, sampleL, (float) source->FinePosition);
                 float outSampleR = Lerp(lastSampleR, sampleR, (float) source->FinePosition);
 
-                buffer[i + 0] = Clamp(outSampleL, -1.0f, 1.0f);
-                buffer[i + 1] = Clamp(outSampleR, -1.0f, 1.0f);
+                buffer[i + 0] += Clamp(outSampleL, -1.0f, 1.0f);
+                buffer[i + 1] += Clamp(outSampleR, -1.0f, 1.0f);
 
                 source->FinePosition += buf->SpeedCorrection;
                 int intPos = (int) source->FinePosition;
@@ -148,6 +153,10 @@ namespace mixr {
                     source->LastPosition = source->Position;
                     source->LastSampleL = sampleL;
                     source->LastSampleR = sampleR;
+                }
+
+                if (source->Position >= buf->LengthInSamples) {
+                    source->Playing = false;
                 }
             }
         }
