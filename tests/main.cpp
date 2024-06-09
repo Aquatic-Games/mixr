@@ -9,7 +9,7 @@
 
 int main() {
     std::ifstream file(R"(C:\Users\ollie\Music\TESTFILES\Always There-32bitfloat.raw)", std::ios::binary);
-    std::vector<uint8_t> data(std::istreambuf_iterator<char>{file}, {});
+    std::vector<uint8_t> pcmData(std::istreambuf_iterator<char>{file}, {});
 
     /*auto device = std::make_unique<Device::SdlDevice>(48000);
     Context* context = device->Context();
@@ -21,7 +21,7 @@ int main() {
         .Channels = Channels::Stereo
     };
 
-    auto buffer = context->CreateBuffer(format, data.data(), data.size());
+    auto buffer = context->CreateBuffer(format, pcmData.pcmData(), pcmData.size());
 
     auto source = context->CreateSource();
     source->SubmitBuffer(buffer.get());
@@ -39,16 +39,21 @@ int main() {
     mxCreateSDLDevice(48000, 512, &device);
     mxDeviceGetContext(device, &context);
 
+    mxContextSetMasterVolume(context, 0.1f);
+
     MxAudioFormat format {
         .DataType = MX_DATA_TYPE_F32,
         .SampleRate = 44100,
         .Channels = MX_CHANNELS_STEREO
     };
 
-    MxAudioBuffer buffer = mxContextCreateBuffer(context, &format, data.data(), data.size());
+    MxAudioBuffer buffer = mxContextCreateBuffer(context, &format, pcmData.data(), pcmData.size());
 
     MxAudioSource source = mxContextCreateSource(context);
     mxSourceSubmitBuffer(context, source, buffer);
+    mxSourceSetSpeed(context, source, 2.0);
+    mxSourceSetVolume(context, source, 0.5f);
+    mxSourceSetLooping(context, source, true);
     mxSourcePlay(context, source);
 
     while (true) {

@@ -42,10 +42,15 @@ extern "C" {
     void mxDestroyDevice(MxDevice *device);
 
     MxAudioBuffer mxContextCreateBuffer(MxContext *context, MxAudioFormat *format, uint8_t* data, size_t dataLength);
-
     MxAudioSource mxContextCreateSource(MxContext *context);
+
+    void mxContextSetMasterVolume(MxContext *context, float volume);
+
     void mxSourceSubmitBuffer(MxContext *context, MxAudioSource source, MxAudioBuffer buffer);
     void mxSourcePlay(MxContext *context, MxAudioSource source);
+    void mxSourceSetSpeed(MxContext *context, MxAudioSource source, double speed);
+    void mxSourceSetVolume(MxContext *context, MxAudioSource source, float volume);
+    void mxSourceSetLooping(MxContext *context, MxAudioSource source, bool looping);
 
 #ifdef __cplusplus
 }

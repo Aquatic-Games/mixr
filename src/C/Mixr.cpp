@@ -33,6 +33,12 @@ MxAudioSource mxContextCreateSource(MxContext *context) {
     return index;
 }
 
+void mxContextSetMasterVolume(MxContext *context, float volume) {
+    Impl* impl = (Impl*) context;
+
+    impl->SetMasterVolume(volume);
+}
+
 void mxSourceSubmitBuffer(MxContext *context, MxAudioSource source, MxAudioBuffer buffer) {
     Impl* impl = (Impl*) context;
 
@@ -43,4 +49,22 @@ void mxSourcePlay(MxContext *context, MxAudioSource source) {
     Impl* impl = (Impl*) context;
 
     impl->SourcePlay(source);
+}
+
+void mxSourceSetSpeed(MxContext *context, MxAudioSource source, double speed) {
+    Impl* impl = (Impl*) context;
+
+    impl->SourceSetSpeed(source, speed);
+}
+
+void mxSourceSetVolume(MxContext *context, MxAudioSource source, float volume) {
+    Impl* impl = (Impl*) context;
+
+    impl->SourceSetVolume(source, volume);
+}
+
+void mxSourceSetLooping(MxContext *context, MxAudioSource source, bool looping) {
+    Impl* impl = (Impl*) context;
+
+    impl->SourceSetLooping(source, looping);
 }
