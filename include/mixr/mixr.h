@@ -8,6 +8,7 @@ extern "C" {
 #endif
 
     typedef struct MxContext MxContext;
+    typedef struct MxDevice MxDevice;
 
     typedef size_t MxAudioBuffer;
     typedef size_t MxAudioSource;
@@ -32,6 +33,11 @@ extern "C" {
 
     void mxCreateContext(uint32_t sampleRate, MxContext **pContext);
     void mxDestroyContext(MxContext *context);
+
+    // TODO: Move this to a separate file
+    void mxCreateSDLDevice(uint32_t sampleRate, uint16_t periodSize, MxDevice **pDevice);
+    void mxSDLDeviceGetContext(MxDevice *device, MxContext **pContext);
+    void mxDestroySDLDevice(MxDevice *mxDevice);
 
     MxAudioBuffer mxContextCreateBuffer(MxContext *context, MxAudioFormat *format, uint8_t* data, size_t dataLength);
 

@@ -34,8 +34,10 @@ int main() {
     //source2->SubmitBuffer(buffer.get());
     //source2->Play();*/
 
+    MxDevice* device;
     MxContext* context;
-    mxCreateContext(48000, &context);
+    mxCreateSDLDevice(48000, 512, &device);
+    mxSDLDeviceGetContext(device, &context);
 
     MxAudioFormat format {
         .DataType = MX_DATA_TYPE_F32,
@@ -53,7 +55,7 @@ int main() {
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }*/
 
-    mxDestroyContext(context);
+    mxDestroySDLDevice(device);
 
     return 0;
 }
