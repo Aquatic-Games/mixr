@@ -1,7 +1,5 @@
 #include "Impl.h"
 
-#include <iostream>
-
 namespace mixr {
     Impl::Impl(uint32_t sampleRate) {
         _sampleRate = sampleRate;
@@ -56,7 +54,8 @@ namespace mixr {
 
             .Playing = false,
 
-            .Position = 0
+            .Position = 0,
+            .FinePosition = 0.0
         };
 
         size_t index = _sources.size();
@@ -73,6 +72,7 @@ namespace mixr {
         Source* source = &_sources[sourceId];
 
         source->Position = 0;
+        source->FinePosition = 0.0;
         source->Playing = true;
     }
 
@@ -80,7 +80,7 @@ namespace mixr {
         _sources[sourceId].Playing = false;
     }
 
-    inline float GetSample(uint8_t* data, size_t index, DataType dataType) {
+    inline float GetSample(const uint8_t* data, size_t index, DataType dataType) {
         switch (dataType) {
             case DataType::U8:
                 return 0;
@@ -121,7 +121,10 @@ namespace mixr {
                 buffer[i + 0] = sampleL;
                 buffer[i + 1] = sampleR;
 
-                source->Position++;
+                source->FinePosition += buf->SpeedCorrection;
+                int intPos = (int) source->FinePosition;
+                source->Position += intPos;
+                source->FinePosition -= intPos;
             }
         }
     }

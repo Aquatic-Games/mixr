@@ -24,6 +24,7 @@ namespace mixr {
         bool Playing;
 
         size_t Position;
+        double FinePosition;
     };
 
     class Impl {
