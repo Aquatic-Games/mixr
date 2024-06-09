@@ -1,22 +1,23 @@
-#include <mixr/mixr.hpp>
+//#include <mixr/mixr.hpp>
+#include <mixr/mixr.h>
 #include <fstream>
 #include <vector>
 #include <thread>
 #include <iostream>
 
-using namespace mixr;
+//using namespace mixr;
 
 int main() {
-    std::ifstream file(R"(C:\Users\ollie\Music\TESTFILES\nixonspace-16bitshort.raw)", std::ios::binary);
+    std::ifstream file(R"(C:\Users\ollie\Music\TESTFILES\Always There-32bitfloat.raw)", std::ios::binary);
     std::vector<uint8_t> data(std::istreambuf_iterator<char>{file}, {});
 
-    auto device = std::make_unique<Device::SdlDevice>(48000);
+    /*auto device = std::make_unique<Device::SdlDevice>(48000);
     Context* context = device->Context();
     //context->SetMasterVolume(0.1f);
 
     AudioFormat format {
-        .DataType = DataType::I16,
-        .SampleRate = 48000,
+        .DataType = DataType::F32,
+        .SampleRate = 44100,
         .Channels = Channels::Stereo
     };
 
@@ -31,11 +32,16 @@ int main() {
 
     //auto source2 = context->CreateSource();
     //source2->SubmitBuffer(buffer.get());
-    //source2->Play();
+    //source2->Play();*/
 
-    while (true) {
+    MxContext* context;
+    mxCreateContext(48000, &context);
+
+    /*while (true) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
-    }
+    }*/
+
+    mxDestroyContext(context);
 
     return 0;
 }
