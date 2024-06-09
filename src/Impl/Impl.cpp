@@ -97,6 +97,10 @@ namespace mixr {
         return 0;
     }
 
+    inline float Clamp(float value, float min, float max) {
+        return value <= min ? min : value >= max ? max : value;
+    }
+
     void Impl::MixToStereoF32Buffer(float* buffer, size_t bufferLength) {
         for (int i = 0; i < bufferLength; i += 2) {
             buffer[i + 0] = 0;
@@ -116,10 +120,10 @@ namespace mixr {
                 size_t bytePosition = source->Position * (buf->ByteAlign + buf->StereoAlign);
 
                 float sampleL = GetSample(bufferData, bytePosition, format->DataType);
-                float sampleR = GetSample(bufferData, bytePosition, format->DataType);
+                float sampleR = GetSample(bufferData, bytePosition + buf->StereoAlign, format->DataType);
 
-                buffer[i + 0] = sampleL;
-                buffer[i + 1] = sampleR;
+                buffer[i + 0] = Clamp(sampleL, -1.0f, 1.0f);
+                buffer[i + 1] = Clamp(sampleR, -1.0f, 1.0f);
 
                 source->FinePosition += buf->SpeedCorrection;
                 int intPos = (int) source->FinePosition;
