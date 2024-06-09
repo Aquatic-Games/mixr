@@ -20,6 +20,9 @@ namespace mixr {
         }
 
         void SubmitBuffer(AudioBuffer* buffer);
+
+        void Play();
+        void Stop();
     };
 
 }

@@ -9,6 +9,14 @@ namespace mixr {
     }
 
     void AudioSource::SubmitBuffer(AudioBuffer* buffer) {
-        _impl->SubmitBufferToSource(_id, buffer->ID());
+        _impl->SourceSubmitBuffer(_id, buffer->ID());
+    }
+
+    void AudioSource::Play() {
+        _impl->SourcePlay(_id);
+    }
+
+    void AudioSource::Stop() {
+        _impl->SourceStop(_id);
     }
 }

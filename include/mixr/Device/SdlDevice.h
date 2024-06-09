@@ -13,7 +13,7 @@ namespace mixr::Device {
         static void AudioCallback(void* userData, uint8_t* buffer, int length);
 
     public:
-        SdlDevice(uint32_t sampleRate, uint16_t periodSize = 512);
+        explicit SdlDevice(uint32_t sampleRate, uint16_t periodSize = 512);
         ~SdlDevice() override;
     };
 

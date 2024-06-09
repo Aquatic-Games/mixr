@@ -65,8 +65,19 @@ namespace mixr {
         return index;
     }
 
-    void Impl::SubmitBufferToSource(size_t sourceId, size_t bufferId) {
+    void Impl::SourceSubmitBuffer(size_t sourceId, size_t bufferId) {
         _sources[sourceId].QueuedBuffers.push(bufferId);
+    }
+
+    void Impl::SourcePlay(size_t sourceId) {
+        Source* source = &_sources[sourceId];
+
+        source->Position = 0;
+        source->Playing = true;
+    }
+
+    void Impl::SourceStop(size_t sourceId) {
+        _sources[sourceId].Playing = false;
     }
 
     inline float GetSample(uint8_t* data, size_t index, DataType dataType) {
@@ -82,6 +93,8 @@ namespace mixr {
                 return *(float*) &value;
             }
         }
+
+        return 0;
     }
 
     void Impl::MixToStereoF32Buffer(float* buffer, size_t bufferLength) {
@@ -91,6 +104,10 @@ namespace mixr {
 
             for (int s = 0; s < _sources.size(); s++) {
                 Source* source = &_sources[s];
+
+                if (!source->Playing)
+                    continue;
+
                 Buffer* buf = &_buffers[source->QueuedBuffers.front()];
 
                 uint8_t* bufferData = buf->Data.data();
