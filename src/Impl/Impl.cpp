@@ -178,7 +178,7 @@ namespace mixr {
 
                 if (source->Position >= buf->LengthInSamples) {
                     if (source->Looping) {
-                        source->Position = 0;
+                        source->Position -= buf->LengthInSamples;
                     } else {
                         source->Playing = false;
                     }

@@ -13,7 +13,7 @@ int main() {
 
     auto device = std::make_unique<Device::SdlDevice>(48000);
     Context* context = device->Context();
-    //context->SetMasterVolume(0.1f);
+    //context->SetMasterVolume(1 / 512.0f);
 
     AudioFormat format {
         .DataType = DataType::I16,
@@ -26,7 +26,7 @@ int main() {
     auto source = context->CreateSource();
     source->SubmitBuffer(buffer.get());
 
-    //source->SetSpeed(1.15);
+    source->SetSpeed(1.30);
     //source->SetVolume(0.5f);
     source->SetLooping(true);
 
