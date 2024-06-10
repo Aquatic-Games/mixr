@@ -74,3 +74,9 @@ void mxSourceSetLooping(MxContext *context, MxAudioSource source, bool looping) 
 
     impl->SourceSetLooping(source, looping);
 }
+
+void mxSourceSetPanning(MxContext *context, MxAudioSource source, float panning) {
+    Impl* impl = (Impl*) context;
+
+    impl->SourceSetPanning(source, panning);
+}

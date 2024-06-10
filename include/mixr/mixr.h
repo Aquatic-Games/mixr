@@ -51,6 +51,7 @@ extern "C" {
     void mxSourceSetSpeed(MxContext *context, MxAudioSource source, double speed);
     void mxSourceSetVolume(MxContext *context, MxAudioSource source, float volume);
     void mxSourceSetLooping(MxContext *context, MxAudioSource source, bool looping);
+    void mxSourceSetPanning(MxContext *context, MxAudioSource source, float panning);
 
 #ifdef __cplusplus
 }

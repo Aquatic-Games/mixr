@@ -8,7 +8,7 @@
 using namespace mixr;
 
 int main() {
-    Stream::Wav wav(R"(C:\Users\ollie\Music\DEADLOCK.wav)");
+    /*Stream::Wav wav(R"(C:\Users\ollie\Music\DEADLOCK.wav)");
     auto format = wav.Format();
     auto data = wav.GetPCM();
 
@@ -26,9 +26,9 @@ int main() {
     source->SetLooping(true);
     source->SetPanning(0.0f);
 
-    source->Play();
+    source->Play();*/
 
-    /*MxAudioStream* stream;
+    MxAudioStream* stream;
     mxStreamLoadWav(R"(C:\Users\ollie\Music\DEADLOCK.wav)", &stream);
 
     MxAudioFormat format = mxStreamGetFormat(stream);
@@ -56,8 +56,9 @@ int main() {
     //mxSourceSetSpeed(context, source, 2.0);
     //mxSourceSetVolume(context, source, 0.5f);
     mxSourceSetLooping(context, source, true);
+    //mxSourceSetPanning(context, source, -1.0f);
 
-    mxSourcePlay(context, source);*/
+    mxSourcePlay(context, source);
 
     while (true) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
