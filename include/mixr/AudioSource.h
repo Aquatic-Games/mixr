@@ -27,6 +27,7 @@ namespace mixr {
         void SetPanning(float panning);
 
         void Play();
+        void Pause();
         void Stop();
     };
 

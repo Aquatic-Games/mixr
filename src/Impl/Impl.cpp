@@ -94,18 +94,21 @@ namespace mixr {
     }
 
     void Impl::SourcePlay(size_t sourceId) {
-        Source* source = &_sources[sourceId];
+        _sources[sourceId].Playing = true;
+    }
 
+    void Impl::SourcePause(size_t sourceId) {
+        _sources[sourceId].Playing = false;
+    }
+
+    void Impl::SourceStop(size_t sourceId) {
+        Source* source = &_sources[sourceId];
+        source->Playing = false;
         source->Position = 0;
         source->LastPosition = 0;
         source->LastSampleL = 0.0f;
         source->LastSampleR = 0.0f;
         source->FinePosition = 0.0;
-        source->Playing = true;
-    }
-
-    void Impl::SourceStop(size_t sourceId) {
-        _sources[sourceId].Playing = false;
     }
 
     void Impl::SourceSetSpeed(size_t sourceId, double speed) {
@@ -190,7 +193,7 @@ namespace mixr {
                     if (source->Looping) {
                         source->Position -= buf->LengthInSamples;
                     } else {
-                        source->Playing = false;
+                        SourceStop(s);
                     }
                 }
             }

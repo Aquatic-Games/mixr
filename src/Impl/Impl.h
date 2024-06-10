@@ -56,6 +56,7 @@ namespace mixr {
 
         void SourceSubmitBuffer(size_t sourceId, size_t bufferId);
         void SourcePlay(size_t sourceId);
+        void SourcePause(size_t sourceId);
         void SourceStop(size_t sourceId);
         void SourceSetSpeed(size_t sourceId, double speed);
         void SourceSetVolume(size_t sourceId, float volume);

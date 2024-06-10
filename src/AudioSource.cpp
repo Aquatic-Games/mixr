@@ -32,6 +32,10 @@ namespace mixr {
         _impl->SourcePlay(_id);
     }
 
+    void AudioSource::Pause() {
+        _impl->SourcePause(_id);
+    }
+
     void AudioSource::Stop() {
         _impl->SourceStop(_id);
     }
