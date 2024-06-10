@@ -45,6 +45,12 @@ void mxSourceSubmitBuffer(MxContext *context, MxAudioSource source, MxAudioBuffe
     impl->SourceSubmitBuffer(source, buffer);
 }
 
+void mxSourceClearBuffers(MxContext *context, MxAudioSource source) {
+    Impl* impl = (Impl*) context;
+
+    impl->SourceClearBuffers(source);
+}
+
 void mxSourcePlay(MxContext *context, MxAudioSource source) {
     Impl* impl = (Impl*) context;
 

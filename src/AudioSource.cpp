@@ -12,6 +12,10 @@ namespace mixr {
         _impl->SourceSubmitBuffer(_id, buffer->ID());
     }
 
+    void AudioSource::ClearBuffers() {
+        _impl->SourceClearBuffers(_id);
+    }
+
     void AudioSource::SetSpeed(double speed) {
         _impl->SourceSetSpeed(_id, speed);
     }

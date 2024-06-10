@@ -27,6 +27,8 @@ int main() {
     source->SubmitBuffer(buffer1.get());
     source->SubmitBuffer(buffer2.get());
 
+    //source->ClearBuffers();
+
     //source->SetSpeed(5);
     //source->SetVolume(0.5f);
     source->SetLooping(true);

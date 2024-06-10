@@ -55,6 +55,7 @@ namespace mixr {
         void SetMasterVolume(float volume);
 
         void SourceSubmitBuffer(size_t sourceId, size_t bufferId);
+        void SourceClearBuffers(size_t sourceId);
         void SourcePlay(size_t sourceId);
         void SourcePause(size_t sourceId);
         void SourceStop(size_t sourceId);

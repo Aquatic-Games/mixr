@@ -46,6 +46,7 @@ extern "C" {
     void mxContextSetMasterVolume(MxContext *context, float volume);
 
     void mxSourceSubmitBuffer(MxContext *context, MxAudioSource source, MxAudioBuffer buffer);
+    void mxSourceClearBuffers(MxContext *context, MxAudioSource source);
     void mxSourcePlay(MxContext *context, MxAudioSource source);
     void mxSourcePause(MxContext *context, MxAudioSource source);
     void mxSourceStop(MxContext *context, MxAudioSource source);

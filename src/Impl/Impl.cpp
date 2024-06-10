@@ -93,6 +93,12 @@ namespace mixr {
         _sources[sourceId].QueuedBuffers.push(bufferId);
     }
 
+    void Impl::SourceClearBuffers(size_t sourceId) {
+        SourceStop(sourceId);
+        std::queue<size_t> empty;
+        std::swap(_sources[sourceId].QueuedBuffers, empty);
+    }
+
     void Impl::SourcePlay(size_t sourceId) {
         Source* source = &_sources[sourceId];
 
