@@ -51,6 +51,12 @@ void mxSourcePlay(MxContext *context, MxAudioSource source) {
     impl->SourcePlay(source);
 }
 
+void mxSourceStop(MxContext *context, MxAudioSource source) {
+    Impl* impl = (Impl*) context;
+
+    impl->SourceStop(source);
+}
+
 void mxSourceSetSpeed(MxContext *context, MxAudioSource source, double speed) {
     Impl* impl = (Impl*) context;
 

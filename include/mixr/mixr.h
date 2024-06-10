@@ -48,6 +48,7 @@ extern "C" {
 
     void mxSourceSubmitBuffer(MxContext *context, MxAudioSource source, MxAudioBuffer buffer);
     void mxSourcePlay(MxContext *context, MxAudioSource source);
+    void mxSourceStop(MxContext *context, MxAudioSource source);
     void mxSourceSetSpeed(MxContext *context, MxAudioSource source, double speed);
     void mxSourceSetVolume(MxContext *context, MxAudioSource source, float volume);
     void mxSourceSetLooping(MxContext *context, MxAudioSource source, bool looping);

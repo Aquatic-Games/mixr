@@ -1,13 +1,14 @@
 #include <mixr/mixr.hpp>
 #include <mixr/Stream/Wav.hpp>
 #include <mixr/mixr.h>
+#include <mixr/Stream/Wav.h>
 #include <thread>
 #include <iostream>
 
 using namespace mixr;
 
 int main() {
-    Stream::Wav wav(R"(C:\Users\ollie\Music\DEADLOCK.wav)");
+    /*Stream::Wav wav(R"(C:\Users\ollie\Music\DEADLOCK.wav)");
     auto format = wav.Format();
     auto data = wav.GetPCM();
 
@@ -24,37 +25,44 @@ int main() {
     //source->SetVolume(0.5f);
     source->SetLooping(true);
 
-    source->Play();
+    source->Play();*/
 
-    /*MxDevice* device;
+    MxAudioStream* stream;
+    mxStreamLoadWav(R"(C:\Users\ollie\Music\DEADLOCK.wav)", &stream);
+
+    MxAudioFormat format = mxStreamGetFormat(stream);
+
+    uint8_t* data;
+    size_t dataLength;
+    mxStreamGetPCM(stream, nullptr, &dataLength);
+    data = new uint8_t[dataLength];
+    mxStreamGetPCM(stream, data, &dataLength);
+
+    mxDestroyStream(stream);
+
+    MxDevice* device;
     MxContext* context;
     mxCreateSDLDevice(48000, 512, &device);
     mxDeviceGetContext(device, &context);
 
-    mxContextSetMasterVolume(context, 0.1f);
+    //mxContextSetMasterVolume(context, 0.1f);
 
-    MxAudioFormat format {
-        .DataType = MX_DATA_TYPE_I16,
-        .SampleRate = 44100,
-        .Channels = MX_CHANNELS_STEREO
-    };
-
-    MxAudioBuffer buffer = mxContextCreateBuffer(context, &format, pcmData.data(), pcmData.size());
+    MxAudioBuffer buffer = mxContextCreateBuffer(context, &format, data, dataLength);
 
     MxAudioSource source = mxContextCreateSource(context);
     mxSourceSubmitBuffer(context, source, buffer);
 
-    mxSourceSetSpeed(context, source, 2.0);
-    mxSourceSetVolume(context, source, 0.5f);
+    //mxSourceSetSpeed(context, source, 2.0);
+    //mxSourceSetVolume(context, source, 0.5f);
     mxSourceSetLooping(context, source, true);
 
-    mxSourcePlay(context, source);*/
+    mxSourcePlay(context, source);
 
     while (true) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 
-    //mxDestroyDevice(device);
+    mxDestroyDevice(device);
 
     return 0;
 }

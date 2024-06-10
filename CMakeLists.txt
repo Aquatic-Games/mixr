@@ -24,6 +24,10 @@ add_library(mixr-obj OBJECT
         include/mixr/Stream/AudioStream.hpp
         src/Stream/Wav.cpp
         include/mixr/Stream/Wav.hpp
+        include/mixr/Stream/AudioStream.h
+        src/C/Stream.cpp
+        include/mixr/Stream/Wav.h
+        src/C/Wav.cpp
 )
 
 target_include_directories(mixr-obj PRIVATE include)
