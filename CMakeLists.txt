@@ -39,7 +39,7 @@ target_link_libraries(mixr-obj PUBLIC SDL2::SDL2)
 add_library(mixr SHARED $<TARGET_OBJECTS:mixr-obj>)
 target_include_directories(mixr PUBLIC include)
 target_link_options(mixr PRIVATE -static)
-target_link_libraries(mixr PUBLIC SDL2::SDL2)
+target_link_libraries(mixr PUBLIC SDL2::SDL2-static)
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3 -s")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -s")
 
