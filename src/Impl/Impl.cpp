@@ -94,7 +94,12 @@ namespace mixr {
     }
 
     void Impl::SourcePlay(size_t sourceId) {
-        _sources[sourceId].Playing = true;
+        Source* source = &_sources[sourceId];
+
+        if (source->QueuedBuffers.empty())
+            return;
+
+        source->Playing = true;
     }
 
     void Impl::SourcePause(size_t sourceId) {
@@ -190,7 +195,13 @@ namespace mixr {
                 }
 
                 if (source->Position >= buf->LengthInSamples) {
-                    if (source->Looping) {
+                    // Hmm. This doesn't seem ideal.
+                    // Right now the library relies on the queue having elements, since it gets the buffer by checking
+                    // the front of the queue. Perhaps the "current buffer" should be stored in an index instead.
+                    if (source->QueuedBuffers.size() > 1) {
+                        source->QueuedBuffers.pop();
+                        source->Position = 0;
+                    } else if (source->Looping) {
                         source->Position -= buf->LengthInSamples;
                     } else {
                         SourceStop(s);
