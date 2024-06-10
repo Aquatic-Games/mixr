@@ -12,7 +12,7 @@ namespace mixr::Stream {
         virtual ~AudioStream() = default;
 
         virtual AudioFormat Format() = 0;
-        virtual std::vector<uint8_t> GetBuffer() = 0;
+        virtual std::vector<uint8_t> GetPCM() = 0;
     };
 
 }

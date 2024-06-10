@@ -1,4 +1,4 @@
-#include "mixr/Stream/Wav.h"
+#include "mixr/Stream/Wav.hpp"
 
 #include <stdexcept>
 
@@ -17,7 +17,7 @@ namespace mixr::Stream {
             throw std::runtime_error("Given file is not a wav file: Missing RIFF header.");
         }
 
-        _stream.read(nullptr, 4); // File size
+        _stream.seekg(4, std::ios::cur); // File size
 
         uint32_t waveHeader;
         _stream.read((char*) &waveHeader, sizeof(waveHeader));
@@ -34,10 +34,81 @@ namespace mixr::Stream {
 
             switch (header) {
                 case fmt: {
+                    uint16_t type;
+                    _stream.read((char*) &type, sizeof(type));
+
+                    uint16_t channels;
+                    _stream.read((char*) &channels, sizeof(channels));
+
+                    uint32_t sampleRate;
+                    _stream.read((char*) &sampleRate, sizeof(sampleRate));
+
+                    _stream.seekg(6, std::ios::cur); // 6 "useless" bytes, not needed here.
+
+                    uint16_t bitsPerSample;
+                    _stream.read((char*) &bitsPerSample, sizeof(bitsPerSample));
+
+                    _format.SampleRate = sampleRate;
+
+                    switch (channels) {
+                        case 1:
+                            _format.Channels = Channels::Mono;
+                            break;
+
+                        case 2:
+                            _format.Channels = Channels::Stereo;
+                            break;
+
+                        default:
+                            throw std::runtime_error("Unsupported number of channels.");
+                    }
+
+                    switch (type) {
+                        case 1: {
+                            switch (bitsPerSample) {
+                                case 8:
+                                    _format.DataType = DataType::U8;
+                                    break;
+
+                                case 16:
+                                    _format.DataType = DataType::I16;
+                                    break;
+
+                                case 32:
+                                    _format.DataType = DataType::I32;
+                                    break;
+
+                                default:
+                                    throw std::runtime_error("Unsupported data type.");
+                            }
+
+                            break;
+                        }
+
+                        case 3: {
+                            switch (bitsPerSample) {
+                                case 32:
+                                    _format.DataType = DataType::F32;
+                                    break;
+
+                                default:
+                                    throw std::runtime_error("Unsupported data type.");
+                            }
+
+                            break;
+                        }
+
+                        default:
+                            throw std::runtime_error("Unsupported data type.");
+                    }
+
                     break;
                 }
 
                 case data: {
+                    _dataStartPoint = _stream.tellg();
+                    _dataLength = chunkSize;
+
                     return;
                 }
 
@@ -46,5 +117,18 @@ namespace mixr::Stream {
                     break;
             }
         }
+    }
+
+    AudioFormat Wav::Format() {
+        return _format;
+    }
+
+    std::vector<uint8_t> Wav::GetPCM() {
+        _stream.seekg(_dataStartPoint);
+
+        std::vector<uint8_t> data(_dataLength);
+        _stream.read((char*) data.data(), _dataLength);
+
+        return data;
     }
 }

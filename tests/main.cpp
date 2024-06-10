@@ -1,32 +1,26 @@
 #include <mixr/mixr.hpp>
+#include <mixr/Stream/Wav.hpp>
 #include <mixr/mixr.h>
-#include <fstream>
-#include <vector>
 #include <thread>
 #include <iostream>
 
 using namespace mixr;
 
 int main() {
-    std::ifstream file(R"(C:\Users\ollie\Music\TESTFILES\Insomnia-16bitshort.raw)", std::ios::binary);
-    std::vector<uint8_t> pcmData(std::istreambuf_iterator<char>{file}, {});
+    Stream::Wav wav(R"(C:\Users\ollie\Music\DEADLOCK.wav)");
+    auto format = wav.Format();
+    auto data = wav.GetPCM();
 
     auto device = std::make_unique<Device::SdlDevice>(48000);
     Context* context = device->Context();
     //context->SetMasterVolume(1 / 512.0f);
 
-    AudioFormat format {
-        .DataType = DataType::I16,
-        .SampleRate = 44100,
-        .Channels = Channels::Stereo
-    };
-
-    auto buffer = context->CreateBuffer(format, pcmData.data(), pcmData.size());
+    auto buffer = context->CreateBuffer(format, data.data(), data.size());
 
     auto source = context->CreateSource();
     source->SubmitBuffer(buffer.get());
 
-    source->SetSpeed(1.30);
+    //source->SetSpeed(1.30);
     //source->SetVolume(0.5f);
     source->SetLooping(true);
 

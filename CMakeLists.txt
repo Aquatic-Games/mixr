@@ -21,9 +21,9 @@ add_library(mixr-obj OBJECT
         include/mixr/mixr.h
         src/C/Mixr.cpp
         src/C/MixrSDL.cpp
-        include/mixr/Stream/AudioStream.h
+        include/mixr/Stream/AudioStream.hpp
         src/Stream/Wav.cpp
-        include/mixr/Stream/Wav.h
+        include/mixr/Stream/Wav.hpp
 )
 
 target_include_directories(mixr-obj PRIVATE include)
