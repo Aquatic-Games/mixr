@@ -1,40 +1,38 @@
-//#include <mixr/mixr.hpp>
+#include <mixr/mixr.hpp>
 #include <mixr/mixr.h>
 #include <fstream>
 #include <vector>
 #include <thread>
 #include <iostream>
 
-//using namespace mixr;
+using namespace mixr;
 
 int main() {
-    std::ifstream file(R"(C:\Users\ollie\Music\TESTFILES\Always There-32bitfloat.raw)", std::ios::binary);
+    std::ifstream file(R"(C:\Users\ollie\Music\TESTFILES\Insomnia-16bitshort.raw)", std::ios::binary);
     std::vector<uint8_t> pcmData(std::istreambuf_iterator<char>{file}, {});
 
-    /*auto device = std::make_unique<Device::SdlDevice>(48000);
+    auto device = std::make_unique<Device::SdlDevice>(48000);
     Context* context = device->Context();
     //context->SetMasterVolume(0.1f);
 
     AudioFormat format {
-        .DataType = DataType::F32,
+        .DataType = DataType::I16,
         .SampleRate = 44100,
         .Channels = Channels::Stereo
     };
 
-    auto buffer = context->CreateBuffer(format, pcmData.pcmData(), pcmData.size());
+    auto buffer = context->CreateBuffer(format, pcmData.data(), pcmData.size());
 
     auto source = context->CreateSource();
     source->SubmitBuffer(buffer.get());
-    //source->SetSpeed(2);
+
+    //source->SetSpeed(1.15);
     //source->SetVolume(0.5f);
     source->SetLooping(true);
+
     source->Play();
 
-    //auto source2 = context->CreateSource();
-    //source2->SubmitBuffer(buffer.get());
-    //source2->Play();*/
-
-    MxDevice* device;
+    /*MxDevice* device;
     MxContext* context;
     mxCreateSDLDevice(48000, 512, &device);
     mxDeviceGetContext(device, &context);
@@ -42,7 +40,7 @@ int main() {
     mxContextSetMasterVolume(context, 0.1f);
 
     MxAudioFormat format {
-        .DataType = MX_DATA_TYPE_F32,
+        .DataType = MX_DATA_TYPE_I16,
         .SampleRate = 44100,
         .Channels = MX_CHANNELS_STEREO
     };
@@ -51,16 +49,18 @@ int main() {
 
     MxAudioSource source = mxContextCreateSource(context);
     mxSourceSubmitBuffer(context, source, buffer);
+
     mxSourceSetSpeed(context, source, 2.0);
     mxSourceSetVolume(context, source, 0.5f);
     mxSourceSetLooping(context, source, true);
-    mxSourcePlay(context, source);
+
+    mxSourcePlay(context, source);*/
 
     while (true) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 
-    mxDestroyDevice(device);
+    //mxDestroyDevice(device);
 
     return 0;
 }

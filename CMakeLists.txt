@@ -3,7 +3,7 @@ project(mixr)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_library(mixr STATIC
+add_library(mixr-obj OBJECT
         include/mixr/mixr.hpp
         src/Context.cpp
         include/mixr/Context.h
@@ -23,10 +23,18 @@ add_library(mixr STATIC
         src/C/MixrSDL.cpp
 )
 
-target_include_directories(mixr PUBLIC include)
+target_include_directories(mixr-obj PRIVATE include)
+set_property(TARGET mixr-obj PROPERTY POSITION_INDEPENDENT_CODE 1)
 
 add_subdirectory(lib/SDL)
-target_link_libraries(mixr PUBLIC SDL2-static)
+target_link_libraries(mixr-obj PUBLIC SDL2::SDL2)
+
+add_library(mixr SHARED $<TARGET_OBJECTS:mixr-obj>)
+target_include_directories(mixr PUBLIC include)
+target_link_options(mixr PRIVATE -static)
+target_link_libraries(mixr PUBLIC SDL2::SDL2)
+set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3 -s")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -s")
 
 add_executable(mixrtest tests/main.cpp)
 target_link_libraries(mixrtest PRIVATE mixr)
