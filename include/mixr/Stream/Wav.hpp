@@ -18,6 +18,7 @@ namespace mixr::Stream {
 
     public:
         explicit Wav(const std::string& path);
+        ~Wav() override;
 
         AudioFormat Format() override;
         std::vector<uint8_t> GetPCM() override;

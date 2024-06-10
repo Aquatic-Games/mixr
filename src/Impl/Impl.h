@@ -24,8 +24,11 @@ namespace mixr {
 
         bool Playing;
         double Speed;
-        float Volume;
+        float MainVolume;
         bool Looping;
+
+        float VolumeL;
+        float VolumeR;
 
         size_t Position;
         double FinePosition;
@@ -57,6 +60,7 @@ namespace mixr {
         void SourceSetSpeed(size_t sourceId, double speed);
         void SourceSetVolume(size_t sourceId, float volume);
         void SourceSetLooping(size_t sourceId, bool looping);
+        void SourceSetPanning(size_t sourceId, float panning);
 
         void MixToStereoF32Buffer(float* buffer, size_t bufferLength);
     };

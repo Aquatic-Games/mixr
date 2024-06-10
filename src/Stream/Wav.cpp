@@ -131,4 +131,6 @@ namespace mixr::Stream {
 
         return data;
     }
+
+    Wav::~Wav() = default;
 }

@@ -1,6 +1,14 @@
 #include <iostream>
 #include "Impl.h"
 
+inline float Clamp(float value, float min, float max) {
+    return value <= min ? min : value >= max ? max : value;
+}
+
+inline float Lerp(float a, float b, float multiplier) {
+    return multiplier * (b - a) + a;
+}
+
 namespace mixr {
     Impl::Impl(uint32_t sampleRate) {
         _sampleRate = sampleRate;
@@ -57,8 +65,11 @@ namespace mixr {
 
             .Playing = false,
             .Speed = 1.0,
-            .Volume = 1.0f,
+            .MainVolume = 1.0f,
             .Looping = false,
+
+            .VolumeL = 1.0f,
+            .VolumeR = 1.0f,
 
             .Position = 0,
             .FinePosition = 0.0,
@@ -102,11 +113,18 @@ namespace mixr {
     }
 
     void Impl::SourceSetVolume(size_t sourceId, float volume) {
-        _sources[sourceId].Volume = volume;
+        _sources[sourceId].MainVolume = volume;
     }
 
     void Impl::SourceSetLooping(size_t sourceId, bool looping) {
         _sources[sourceId].Looping = looping;
+    }
+
+    void Impl::SourceSetPanning(size_t sourceId, float panning) {
+        Source* source = &_sources[sourceId];
+
+        source->VolumeL = Clamp(1 - panning, 0.0f, 1.0f);
+        source->VolumeR = Clamp(1 - -panning, 0.0f, 1.0f);
     }
 
     inline float GetSample(const uint8_t* data, size_t index, DataType dataType) {
@@ -124,14 +142,6 @@ namespace mixr {
         }
 
         return 0;
-    }
-
-    inline float Clamp(float value, float min, float max) {
-        return value <= min ? min : value >= max ? max : value;
-    }
-
-    inline float Lerp(float a, float b, float multiplier) {
-        return multiplier * (b - a) + a;
     }
 
     void Impl::MixToStereoF32Buffer(float* buffer, size_t bufferLength) {
@@ -158,8 +168,8 @@ namespace mixr {
                 float lastSampleL = source->LastSampleL;
                 float lastSampleR = source->LastSampleR;
 
-                float outSampleL = Lerp(lastSampleL, sampleL, (float) source->FinePosition) * source->Volume;
-                float outSampleR = Lerp(lastSampleR, sampleR, (float) source->FinePosition) * source->Volume;
+                float outSampleL = Lerp(lastSampleL, sampleL, (float) source->FinePosition) * source->VolumeL * source->MainVolume;
+                float outSampleR = Lerp(lastSampleR, sampleR, (float) source->FinePosition) * source->VolumeR * source->MainVolume;
 
                 buffer[i + 0] += Clamp(outSampleL, -1.0f, 1.0f);
                 buffer[i + 1] += Clamp(outSampleR, -1.0f, 1.0f);

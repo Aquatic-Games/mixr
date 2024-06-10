@@ -24,6 +24,7 @@ namespace mixr {
         void SetSpeed(double speed);
         void SetVolume(float volume);
         void SetLooping(bool looping);
+        void SetPanning(float panning);
 
         void Play();
         void Stop();

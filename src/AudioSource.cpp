@@ -24,6 +24,10 @@ namespace mixr {
         _impl->SourceSetLooping(_id, looping);
     }
 
+    void AudioSource::SetPanning(float panning) {
+        _impl->SourceSetPanning(_id, panning);
+    }
+
     void AudioSource::Play() {
         _impl->SourcePlay(_id);
     }
