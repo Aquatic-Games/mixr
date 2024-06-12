@@ -141,6 +141,13 @@ namespace mixr {
         source->VolumeR = Clamp(1 - -panning, 0.0f, 1.0f);
     }
 
+    void Impl::SourceSetChannelVolumes(size_t sourceId, float volumeL, float volumeR) {
+        Source* source = &_sources[sourceId];
+
+        source->VolumeL = volumeL;
+        source->VolumeR = volumeR;
+    }
+
     inline float GetSample(const uint8_t* data, size_t index, DataType dataType) {
         switch (dataType) {
             case DataType::U8:
@@ -166,7 +173,7 @@ namespace mixr {
             for (int s = 0; s < _sources.size(); s++) {
                 Source* source = &_sources[s];
 
-                if (!source->Playing)
+                if (!source->Playing || source->MainVolume <= 0.01f)
                     continue;
 
                 Buffer* buf = &_buffers[source->QueuedBuffers.front()];

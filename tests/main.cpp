@@ -8,31 +8,26 @@
 using namespace mixr;
 
 int main() {
-    Stream::Wav wav1(R"(C:\Users\ollie\Music\dedune-start.wav)");
-    auto format1 = wav1.Format();
-    auto data1 = wav1.GetPCM();
-
-    Stream::Wav wav2(R"(C:\Users\ollie\Music\dedune-loop.wav)");
-    auto format2 = wav2.Format();
-    auto data2 = wav2.GetPCM();
+    Stream::Wav wav(R"(C:\Users\ollie\Music\SCD\1-18 Quartz Quadrant JP.wav)");
+    auto format = wav.Format();
+    auto data = wav.GetPCM();
 
     auto device = std::make_unique<Device::SdlDevice>(48000);
     Context* context = device->Context();
     //context->SetMasterVolume(1 / 512.0f);
 
-    auto buffer1 = context->CreateBuffer(format1, data1.data(), data1.size());
-    auto buffer2 = context->CreateBuffer(format2, data2.data(), data2.size());
+    auto buffer1 = context->CreateBuffer(format, data.data(), data.size());
 
     auto source = context->CreateSource();
     source->SubmitBuffer(buffer1.get());
-    source->SubmitBuffer(buffer2.get());
 
     //source->ClearBuffers();
 
     //source->SetSpeed(5);
     //source->SetVolume(0.5f);
     source->SetLooping(true);
-    source->SetPanning(0.0f);
+    //source->SetPanning(0.0f);
+    //source->SetChannelVolumes(-1, 1);
 
     source->Play();
 

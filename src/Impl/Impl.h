@@ -63,6 +63,7 @@ namespace mixr {
         void SourceSetVolume(size_t sourceId, float volume);
         void SourceSetLooping(size_t sourceId, bool looping);
         void SourceSetPanning(size_t sourceId, float panning);
+        void SourceSetChannelVolumes(size_t sourceId, float volumeL, float volumeR);
 
         void MixToStereoF32Buffer(float* buffer, size_t bufferLength);
     };

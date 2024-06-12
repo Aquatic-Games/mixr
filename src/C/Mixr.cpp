@@ -92,3 +92,9 @@ void mxSourceSetPanning(MxContext *context, MxAudioSource source, float panning)
 
     impl->SourceSetPanning(source, panning);
 }
+
+void mxSourceSetChannelVolumes(MxContext *context, MxAudioSource source, float volumeL, float volumeR) {
+    Impl* impl = (Impl*) context;
+
+    impl->SourceSetChannelVolumes(source, volumeL, volumeR);
+}

@@ -32,6 +32,10 @@ namespace mixr {
         _impl->SourceSetPanning(_id, panning);
     }
 
+    void AudioSource::SetChannelVolumes(float volumeL, float volumeR) {
+        _impl->SourceSetChannelVolumes(_id, volumeL, volumeR);
+    }
+
     void AudioSource::Play() {
         _impl->SourcePlay(_id);
     }

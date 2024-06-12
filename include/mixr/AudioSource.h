@@ -26,6 +26,7 @@ namespace mixr {
         void SetVolume(float volume);
         void SetLooping(bool looping);
         void SetPanning(float panning);
+        void SetChannelVolumes(float volumeL, float volumeR);
 
         void Play();
         void Pause();
