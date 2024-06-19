@@ -21,7 +21,7 @@ namespace mixr {
         explicit Context(uint32_t sampleRate);
         ~Context();
 
-        std::unique_ptr<AudioBuffer> CreateBuffer(const AudioFormat& format, void* data, size_t dataLength);
+        std::unique_ptr<AudioBuffer> CreateBuffer(const BufferDescription& description, void* data, size_t dataLength);
         std::unique_ptr<AudioSource> CreateSource();
 
         void SetMasterVolume(float volume);

@@ -15,7 +15,9 @@ namespace mixr {
         _masterVolume = 1.0f;
     }
 
-    size_t Impl::CreateBuffer(const AudioFormat& format, uint8_t* data, size_t dataLength) {
+    size_t Impl::CreateBuffer(const BufferDescription& description, uint8_t* data, size_t dataLength) {
+        AudioFormat format = description.Format;
+
         uint8_t byteAlign;
         switch (format.DataType) {
             case DataType::U8:
@@ -44,6 +46,10 @@ namespace mixr {
         Buffer buffer {
             .Data = std::vector<uint8_t>(data, data + dataLength),
             .Format = format,
+
+            .PcmType = description.Type,
+            .ChunkSize = description.Type == PcmType::ADPCM ? description.Info.ADPCM.ChunkSize : 0,
+
             .LengthInSamples = dataLength / (byteAlign * channels),
 
             .ByteAlign = byteAlign,
@@ -183,8 +189,43 @@ namespace mixr {
 
                 size_t bytePosition = source->Position * (buf->ByteAlign + buf->StereoAlign);
 
-                float sampleL = GetSample(bufferData, bytePosition, format->DataType);
-                float sampleR = GetSample(bufferData, bytePosition + buf->StereoAlign, format->DataType);
+                float sampleL, sampleR;
+
+                switch (buf->PcmType) {
+                    case PcmType::PCM: {
+                        sampleL = GetSample(bufferData, bytePosition, format->DataType);
+                        sampleR = GetSample(bufferData, bytePosition + buf->StereoAlign, format->DataType);
+
+                        break;
+                    }
+
+                    // This makes me uncomfortable..
+                    // The fact that it works and *fast* annoys me because now I don't want to change it even though
+                    // it could really do with some threading and being less awful.
+                    case PcmType::ADPCM: {
+                        bool stereo = buf->Format.Channels == Channels::Stereo;
+                        size_t chunkSize = buf->ChunkSize;
+
+                        size_t dataSize = (chunkSize - (stereo ? 8 : 4)) * 4;
+                        size_t newBytePosition = bytePosition % dataSize;
+
+                        if (!source->TempBuffer) {
+                            source->TempBuffer = new uint8_t[dataSize];
+                        }
+
+                        if (newBytePosition == 0) {
+                            size_t chunk = bytePosition / dataSize;
+                            Utils::ADPCM::DecodeIMAChunk(buf->Data.data() + (chunk * chunkSize), chunkSize, source->TempBuffer, stereo);
+                        }
+
+                        uint8_t* sBuf = source->TempBuffer;
+
+                        sampleL = (float) (int16_t) (sBuf[newBytePosition + 0] | sBuf[newBytePosition + 1] << 8) / (float) INT16_MAX;
+                        sampleR = (float) (int16_t) (sBuf[newBytePosition + 2] | sBuf[newBytePosition + 3] << 8) / (float) INT16_MAX;
+
+                        break;
+                    }
+                }
 
                 float lastSampleL = source->LastSampleL;
                 float lastSampleR = source->LastSampleR;

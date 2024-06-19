@@ -22,8 +22,9 @@ MxAudioBuffer mxContextCreateBuffer(MxContext *context, MxAudioFormat *format, u
         .Channels = (Channels) format->Channels
     };
 
-    size_t index = impl->CreateBuffer(fmt, data, dataLength);
-    return index;
+    //size_t index = impl->CreateBuffer(fmt, data, dataLength);
+    //return index;
+    return 0;
 }
 
 MxAudioSource mxContextCreateSource(MxContext *context) {

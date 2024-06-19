@@ -1,6 +1,6 @@
 #include <mixr/mixr.hpp>
 #include <mixr/Stream/Wav.hpp>
-#include <mixr/mixr.h>
+//#include <mixr/mixr.h>
 #include <mixr/Stream/Wav.h>
 #include <mixr/Utils/ADPCM.h>
 #include <thread>
@@ -10,36 +10,51 @@ using namespace mixr;
 using namespace mixr::Utils;
 
 int main() {
-    Stream::Wav wav(R"(C:\Users\ollie\Music\ADPCM 1-04 SKYSCRAPER SEQUENCE.wav)");
+    Stream::Wav wav(R"(C:\Users\ollie\Documents\Audacity\13 Killer-32k.wav)");
     auto format = wav.Format();
     auto data = wav.GetPCM();
 
-    if (wav.IsADPCM()) {
-        data = ADPCM::DecodeIMA(data.data(), data.size(), format.Channels == Channels::Stereo, wav.ADPCMInfo().ChunkSize);
-    }
+    //if (wav.IsADPCM()) {
+    //    data = ADPCM::DecodeIMA(data.data(), data.size(), format.Channels == Channels::Stereo, wav.ADPCMInfo().ChunkSize);
+    //}
 
-    std::ofstream rawData("Test.raw", std::ios::out | std::ios::binary);
-    rawData.write((char*) data.data(), data.size());
-    rawData.close();
+    constexpr int numSounds = 1;
 
     auto device = std::make_unique<Device::SdlDevice>(48000);
     Context* context = device->Context();
-    //context->SetMasterVolume(1 / 512.0f);
+    //context->SetMasterVolume(1.0f / numSounds);
 
-    auto buffer1 = context->CreateBuffer(format, data.data(), data.size());
+    BufferDescription description {
+        .Type = PcmType::PCM,
+        .Format = format
+    };
 
-    auto source = context->CreateSource();
-    source->SubmitBuffer(buffer1.get());
+    if (wav.IsADPCM()) {
+        description.Type = PcmType::ADPCM,
+        description.Info.ADPCM = { .ChunkSize = wav.ADPCMInfo().ChunkSize };
+    }
+
+    auto buffer = context->CreateBuffer(description, data.data(), data.size());
+
+    for (int i = 0; i < numSounds; i++) {
+        auto source = context->CreateSource();
+        source->SubmitBuffer(buffer.get());
+        //source->SetSpeed(25);
+        source->Play();
+    }
+
+    //auto source = context->CreateSource();
+    //source->SubmitBuffer(buffer.get());
 
     //source->ClearBuffers();
 
-    //source->SetSpeed(5);
+    //source->SetSpeed(0.25);
     //source->SetVolume(0.5f);
-    source->SetLooping(true);
+    //source->SetLooping(true);
     //source->SetPanning(0.0f);
     //source->SetChannelVolumes(-1, 1);
 
-    source->Play();
+    //source->Play();
 
     /*MxAudioStream* stream;
     mxStreamLoadWav(R"(C:\Users\ollie\Music\DEADLOCK.wav)", &stream);

@@ -14,6 +14,10 @@ namespace mixr {
     struct Buffer {
         std::vector<uint8_t> Data;
         AudioFormat Format;
+
+        PcmType PcmType;
+        size_t ChunkSize;
+
         size_t LengthInSamples;
 
         int ByteAlign;
@@ -53,7 +57,7 @@ namespace mixr {
     public:
         explicit Impl(uint32_t sampleRate);
 
-        size_t CreateBuffer(const AudioFormat& format, uint8_t* data, size_t dataLength);
+        size_t CreateBuffer(const BufferDescription& description, uint8_t* data, size_t dataLength);
         size_t CreateSource();
 
         void SetMasterVolume(float volume);
