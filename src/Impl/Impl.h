@@ -7,6 +7,8 @@
 #include "mixr/Context.h"
 #include "mixr/Common.h"
 
+#include "ADPCM.h"
+
 namespace mixr {
 
     struct Buffer {

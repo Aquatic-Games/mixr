@@ -8,7 +8,7 @@
 using namespace mixr;
 
 int main() {
-    Stream::Wav wav(R"(C:\Users\ollie\Music\SCD\1-18 Quartz Quadrant JP.wav)");
+    Stream::Wav wav(R"(C:\Users\ollie\Music\SCD\2-03 Stardust Speedway 'G' Mix JP.wav)");
     auto format = wav.Format();
     auto data = wav.GetPCM();
 
