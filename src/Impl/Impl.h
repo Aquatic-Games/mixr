@@ -38,6 +38,8 @@ namespace mixr {
         size_t LastPosition;
         float LastSampleL;
         float LastSampleR;
+
+        uint8_t* TempBuffer;
     };
 
     class Impl {

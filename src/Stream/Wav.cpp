@@ -43,7 +43,10 @@ namespace mixr::Stream {
                     uint32_t sampleRate;
                     _stream.read((char*) &sampleRate, sizeof(sampleRate));
 
-                    _stream.seekg(6, std::ios::cur); // 6 "useless" bytes, not needed here.
+                    _stream.seekg(4, std::ios::cur); // Average bytes per second. Not needed
+
+                    uint16_t blockAlign;
+                    _stream.read((char*) &blockAlign, sizeof(blockAlign));
 
                     uint16_t bitsPerSample;
                     _stream.read((char*) &bitsPerSample, sizeof(bitsPerSample));
@@ -98,6 +101,25 @@ namespace mixr::Stream {
                             break;
                         }
 
+                        case 17: {
+                            _format.DataType = DataType::I16;
+                            _isAdpcm = true;
+                            _adpcmInfo = {
+                                .Type = ADPCMType::IMA,
+                                .ChunkSize = blockAlign
+                            };
+
+                            // MS IMA ADPCM fmt headers contain extra data that we don't need, so just skip over it.
+                            // https://wiki.multimedia.cx/index.php/WAVEFORMATEX
+                            uint16_t extraDataSize;
+                            _stream.read((char*) &extraDataSize, sizeof(extraDataSize));
+
+                            _stream.seekg(extraDataSize, std::ios::cur);
+
+                            break;
+
+                        }
+
                         default:
                             throw std::runtime_error("Unsupported data type.");
                     }
@@ -130,6 +152,14 @@ namespace mixr::Stream {
         _stream.read((char*) data.data(), _dataLength);
 
         return data;
+    }
+
+    bool Wav::IsADPCM() {
+        return _isAdpcm;
+    }
+
+    ADPCMInfo Wav::ADPCMInfo() {
+        return _adpcmInfo;
     }
 
     Wav::~Wav() = default;
