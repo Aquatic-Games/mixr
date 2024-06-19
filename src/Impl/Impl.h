@@ -7,7 +7,7 @@
 #include "mixr/Context.h"
 #include "mixr/Common.h"
 
-#include "ADPCM.h"
+#include "mixr/Utils/ADPCM.h"
 
 namespace mixr {
 

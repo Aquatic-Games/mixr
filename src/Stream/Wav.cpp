@@ -4,6 +4,8 @@
 
 namespace mixr::Stream {
     Wav::Wav(const std::string& path) {
+        _isAdpcm = false;
+
         constexpr uint32_t riff = 0x46464952;
         constexpr uint32_t wave = 0x45564157;
         constexpr uint32_t fmt  = 0x20746D66;

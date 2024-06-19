@@ -1,10 +1,11 @@
-#include "ADPCM.h"
+#include <iostream>
+#include "mixr/Utils/ADPCM.h"
 
 inline int Clamp(int value, int min, int max) {
     return value <= min ? min : value >= max ? max : value;
 }
 
-namespace mixr::ADPCM {
+namespace mixr::Utils::ADPCM {
     int IndexTable[] = {
             -1, -1, -1, -1, 2, 4, 6, 8,
             -1, -1, -1, -1, 2, 4, 6, 8
@@ -22,6 +23,18 @@ namespace mixr::ADPCM {
             15289, 16818, 18500, 20350, 22385, 24623, 27086, 29794, 32767
     };
 
+    std::vector<uint8_t> DecodeIMA(uint8_t* data, size_t dataLength, bool stereo, size_t chunkSize) {
+        std::vector<uint8_t> result(dataLength * 4);
+
+        size_t currentPos = 0;
+        for (size_t c = 0; c < dataLength; c += chunkSize) {
+            DecodeIMAChunk(data + c, chunkSize, result.data() + (currentPos * 4), stereo);
+            currentPos += chunkSize - (stereo ? 8 : 4);
+        }
+
+        return result;
+    }
+
     void DecodeIMAChunk(uint8_t* inBuffer, size_t chunkSize, uint8_t* outBuffer, bool stereo) {
         int channels = stereo ? 2 : 1;
 
@@ -30,17 +43,20 @@ namespace mixr::ADPCM {
         int step[channels];
 
         size_t newIndex[channels];
+        newIndex[0] = 0;
         if (stereo)
             newIndex[1] = 2;
 
         int chunkOffset = 4;
-        predictor[0] = (uint16_t) (inBuffer[0] | inBuffer[1] << 8);
+        predictor[0] = (int16_t) (inBuffer[0] | inBuffer[1] << 8);
         stepIndex[0] = inBuffer[2];
         step[0] = StepTable[stepIndex[0]];
 
+        //std::cout << predictor[0] << std::endl;
+
         if (stereo) {
             chunkOffset = 8;
-            predictor[1] = (uint16_t) (inBuffer[4] | inBuffer[5] << 8);
+            predictor[1] = (int16_t) (inBuffer[4] | inBuffer[5] << 8);
             stepIndex[1] = inBuffer[6];
             step[1] = StepTable[stepIndex[1]];
         }
@@ -68,9 +84,9 @@ namespace mixr::ADPCM {
                 if ((delta & 1) == 1)
                     diff += step[channel] >> 2;
                 if (sign)
-                    predictor[channel] += diff;
-                else
                     predictor[channel] -= diff;
+                else
+                    predictor[channel] += diff;
 
                 predictor[channel] = Clamp(predictor[channel], INT16_MIN, INT16_MAX);
 
@@ -78,7 +94,7 @@ namespace mixr::ADPCM {
                 stepIndex[channel] = Clamp(stepIndex[channel], 0, 88);
                 step[channel] = StepTable[stepIndex[channel]];
 
-                uint16_t currentPredictor = (uint16_t) predictor[channel];
+                int16_t currentPredictor = (int16_t) predictor[channel];
 
                 outBuffer[newIndex[channel]] = (uint8_t) (currentPredictor & 0xFF);
                 outBuffer[newIndex[channel] + 1] = (uint8_t) (currentPredictor >> 8);

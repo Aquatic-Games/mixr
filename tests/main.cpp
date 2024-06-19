@@ -2,17 +2,25 @@
 #include <mixr/Stream/Wav.hpp>
 #include <mixr/mixr.h>
 #include <mixr/Stream/Wav.h>
+#include <mixr/Utils/ADPCM.h>
 #include <thread>
 #include <iostream>
 
 using namespace mixr;
+using namespace mixr::Utils;
 
 int main() {
-    Stream::Wav adpcm(R"(C:\Users\ollie\Music\ADPCM 1-04 SKYSCRAPER SEQUENCE.wav)");
-
-    Stream::Wav wav(R"(C:\Users\ollie\Music\SCD\2-03 Stardust Speedway 'G' Mix JP.wav)");
+    Stream::Wav wav(R"(C:\Users\ollie\Music\ADPCM 1-04 SKYSCRAPER SEQUENCE.wav)");
     auto format = wav.Format();
     auto data = wav.GetPCM();
+
+    if (wav.IsADPCM()) {
+        data = ADPCM::DecodeIMA(data.data(), data.size(), format.Channels == Channels::Stereo, wav.ADPCMInfo().ChunkSize);
+    }
+
+    std::ofstream rawData("Test.raw", std::ios::out | std::ios::binary);
+    rawData.write((char*) data.data(), data.size());
+    rawData.close();
 
     auto device = std::make_unique<Device::SdlDevice>(48000);
     Context* context = device->Context();
