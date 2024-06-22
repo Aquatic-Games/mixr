@@ -43,14 +43,31 @@ namespace mixr {
                 break;
         }
 
+        size_t lengthInSamples;
+        size_t numChunks = 0;
+        switch (description.Type) {
+            case PcmType::PCM:
+                lengthInSamples = dataLength / (byteAlign * channels);
+                break;
+
+            case PcmType::ADPCM: {
+                ADPCMDescription adpcm = description.Info.ADPCM;
+                numChunks = dataLength / adpcm.ChunkSize;
+                int bytesToRemovePerChunk = channels * 4;
+                lengthInSamples = ((dataLength * 4) - (bytesToRemovePerChunk * numChunks)) / (byteAlign * channels);
+                break;
+            }
+        }
+
         Buffer buffer {
             .Data = std::vector<uint8_t>(data, data + dataLength),
             .Format = format,
 
             .PcmType = description.Type,
             .ChunkSize = description.Type == PcmType::ADPCM ? description.Info.ADPCM.ChunkSize : 0,
+            .NumChunks = numChunks,
 
-            .LengthInSamples = dataLength / (byteAlign * channels),
+            .LengthInSamples = lengthInSamples,
 
             .ByteAlign = byteAlign,
             .StereoAlign = byteAlign * (channels - 1),
@@ -82,7 +99,8 @@ namespace mixr {
 
             .LastPosition = 0,
             .LastSampleL = 0.0f,
-            .LastSampleR = 0.0f
+            .LastSampleR = 0.0f,
+            .LastChunk = (size_t) -1
         };
 
         size_t index = _sources.size();
@@ -126,6 +144,7 @@ namespace mixr {
         source->LastSampleL = 0.0f;
         source->LastSampleR = 0.0f;
         source->FinePosition = 0.0;
+        source->LastChunk = -1;
     }
 
     void Impl::SourceSetSpeed(size_t sourceId, double speed) {
@@ -205,18 +224,20 @@ namespace mixr {
                     case PcmType::ADPCM: {
                         bool stereo = buf->Format.Channels == Channels::Stereo;
                         size_t chunkSize = buf->ChunkSize;
-
                         size_t dataSize = (chunkSize - (stereo ? 8 : 4)) * 4;
-                        size_t newBytePosition = bytePosition % dataSize;
+
+                        size_t chunk = bytePosition / dataSize;
 
                         if (!source->TempBuffer) {
                             source->TempBuffer = new uint8_t[dataSize];
                         }
 
-                        if (newBytePosition == 0) {
-                            size_t chunk = bytePosition / dataSize;
+                        if (chunk < buf->NumChunks && chunk != source->LastChunk) {
+                            source->LastChunk = chunk;
                             Utils::ADPCM::DecodeIMAChunk(buf->Data.data() + (chunk * chunkSize), chunkSize, source->TempBuffer, stereo);
                         }
+
+                        size_t newBytePosition = bytePosition % dataSize;
 
                         uint8_t* sBuf = source->TempBuffer;
 

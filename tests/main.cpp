@@ -10,7 +10,7 @@ using namespace mixr;
 using namespace mixr::Utils;
 
 int main() {
-    Stream::Wav wav(R"(C:\Users\ollie\Documents\Audacity\13 Killer-32k.wav)");
+    Stream::Wav wav(R"(C:\Users\ollie\Documents\Audacity\test.wav)");
     auto format = wav.Format();
     auto data = wav.GetPCM();
 
@@ -39,7 +39,7 @@ int main() {
     for (int i = 0; i < numSounds; i++) {
         auto source = context->CreateSource();
         source->SubmitBuffer(buffer.get());
-        //source->SetSpeed(25);
+        //source->SetSpeed(0.8);
         source->Play();
     }
 

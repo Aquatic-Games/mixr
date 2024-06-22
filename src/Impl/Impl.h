@@ -17,6 +17,7 @@ namespace mixr {
 
         PcmType PcmType;
         size_t ChunkSize;
+        size_t NumChunks;
 
         size_t LengthInSamples;
 
@@ -43,6 +44,7 @@ namespace mixr {
         float LastSampleL;
         float LastSampleR;
 
+        size_t LastChunk;
         uint8_t* TempBuffer;
     };
 
