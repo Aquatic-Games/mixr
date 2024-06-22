@@ -51,7 +51,7 @@ namespace mixr {
                 break;
 
             case PcmType::ADPCM: {
-                ADPCMDescription adpcm = description.Info.ADPCM;
+                ADPCMDescription adpcm = description.ADPCM;
                 numChunks = dataLength / adpcm.ChunkSize;
                 int bytesToRemovePerChunk = channels * 4;
                 lengthInSamples = ((dataLength * 4) - (bytesToRemovePerChunk * numChunks)) / (byteAlign * channels);
@@ -64,7 +64,7 @@ namespace mixr {
             .Format = format,
 
             .PcmType = description.Type,
-            .ChunkSize = description.Type == PcmType::ADPCM ? description.Info.ADPCM.ChunkSize : 0,
+            .ChunkSize = description.Type == PcmType::ADPCM ? description.ADPCM.ChunkSize : 0,
             .NumChunks = numChunks,
 
             .LengthInSamples = lengthInSamples,

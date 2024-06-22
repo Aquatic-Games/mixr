@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <cstddef>
 
 namespace mixr {
 
@@ -39,7 +40,7 @@ namespace mixr {
 
         union {
             ADPCMDescription ADPCM;
-        } Info;
+        };
     };
 
 }

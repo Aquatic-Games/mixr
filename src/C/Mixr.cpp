@@ -13,18 +13,13 @@ void mxDestroyContext(MxContext *context) {
     delete (Impl*) context;
 }
 
-MxAudioBuffer mxContextCreateBuffer(MxContext *context, MxAudioFormat *format, uint8_t* data, size_t dataLength) {
+MxAudioBuffer mxContextCreateBuffer(MxContext *context, MxBufferDescription *description, uint8_t* data, size_t dataLength) {
     Impl* impl = (Impl*) context;
 
-    AudioFormat fmt {
-        .DataType = (DataType) format->DataType,
-        .SampleRate = format->SampleRate,
-        .Channels = (Channels) format->Channels
-    };
+    auto desc = reinterpret_cast<BufferDescription*>(description);
 
-    //size_t index = impl->CreateBuffer(fmt, data, dataLength);
-    //return index;
-    return 0;
+    size_t index = impl->CreateBuffer(*desc, data, dataLength);
+    return index;
 }
 
 MxAudioSource mxContextCreateSource(MxContext *context) {

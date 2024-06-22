@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -30,6 +31,24 @@ extern "C" {
         MxChannels Channels;
     } MxAudioFormat;
 
+    typedef enum {
+        MX_PCM_TYPE_PCM,
+        MX_PCM_TYPE_ADPCM
+    } MxPcmType;
+
+    typedef struct {
+        size_t ChunkSize;
+    } MxADPCMDescription;
+
+    typedef struct {
+        MxPcmType Type;
+        MxAudioFormat Format;
+
+        union {
+            MxADPCMDescription ADPCM;
+        };
+    } MxBufferDescription;
+
     void mxCreateContext(uint32_t sampleRate, MxContext **pContext);
     void mxDestroyContext(MxContext *context);
 
@@ -40,7 +59,7 @@ extern "C" {
     void mxDeviceGetContext(MxDevice *device, MxContext **pContext);
     void mxDestroyDevice(MxDevice *device);
 
-    MxAudioBuffer mxContextCreateBuffer(MxContext *context, MxAudioFormat *format, uint8_t* data, size_t dataLength);
+    MxAudioBuffer mxContextCreateBuffer(MxContext *context, MxBufferDescription *description, uint8_t* data, size_t dataLength);
     MxAudioSource mxContextCreateSource(MxContext *context);
 
     void mxContextSetMasterVolume(MxContext *context, float volume);
