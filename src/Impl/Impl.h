@@ -13,26 +13,27 @@ namespace mixr {
 
     struct Buffer {
         std::vector<uint8_t> Data;
-        AudioFormat Format;
-
-        PcmType PcmType;
-        size_t ChunkSize;
-        size_t NumChunks;
-
-        size_t LengthInSamples;
-
-        int ByteAlign;
-        int StereoAlign;
-        double SpeedCorrection;
     };
 
     struct Source {
+        // ------ Source Info -----
+        SourceType Type;
+        AudioFormat Format;
+        int ByteAlign;
+        int StereoAlign;
+        double SpeedCorrection;
+
         std::queue<size_t> QueuedBuffers;
 
+        uint8_t* Buffer;
+
+        // ----- Playing Info ------
         bool Playing;
         double Speed;
         float MainVolume;
         bool Looping;
+
+        size_t LengthInSamples;
 
         float VolumeL;
         float VolumeR;
@@ -44,8 +45,10 @@ namespace mixr {
         float LastSampleL;
         float LastSampleR;
 
+        // ----- IMA ADPCM -----
         size_t LastChunk;
-        uint8_t* TempBuffer;
+        size_t ChunkSize;
+        size_t NumChunks;
     };
 
     class Impl {
@@ -56,11 +59,13 @@ namespace mixr {
         std::vector<Buffer> _buffers;
         std::vector<Source> _sources;
 
+        void UpdateSource(Source* source);
+
     public:
         explicit Impl(uint32_t sampleRate);
 
-        size_t CreateBuffer(const BufferDescription& description, uint8_t* data, size_t dataLength);
-        size_t CreateSource();
+        size_t CreateBuffer(uint8_t* data, size_t dataLength);
+        size_t CreateSource(const SourceDescription& description);
 
         void SetMasterVolume(float volume);
 

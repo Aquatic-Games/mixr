@@ -32,22 +32,22 @@ extern "C" {
     } MxAudioFormat;
 
     typedef enum {
-        MX_PCM_TYPE_PCM,
-        MX_PCM_TYPE_ADPCM
-    } MxPcmType;
+        MX_SOURCE_TYPE_PCM,
+        MX_SOURCE_TYPE_ADPCM
+    } MxSourceType;
 
     typedef struct {
         size_t ChunkSize;
     } MxADPCMDescription;
 
     typedef struct {
-        MxPcmType Type;
+        MxSourceType Type;
         MxAudioFormat Format;
 
         union {
             MxADPCMDescription ADPCM;
         };
-    } MxBufferDescription;
+    } MxSourceDescription;
 
     void mxCreateContext(uint32_t sampleRate, MxContext **pContext);
     void mxDestroyContext(MxContext *context);
@@ -59,8 +59,8 @@ extern "C" {
     void mxDeviceGetContext(MxDevice *device, MxContext **pContext);
     void mxDestroyDevice(MxDevice *device);
 
-    MxAudioBuffer mxContextCreateBuffer(MxContext *context, MxBufferDescription *description, uint8_t* data, size_t dataLength);
-    MxAudioSource mxContextCreateSource(MxContext *context);
+    MxAudioBuffer mxContextCreateBuffer(MxContext *context, uint8_t *data, size_t dataLength);
+    MxAudioSource mxContextCreateSource(MxContext *context, MxSourceDescription *description);
 
     void mxContextSetMasterVolume(MxContext *context, float volume);
 

@@ -24,24 +24,24 @@ int main() {
     Context* context = device->Context();
     //context->SetMasterVolume(1.0f / numSounds);
 
-    BufferDescription description {
-        .Type = PcmType::PCM,
+    SourceDescription description {
+        .Type = SourceType::PCM,
         .Format = format
     };
 
     if (wav.IsADPCM()) {
-        description.Type = PcmType::ADPCM,
+        description.Type = SourceType::ADPCM,
         description.ADPCM = { .ChunkSize = wav.ADPCMInfo().ChunkSize };
     }
 
-    auto buffer = context->CreateBuffer(description, data.data(), data.size());
+    auto buffer = context->CreateBuffer(data.data(), data.size());
 
-    auto source = context->CreateSource();
+    auto source = context->CreateSource(description);
     source->SubmitBuffer(buffer.get());
 
     //source->ClearBuffers();
 
-    //source->SetSpeed(0.25);
+    //source->SetSpeed(1.5);
     //source->SetVolume(50);
     //source->SetLooping(true);
     //source->SetPanning(0.0f);
@@ -67,7 +67,7 @@ int main() {
 
     //mxContextSetMasterVolume(context, 0.1f);
 
-    MxBufferDescription description {
+    MxSourceDescription description {
         .Type = MX_PCM_TYPE_PCM,
         .Format = format,
     };

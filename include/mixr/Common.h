@@ -25,7 +25,7 @@ namespace mixr {
         Channels Channels;
     };
 
-    enum class PcmType {
+    enum class SourceType {
         PCM,
         ADPCM
     };
@@ -34,8 +34,8 @@ namespace mixr {
         size_t ChunkSize;
     };
 
-    struct BufferDescription {
-        PcmType Type;
+    struct SourceDescription {
+        SourceType Type;
         AudioFormat Format;
 
         union {
