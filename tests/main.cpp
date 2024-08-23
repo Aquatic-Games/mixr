@@ -1,6 +1,6 @@
 #include <mixr/mixr.hpp>
 #include <mixr/Stream/Wav.hpp>
-//#include <mixr/mixr.h>
+#include <mixr/mixr.h>
 #include <mixr/Stream/Wav.h>
 #include <mixr/Utils/ADPCM.h>
 #include <thread>
@@ -10,19 +10,12 @@ using namespace mixr;
 using namespace mixr::Utils;
 
 int main() {
-    Stream::Wav wav(R"(C:\Users\ollie\Documents\Audacity\16 Geno.wav)");
+    /*Stream::Wav wav(R"(C:\Users\ollie\Documents\Audacity\17 Spectrum (Say My Name).wav)");
     auto format = wav.Format();
     auto data = wav.GetPCM();
 
-    /*if (wav.IsADPCM()) {
-        data = ADPCM::DecodeIMA(data.data(), data.size(), format.Channels == Channels::Stereo, wav.ADPCMInfo().ChunkSize);
-    }*/
-
-    //constexpr int numSounds = 1;
-
     auto device = std::make_unique<Device::SdlDevice>(48000);
     Context* context = device->Context();
-    //context->SetMasterVolume(1.0f / numSounds);
 
     SourceDescription description {
         .Type = SourceType::PCM,
@@ -39,15 +32,7 @@ int main() {
     auto source = context->CreateSource(description);
     source->SubmitBuffer(buffer.get());
 
-    //source->ClearBuffers();
-
-    //source->SetSpeed(1.5);
-    //source->SetVolume(50);
-    //source->SetLooping(true);
-    //source->SetPanning(0.0f);
-    //source->SetChannelVolumes(-1, 1);
-
-    source->Play();
+    source->Play();*/
 
     /*MxAudioStream* stream;
     mxStreamLoadWav(R"(C:\Users\ollie\Documents\Audacity\test.wav)", &stream);
@@ -68,22 +53,22 @@ int main() {
     //mxContextSetMasterVolume(context, 0.1f);
 
     MxSourceDescription description {
-        .Type = MX_PCM_TYPE_PCM,
+        .Type = MX_SOURCE_TYPE_PCM,
         .Format = format,
     };
 
     if (mxWavIsADPCM(stream)) {
         MxADPCMInfo adpcm = mxWavGetADPCMInfo(stream);
 
-        description.Type = MX_PCM_TYPE_ADPCM;
+        description.Type = MX_SOURCE_TYPE_ADPCM;
         description.ADPCM = { .ChunkSize = adpcm.ChunkSize };
     }
 
     mxDestroyStream(stream);
 
-    MxAudioBuffer buffer = mxContextCreateBuffer(context, &description, data, dataLength);
+    MxAudioBuffer buffer = mxContextCreateBuffer(context, data, dataLength);
 
-    MxAudioSource source = mxContextCreateSource(context);
+    MxAudioSource source = mxContextCreateSource(context, &description);
     mxSourceSubmitBuffer(context, source, buffer);
 
     //mxSourceSetSpeed(context, source, 2.0);

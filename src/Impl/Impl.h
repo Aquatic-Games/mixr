@@ -23,9 +23,9 @@ namespace mixr {
         int StereoAlign;
         double SpeedCorrection;
 
+        // ----- Buffering -----
         std::queue<size_t> QueuedBuffers;
-
-        uint8_t* Buffer;
+        uint8_t* MixBuffer;
 
         // ----- Playing Info ------
         bool Playing;
@@ -41,6 +41,7 @@ namespace mixr {
         size_t Position;
         double FinePosition;
 
+        // ----- Interpolation -----
         size_t LastPosition;
         float LastSampleL;
         float LastSampleR;

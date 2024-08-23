@@ -9,8 +9,6 @@ inline float Lerp(float a, float b, float multiplier) {
     return multiplier * (b - a) + a;
 }
 
-
-
 namespace mixr {
     Impl::Impl(uint32_t sampleRate) {
         _sampleRate = sampleRate;
@@ -18,22 +16,6 @@ namespace mixr {
     }
 
     size_t Impl::CreateBuffer(uint8_t* data, size_t dataLength) {
-        size_t lengthInSamples;
-        size_t numChunks = 0;
-        /*switch (description.Type) {
-            case SourceType::PCM:
-                lengthInSamples = dataLength / (byteAlign * channels);
-                break;
-
-            case SourceType::ADPCM: {
-                ADPCMDescription adpcm = description.ADPCM;
-                numChunks = dataLength / adpcm.ChunkSize;
-                int bytesToRemovePerChunk = channels * 4;
-                lengthInSamples = ((dataLength * 4) - (bytesToRemovePerChunk * numChunks)) / (byteAlign * channels);
-                break;
-            }
-        }*/
-
         Buffer buffer {
             .Data = std::vector<uint8_t>(data, data + dataLength)
         };
@@ -96,7 +78,7 @@ namespace mixr {
             .SpeedCorrection = static_cast<float>(format.SampleRate) / static_cast<float>(_sampleRate),
 
             .QueuedBuffers = std::queue<size_t>(),
-            .Buffer = buffer,
+            .MixBuffer = buffer,
 
             .Playing = false,
             .Speed = 1.0,
@@ -215,6 +197,7 @@ namespace mixr {
             buffer[i + 0] = 0;
             buffer[i + 1] = 0;
 
+            // TODO: Optimize this by placing all playing sources into a vector which gets enumerated over.
             for (int s = 0; s < _sources.size(); s++) {
                 Source* source = &_sources[s];
 
@@ -250,12 +233,12 @@ namespace mixr {
 
                         if (chunk < source->NumChunks && chunk != source->LastChunk) {
                             source->LastChunk = chunk;
-                            Utils::ADPCM::DecodeIMAChunk(buf->Data.data() + (chunk * chunkSize), chunkSize, source->Buffer, stereo);
+                            Utils::ADPCM::DecodeIMAChunk(buf->Data.data() + (chunk * chunkSize), chunkSize, source->MixBuffer, stereo);
                         }
 
                         size_t newBytePosition = bytePosition % dataSize;
 
-                        uint8_t* sBuf = source->Buffer;
+                        uint8_t* sBuf = source->MixBuffer;
 
                         sampleL = (float) (int16_t) (sBuf[newBytePosition + 0] | sBuf[newBytePosition + 1] << 8) / (float) INT16_MAX;
                         sampleR = (float) (int16_t) (sBuf[newBytePosition + 2] | sBuf[newBytePosition + 3] << 8) / (float) INT16_MAX;
@@ -292,6 +275,7 @@ namespace mixr {
                     if (source->QueuedBuffers.size() > 1) {
                         source->QueuedBuffers.pop();
                         source->Position = 0;
+                        UpdateSource(source);
                     } else if (source->Looping) {
                         source->Position -= source->LengthInSamples;
                     } else {
