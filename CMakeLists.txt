@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.28)
+cmake_minimum_required(VERSION 3.20)
 project(mixr)
 
 set(CMAKE_C_STANDARD 99)
@@ -34,7 +34,7 @@ add_library(mixr SHARED
 )
 
 target_include_directories(mixr PUBLIC include)
-#set_property(TARGET mixr PROPERTY POSITION_INDEPENDENT_CODE 1)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 add_subdirectory(lib/SDL)
 target_link_libraries(mixr PUBLIC SDL2::SDL2-static)

@@ -10,7 +10,7 @@ using namespace mixr;
 using namespace mixr::Utils;
 
 int main() {
-    /*Stream::Wav wav(R"(C:\Users\ollie\Documents\Audacity\17 Spectrum (Say My Name).wav)");
+    Stream::Wav wav(R"(C:\Users\ollie\Documents\Audacity\17 Spectrum (Say My Name).wav)");
     auto format = wav.Format();
     auto data = wav.GetPCM();
 
@@ -32,7 +32,7 @@ int main() {
     auto source = context->CreateSource(description);
     source->SubmitBuffer(buffer.get());
 
-    source->Play();*/
+    source->Play();
 
     /*MxAudioStream* stream;
     mxStreamLoadWav(R"(C:\Users\ollie\Documents\Audacity\test.wav)", &stream);
