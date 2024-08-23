@@ -10,17 +10,17 @@ using namespace mixr;
 using namespace mixr::Utils;
 
 int main() {
-    //Stream::Wav wav(R"(C:\Users\ollie\Documents\Audacity\test.wav)");
-    //auto format = wav.Format();
-    //auto data = wav.GetPCM();
+    Stream::Wav wav(R"(C:\Users\ollie\Documents\Audacity\16 Geno.wav)");
+    auto format = wav.Format();
+    auto data = wav.GetPCM();
 
-    //if (wav.IsADPCM()) {
-    //    data = ADPCM::DecodeIMA(data.data(), data.size(), format.Channels == Channels::Stereo, wav.ADPCMInfo().ChunkSize);
-    //}
+    /*if (wav.IsADPCM()) {
+        data = ADPCM::DecodeIMA(data.data(), data.size(), format.Channels == Channels::Stereo, wav.ADPCMInfo().ChunkSize);
+    }*/
 
     //constexpr int numSounds = 1;
 
-    /*auto device = std::make_unique<Device::SdlDevice>(48000);
+    auto device = std::make_unique<Device::SdlDevice>(48000);
     Context* context = device->Context();
     //context->SetMasterVolume(1.0f / numSounds);
 
@@ -42,14 +42,14 @@ int main() {
     //source->ClearBuffers();
 
     //source->SetSpeed(0.25);
-    //source->SetVolume(0.5f);
+    //source->SetVolume(50);
     //source->SetLooping(true);
     //source->SetPanning(0.0f);
     //source->SetChannelVolumes(-1, 1);
 
-    source->Play();*/
+    source->Play();
 
-    MxAudioStream* stream;
+    /*MxAudioStream* stream;
     mxStreamLoadWav(R"(C:\Users\ollie\Documents\Audacity\test.wav)", &stream);
 
     MxAudioFormat format = mxStreamGetFormat(stream);
@@ -93,7 +93,7 @@ int main() {
 
     mxSourcePlay(context, source);
 
-    bool test = false;
+    bool test = false;*/
 
     while (true) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -110,7 +110,7 @@ int main() {
         test = !test;*/
     }
 
-    mxDestroyDevice(device);
+    //mxDestroyDevice(device);
 
     return 0;
 }
