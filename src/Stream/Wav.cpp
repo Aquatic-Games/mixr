@@ -147,6 +147,10 @@ namespace mixr::Stream {
         return _format;
     }
 
+    size_t Wav::PCMLengthInBytes() {
+        return _dataLength;
+    }
+
     std::vector<uint8_t> Wav::GetPCM() {
         _stream.seekg(_dataStartPoint);
 

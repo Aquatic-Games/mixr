@@ -125,6 +125,10 @@ namespace mixr::Stream {
         return dynamic_cast<FlacDecoder*>(_file.get())->Format;
     }
 
+    size_t Flac::PCMLengthInBytes() {
+        return dynamic_cast<FlacDecoder*>(_file.get())->TotalSamples;
+    }
+
     std::vector<uint8_t> Flac::GetPCM() {
         auto decoder = dynamic_cast<FlacDecoder*>(_file.get());
 
@@ -137,5 +141,4 @@ namespace mixr::Stream {
 
         return buffer;
     }
-
 }

@@ -9,6 +9,8 @@ extern "C" {
     typedef struct MxAudioStream MxAudioStream;
 
     MxAudioFormat mxStreamGetFormat(MxAudioStream *stream);
+
+    size_t mxStreamGetPCMLengthInBytes(MxAudioStream *stream);
     void mxStreamGetPCM(MxAudioStream *stream, uint8_t *data, size_t *dataLength);
 
     void mxDestroyStream(MxAudioStream *stream);

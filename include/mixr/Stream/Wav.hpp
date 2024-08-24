@@ -32,6 +32,8 @@ namespace mixr::Stream {
         ~Wav() override;
 
         AudioFormat Format() override;
+
+        size_t PCMLengthInBytes() override;
         std::vector<uint8_t> GetPCM() override;
 
         bool IsADPCM();

@@ -33,6 +33,8 @@ add_library(mixr SHARED
         src/Utils/ADPCM.cpp
         include/mixr/Stream/Flac.hpp
         src/Stream/Flac.cpp
+        include/mixr/Stream/Flac.h
+        src/C/Flac.cpp
 )
 
 target_include_directories(mixr PUBLIC include)

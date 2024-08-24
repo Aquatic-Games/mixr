@@ -17,14 +17,20 @@ MxAudioFormat mxStreamGetFormat(MxAudioStream *stream) {
     };
 }
 
+size_t mxStreamGetPCMLengthInBytes(MxAudioStream *stream) {
+    AudioStream* aStream = (AudioStream*) stream;
+
+    return aStream->PCMLengthInBytes();
+}
+
 void mxStreamGetPCM(MxAudioStream *stream, uint8_t *data, size_t *dataLength) {
     AudioStream* aStream = (AudioStream*) stream;
 
-    auto aData = aStream->GetPCM();
-    *dataLength = aData.size();
+    *dataLength = aStream->PCMLengthInBytes();
 
     if (data) {
-        auto dataPtr = aData.data();
+        auto pcmData = aStream->GetPCM();
+        auto dataPtr = pcmData.data();
         std::copy(dataPtr, dataPtr + *dataLength, data);
     }
 }

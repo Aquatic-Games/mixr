@@ -16,6 +16,8 @@ namespace mixr::Stream {
         explicit Flac(const std::string& path);
 
         AudioFormat Format() override;
+
+        size_t PCMLengthInBytes() override;
         std::vector<uint8_t> GetPCM() override;
     };
 
