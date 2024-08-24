@@ -24,7 +24,7 @@ int main() {
     //auto format = flac.Format();
     //auto data = flac.GetPCM();
 
-    auto stream = std::make_unique<Stream::Wav>(R"(C:\Users\ollie\Music\LevelSelect2.wav)");
+    auto stream = std::make_unique<Stream::Flac>(R"(C:\Users\ollie\Music\kf-battle-og.flac)");
     auto format = stream->Format();
     //auto data = wav.GetPCM();
 
@@ -77,7 +77,7 @@ int main() {
             cbData->Stream->Restart();
         }
 
-        cbData->Buffers[cbData->CurrentBuffer]->Update(cbData->Buffer.data(), cbData->Buffer.size());
+        cbData->Buffers[cbData->CurrentBuffer]->Update(cbData->Buffer.data(), size);
         cbData->Source->SubmitBuffer(cbData->Buffers[cbData->CurrentBuffer].get());
 
         cbData->CurrentBuffer++;

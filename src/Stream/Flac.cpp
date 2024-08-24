@@ -7,6 +7,7 @@ namespace mixr::Stream {
     class FlacDecoder : public FLAC::Decoder::File {
     public:
         std::vector<uint8_t> Buffer;
+        size_t CurrentBufferPos;
 
         std::vector<uint8_t>* BufferToWriteTo;
 
@@ -107,6 +108,7 @@ namespace mixr::Stream {
 
             MaxBufferSize = streamInfo->min_blocksize * streamInfo->channels * streamInfo->bits_per_sample / 8;
             TotalSamples = streamInfo->total_samples * streamInfo->channels * streamInfo->bits_per_sample / 8;
+            CurrentBufferPos = 0;
         }
 
         void error_callback(::FLAC__StreamDecoderErrorStatus status) override {
@@ -126,11 +128,50 @@ namespace mixr::Stream {
     }
 
     size_t Flac::GetBuffer(uint8_t* buffer, size_t bufferLength) {
-        return 0;
+        auto decoder = dynamic_cast<FlacDecoder*>(_file.get());
+
+        auto decoderBuffer = &decoder->Buffer;
+
+        decoderBuffer->reserve(decoder->MaxBufferSize);
+
+        size_t currentIndex = 0;
+
+        while (currentIndex < bufferLength)
+        {
+            if (decoder->CurrentBufferPos == 0)
+            {
+                decoderBuffer->clear();
+                decoder->BufferToWriteTo = decoderBuffer;
+                decoder->process_single();
+
+                if (decoder->get_state() == FLAC__STREAM_DECODER_END_OF_STREAM) {
+                    break;
+                }
+            }
+
+            decoder->BufferToWriteTo = decoderBuffer;
+
+            auto copySize = (decoderBuffer->size() - decoder->CurrentBufferPos);
+            if (currentIndex + copySize > bufferLength) {
+                copySize = bufferLength - currentIndex;
+            }
+
+            std::copy(decoderBuffer->data() + decoder->CurrentBufferPos, decoderBuffer->data() + decoder->CurrentBufferPos + copySize, buffer + currentIndex);
+
+            currentIndex += copySize;
+
+            decoder->CurrentBufferPos += copySize;
+
+            if (decoder->CurrentBufferPos >= decoderBuffer->size()) {
+                decoder->CurrentBufferPos -= decoderBuffer->size();
+            }
+        }
+
+        return currentIndex;
     }
 
     void Flac::Restart() {
-
+        _file->seek_absolute(0);
     }
 
     size_t Flac::PCMLengthInBytes() {
