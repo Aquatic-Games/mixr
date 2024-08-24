@@ -169,12 +169,9 @@ namespace mixr {
     void Impl::UpdateBuffer(size_t bufferId, uint8_t* data, size_t dataLength) {
         Buffer* buffer = &_buffers[bufferId];
 
-        std::cout << "Update" << std::endl;
-
         // Resize the buffer if it is not big enough, but otherwise, don't.
         // This may use more memory in some situations, but it prevents unnecessary allocations.
         if (dataLength > buffer->Data.size()) {
-            std::cout << "Resize" << std::endl;
             buffer->Data.resize(dataLength);
         }
 
