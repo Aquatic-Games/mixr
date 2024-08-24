@@ -10,6 +10,10 @@ extern "C" {
 
     MIXR_C_API MxAudioFormat mxStreamGetFormat(MxAudioStream *stream);
 
+    MIXR_C_API size_t mxStreamGetBuffer(MxAudioStream *stream, uint8_t *buffer, size_t bufferLength);
+
+    MIXR_C_API void mxStreamRestart(MxAudioStream *stream);
+
     MIXR_C_API size_t mxStreamGetPCMLengthInBytes(MxAudioStream *stream);
     MIXR_C_API void mxStreamGetPCM(MxAudioStream *stream, uint8_t *data, size_t *dataLength);
 

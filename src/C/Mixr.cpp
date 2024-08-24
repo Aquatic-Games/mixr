@@ -107,6 +107,12 @@ void mxSourceSetChannelVolumes(MxContext *context, MxAudioSource source, float v
     impl->SourceSetChannelVolumes(source, volumeL, volumeR);
 }
 
+void mxSourceSetBufferFinishedCallback(MxContext *context, MxAudioSource source, void (*callback)(void*), void* userData) {
+    Impl* impl = (Impl*) context;
+
+    impl->SourceSetBufferFinishedCallback(source, callback, userData);
+}
+
 void mxContextSetMasterVolume(MxContext *context, float volume) {
     Impl* impl = (Impl*) context;
 

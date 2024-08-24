@@ -19,12 +19,13 @@ struct CallbackData {
     int CurrentBuffer;
 };
 
-int main() {
-    //Stream::Flac flac(R"(C:\Users\ollie\Music\Music\Various Artists\NOW Millennium- 2000 - 2001 (Disc 3)\19 Inner Smile.flac)");
-    //auto format = flac.Format();
-    //auto data = flac.GetPCM();
+int main(int argc, char* argv[]) {
+    if (argc < 2) {
+        std::cout << "Please enter filename as argument" << std::endl;
+        return 1;
+    }
 
-    auto stream = std::make_unique<Stream::Flac>(R"(C:\Users\ollie\Music\kf-battle-og.flac)");
+    auto stream = std::make_unique<Stream::Flac>(argv[1]);
     auto format = stream->Format();
     //auto data = wav.GetPCM();
 

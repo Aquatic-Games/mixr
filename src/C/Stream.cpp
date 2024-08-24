@@ -17,6 +17,18 @@ MxAudioFormat mxStreamGetFormat(MxAudioStream *stream) {
     };
 }
 
+size_t mxStreamGetBuffer(MxAudioStream *stream, uint8_t *buffer, size_t bufferLength) {
+    AudioStream* aStream = (AudioStream*) stream;
+
+    return aStream->GetBuffer(buffer, bufferLength);
+}
+
+void mxStreamRestart(MxAudioStream *stream) {
+    AudioStream* aStream = (AudioStream*) stream;
+
+    aStream->Restart();
+}
+
 size_t mxStreamGetPCMLengthInBytes(MxAudioStream *stream) {
     AudioStream* aStream = (AudioStream*) stream;
 
