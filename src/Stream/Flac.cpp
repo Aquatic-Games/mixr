@@ -100,9 +100,9 @@ namespace mixr::Stream {
             }
 
             Format = {
-                .DataType = type,
-                .SampleRate = streamInfo->sample_rate,
-                .Channels = channels
+               /* .DataType = */ type,
+               /* .SampleRate = */ streamInfo->sample_rate,
+               /* .Channels = */ channels
             };
 
             MaxBufferSize = streamInfo->min_blocksize * streamInfo->channels * streamInfo->bits_per_sample / 8;

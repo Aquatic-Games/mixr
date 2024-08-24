@@ -1,6 +1,7 @@
 #pragma once
 
 #include "AudioStream.h"
+#include "../mixr.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -15,10 +16,10 @@ extern "C" {
         size_t ChunkSize;
     } MxADPCMInfo;
 
-    void mxStreamLoadWav(const char* path, MxAudioStream **pAudioStream);
+    MX_C_API_EXPORT void mxStreamLoadWav(const char* path, MxAudioStream **pAudioStream);
 
-    bool mxWavIsADPCM(MxAudioStream *stream);
-    MxADPCMInfo mxWavGetADPCMInfo(MxAudioStream *stream);
+    MX_C_API_EXPORT bool mxWavIsADPCM(MxAudioStream *stream);
+    MX_C_API_EXPORT MxADPCMInfo mxWavGetADPCMInfo(MxAudioStream *stream);
 
 #ifdef __cplusplus
 }

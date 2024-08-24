@@ -11,9 +11,9 @@ MxAudioFormat mxStreamGetFormat(MxAudioStream *stream) {
     AudioFormat format = aStream->Format();
 
     return {
-        .DataType = (MxDataType) format.DataType,
-        .SampleRate = format.SampleRate,
-        .Channels = (MxChannels) format.Channels
+       /* .DataType = */ (MxDataType) format.DataType,
+       /* .SampleRate = */format.SampleRate,
+       /* .Channels = */ (MxChannels) format.Channels
     };
 }
 

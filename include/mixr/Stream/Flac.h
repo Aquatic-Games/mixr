@@ -1,12 +1,13 @@
 #pragma once
 
 #include "AudioStream.h"
+#include "../mixr.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void mxStreamLoadFlac(const char* path, MxAudioStream **pAudioStream);
+    MX_C_API_EXPORT void mxStreamLoadFlac(const char* path, MxAudioStream **pAudioStream);
 
 #ifdef __cplusplus
 }

@@ -107,8 +107,8 @@ namespace mixr::Stream {
                             _format.DataType = DataType::I16;
                             _isAdpcm = true;
                             _adpcmInfo = {
-                                .Type = ADPCMType::IMA,
-                                .ChunkSize = blockAlign
+                               /* .Type = */ ADPCMType::IMA,
+                               /* .ChunkSize = */ blockAlign
                             };
 
                             // MS IMA ADPCM fmt headers contain extra data that we don't need, so just skip over it.

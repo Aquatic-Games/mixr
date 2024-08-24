@@ -38,11 +38,11 @@ namespace mixr::Utils::ADPCM {
     void DecodeIMAChunk(uint8_t* inBuffer, size_t chunkSize, uint8_t* outBuffer, bool stereo) {
         int channels = stereo ? 2 : 1;
 
-        int predictor[channels];
-        int stepIndex[channels];
-        int step[channels];
+        int predictor[2];
+        int stepIndex[2];
+        int step[2];
 
-        size_t newIndex[channels];
+        size_t newIndex[2];
         newIndex[0] = 0;
         if (stereo)
             newIndex[1] = 2;

@@ -12,7 +12,7 @@
 using namespace mixr;
 
 int main() {
-    /*Stream::Flac flac(R"(C:\Users\ollie\Music\Music\Various Artists\NOW Millennium- 2000 - 2001 (Disc 3)\19 Inner Smile.flac)");
+    Stream::Flac flac(R"(C:\Users\ollie\Music\Music\Various Artists\NOW Millennium- 2000 - 2001 (Disc 3)\19 Inner Smile.flac)");
     auto format = flac.Format();
     auto data = flac.GetPCM();
 
@@ -38,10 +38,10 @@ int main() {
     auto source = context->CreateSource(description);
     source->SubmitBuffer(buffer.get());
 
-    source->Play();*/
+    source->Play();
 
-    MxAudioStream* stream;
-    mxStreamLoadFlac(R"(C:\Users\ollie\Music\distrust_mpt.flac)", &stream);
+    /*MxAudioStream* stream;
+    mxStreamLoadFlac(R"(C:\Users\ollie\Music\Music\Various Artists\NOW Millennium- 2000 - 2001 (Disc 3)\19 Inner Smile.flac)", &stream);
 
     MxAudioFormat format = mxStreamGetFormat(stream);
 
@@ -68,7 +68,7 @@ int main() {
 
         description.Type = MX_SOURCE_TYPE_ADPCM;
         description.ADPCM = { .ChunkSize = adpcm.ChunkSize };
-    }*/
+    }
 
     mxDestroyStream(stream);
 
@@ -84,7 +84,7 @@ int main() {
 
     mxSourcePlay(context, source);
 
-    bool test = false;
+    bool test = false;*/
 
     while (true) {
         std::this_thread::sleep_for(std::chrono::seconds(1));

@@ -17,7 +17,7 @@ namespace mixr {
 
     size_t Impl::CreateBuffer(uint8_t* data, size_t dataLength) {
         Buffer buffer {
-            .Data = std::vector<uint8_t>(data, data + dataLength)
+           /* .Data = */ std::vector<uint8_t>(data, data + dataLength)
         };
 
         size_t index = _buffers.size();
@@ -70,34 +70,36 @@ namespace mixr {
         }
 
         Source source {
-            .Type = type,
-            .Format = format,
-            .ByteAlign = byteAlign,
-            .StereoAlign = byteAlign * (channels - 1),
+           /* .Type = */ type,
+           /* .Format = */ format,
+           /* .ByteAlign = */ byteAlign,
+           /* .StereoAlign = */ byteAlign * (channels - 1),
             // Corrects for the sample rate - if the Mixer sample rate is 48khz, and the buffer sample rate is 44.1khz,
             // then this value will be 0.91xyzw, causing the mixer to play the buffer slightly slower to correct the speed.
-            .SpeedCorrection = static_cast<float>(format.SampleRate) / static_cast<float>(_sampleRate),
+           /* .SpeedCorrection = */ static_cast<float>(format.SampleRate) / static_cast<float>(_sampleRate),
 
-            .QueuedBuffers = std::queue<size_t>(),
-            .MixBuffer = buffer,
+           /* .QueuedBuffers = */ std::queue<size_t>(),
+           /* .MixBuffer = */ buffer,
 
-            .Playing = false,
-            .Speed = 1.0,
-            .MainVolume = 1.0f,
-            .Looping = false,
+           /* .Playing = */ false,
+           /* .Speed = */ 1.0,
+           /* .MainVolume = */ 1.0f,
+           /* .Looping = */ false,
 
-            .VolumeL = 1.0f,
-            .VolumeR = 1.0f,
+           /* .LengthInSamples = */ 0,
 
-            .Position = 0,
-            .FinePosition = 0.0,
+           /* .VolumeL = */ 1.0f,
+           /* .VolumeR = */ 1.0f,
 
-            .LastPosition = 0,
-            .LastSampleL = 0.0f,
-            .LastSampleR = 0.0f,
-            .LastChunk = (size_t) -1,
+           /* .Position = */ 0,
+           /* .FinePosition = */ 0.0,
 
-            .ChunkSize = chunkSize,
+           /* .LastPosition = */ 0,
+           /* .LastSampleL = */ 0.0f,
+           /* .LastSampleR = */ 0.0f,
+           /* .LastChunk = */ (size_t) -1,
+
+           /* .ChunkSize = */ chunkSize,
 
         };
 
