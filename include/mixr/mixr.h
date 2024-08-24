@@ -67,7 +67,10 @@ extern "C" {
     MIXR_C_API void mxDestroyDevice(MxDevice *device);
 
     MIXR_C_API MxAudioBuffer mxContextCreateBuffer(MxContext *context, uint8_t *data, size_t dataLength);
+    MIXR_C_API void mxContextDestroyBuffer(MxContext *context, MxAudioBuffer buffer);
+
     MIXR_C_API MxAudioSource mxContextCreateSource(MxContext *context, MxSourceDescription *description);
+    MIXR_C_API void mxContextDestroySource(MxContext *context, MxAudioSource source);
 
     MIXR_C_API void mxContextSetMasterVolume(MxContext *context, float volume);
 
