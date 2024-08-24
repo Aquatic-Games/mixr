@@ -31,6 +31,8 @@ add_library(mixr SHARED
         src/C/Wav.cpp
         include/mixr/Utils/ADPCM.h
         src/Utils/ADPCM.cpp
+        include/mixr/Stream/Flac.hpp
+        src/Stream/Flac.cpp
 )
 
 target_include_directories(mixr PUBLIC include)
@@ -39,6 +41,10 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 add_subdirectory(lib/SDL)
 target_link_libraries(mixr PUBLIC SDL2::SDL2-static)
 
+set(WITH_OGG OFF)
+set(INSTALL_MANPAGES OFF)
+add_subdirectory(lib/flac)
+target_link_libraries(mixr PUBLIC FLAC::FLAC++)
 
 #add_library(mixr SHARED $<TARGET_OBJECTS:mixr-obj>)
 #target_include_directories(mixr PUBLIC include)

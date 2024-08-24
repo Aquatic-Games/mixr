@@ -2,17 +2,20 @@
 #include <mixr/Stream/Wav.hpp>
 #include <mixr/mixr.h>
 #include <mixr/Stream/Wav.h>
-#include <mixr/Utils/ADPCM.h>
+#include <mixr/Stream/Flac.hpp>
 #include <thread>
 #include <iostream>
 
 using namespace mixr;
-using namespace mixr::Utils;
 
 int main() {
-    Stream::Wav wav(R"(C:\Users\ollie\Documents\Audacity\17 Spectrum (Say My Name).wav)");
-    auto format = wav.Format();
-    auto data = wav.GetPCM();
+    Stream::Flac flac(R"(C:\Users\ollie\Music\Music\Various Artists\Eighties #1s (Disc 2)\08 Back To Life.flac)");
+    auto format = flac.Format();
+    auto data = flac.GetPCM();
+
+    //Stream::Wav wav(R"(C:\Users\ollie\Music\1-04 SKYSCRAPER SEQUENCE.wav)");
+    //auto format = wav.Format();
+    //auto data = wav.GetPCM();
 
     auto device = std::make_unique<Device::SdlDevice>(48000);
     Context* context = device->Context();
@@ -22,10 +25,10 @@ int main() {
         .Format = format
     };
 
-    if (wav.IsADPCM()) {
-        description.Type = SourceType::ADPCM,
-        description.ADPCM = { .ChunkSize = wav.ADPCMInfo().ChunkSize };
-    }
+    //if (wav.IsADPCM()) {
+    //    description.Type = SourceType::ADPCM,
+    //    description.ADPCM = { .ChunkSize = wav.ADPCMInfo().ChunkSize };
+    //}
 
     auto buffer = context->CreateBuffer(data.data(), data.size());
 
