@@ -31,6 +31,7 @@ namespace mixr {
 
         uint8_t byteAlign;
         switch (format.DataType) {
+            case DataType::I8:
             case DataType::U8:
                 byteAlign = 1;
                 break;
@@ -177,6 +178,8 @@ namespace mixr {
 
     inline float GetSample(const uint8_t* data, size_t index, DataType dataType) {
         switch (dataType) {
+            case DataType::I8:
+                return (float) (int8_t) data[index] / (float) INT8_MAX;
             case DataType::U8:
                 return (float) (int8_t) (data[index] - INT8_MAX) / (float) INT8_MAX;
             case DataType::I16:

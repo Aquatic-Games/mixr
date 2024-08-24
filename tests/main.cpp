@@ -9,7 +9,7 @@
 using namespace mixr;
 
 int main() {
-    Stream::Flac flac(R"(C:\Users\ollie\Music\Music\Various Artists\NOW Millennium- 2000 - 2001 (Disc 3)\19 Inner Smile.flac)");
+    Stream::Flac flac(R"(C:\Users\ollie\Music\distrust_8bit.flac)");
     auto format = flac.Format();
     auto data = flac.GetPCM();
 

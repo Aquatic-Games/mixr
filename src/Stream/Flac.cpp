@@ -17,7 +17,7 @@ namespace mixr::Stream {
         ::FLAC__StreamDecoderWriteStatus write_callback(const ::FLAC__Frame* frame, const FLAC__int32* const buffer[]) override {
             switch (Format.DataType)
             {
-                case DataType::U8:
+                case DataType::I8:
                 {
                     for (int i = 0; i < frame->header.blocksize; i++) {
                         uint8_t l = buffer[0][i];
@@ -71,7 +71,7 @@ namespace mixr::Stream {
             DataType type;
             switch (streamInfo->bits_per_sample) {
                 case 8:
-                    type = DataType::U8;
+                    type = DataType::I8;
                     break;
 
                 case 16:
