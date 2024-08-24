@@ -149,6 +149,8 @@ namespace mixr::Stream {
     }
 
     size_t Wav::GetBuffer(uint8_t* buffer, size_t bufferLength) {
+        _stream.seekg(_currentBufferPos);
+
         size_t endPoint = _currentBufferPos + bufferLength;
         size_t dataEnd = _dataStartPoint + _dataLength;
         if (endPoint >= dataEnd) {
@@ -161,6 +163,10 @@ namespace mixr::Stream {
         _currentBufferPos += outputLength;
 
         return outputLength;
+    }
+
+    void Wav::Restart() {
+        _currentBufferPos = _dataStartPoint;
     }
 
     size_t Wav::PCMLengthInBytes() {

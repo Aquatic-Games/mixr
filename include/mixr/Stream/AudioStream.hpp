@@ -15,6 +15,8 @@ namespace mixr::Stream {
 
         virtual size_t GetBuffer(uint8_t* buffer, size_t bufferLength) = 0;
 
+        virtual void Restart() = 0;
+
         virtual size_t PCMLengthInBytes() = 0;
         virtual std::vector<uint8_t> GetPCM() = 0;
     };

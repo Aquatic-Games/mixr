@@ -36,6 +36,8 @@ namespace mixr::Stream {
 
         size_t GetBuffer(uint8_t *buffer, size_t bufferLength) override;
 
+        void Restart() override;
+
         size_t PCMLengthInBytes() override;
         std::vector<uint8_t> GetPCM() override;
 

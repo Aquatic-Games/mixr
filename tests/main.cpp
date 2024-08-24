@@ -24,7 +24,7 @@ int main() {
     //auto format = flac.Format();
     //auto data = flac.GetPCM();
 
-    auto stream = std::make_unique<Stream::Wav>(R"(C:\Users\ollie\Music\1-04 SKYSCRAPER SEQUENCE.wav)");
+    auto stream = std::make_unique<Stream::Wav>(R"(C:\Users\ollie\Music\LevelSelect2.wav)");
     auto format = stream->Format();
     //auto data = wav.GetPCM();
 
@@ -67,11 +67,15 @@ int main() {
     });
 
     source->SetBufferFinishedCallback([](void* userData) -> void {
-        std::cout << "Request Buffer" << std::endl;
-
         auto cbData = (CallbackData*) userData;
 
-        cbData->Stream->GetBuffer(cbData->Buffer.data(), cbData->Buffer.size());
+        auto size = cbData->Stream->GetBuffer(cbData->Buffer.data(), cbData->Buffer.size());
+        std::cout << "Request Buffer: " << size << " bytes returned" << std::endl;
+
+        if (size < cbData->Buffer.size()) {
+            std::cout << "Restart" << std::endl;
+            cbData->Stream->Restart();
+        }
 
         cbData->Buffers[cbData->CurrentBuffer]->Update(cbData->Buffer.data(), cbData->Buffer.size());
         cbData->Source->SubmitBuffer(cbData->Buffers[cbData->CurrentBuffer].get());
@@ -82,6 +86,7 @@ int main() {
 
     }, cbData.get());
 
+    //source->SetSpeed(50);
     source->Play();
 
     /*MxAudioStream* stream;

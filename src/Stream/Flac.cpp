@@ -129,6 +129,10 @@ namespace mixr::Stream {
         return 0;
     }
 
+    void Flac::Restart() {
+
+    }
+
     size_t Flac::PCMLengthInBytes() {
         return dynamic_cast<FlacDecoder*>(_file.get())->TotalSamples;
     }
