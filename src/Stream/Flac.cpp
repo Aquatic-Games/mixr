@@ -171,7 +171,9 @@ namespace mixr::Stream {
     }
 
     void Flac::Restart() {
-        _file->seek_absolute(0);
+        auto decoder = dynamic_cast<FlacDecoder*>(_file.get());
+        decoder->seek_absolute(0);
+        decoder->CurrentBufferPos = 0;
     }
 
     size_t Flac::PCMLengthInBytes() {

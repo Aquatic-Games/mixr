@@ -17,7 +17,8 @@ namespace mixr {
 
     size_t Impl::CreateBuffer(uint8_t* data, size_t dataLength) {
         Buffer buffer {
-           /* .Data = */ std::vector<uint8_t>(data, data + dataLength)
+           /* .Data = */ std::vector<uint8_t>(data, data + dataLength),
+           /* DataLength= */ dataLength
         };
 
         size_t index;
@@ -168,7 +169,17 @@ namespace mixr {
     void Impl::UpdateBuffer(size_t bufferId, uint8_t* data, size_t dataLength) {
         Buffer* buffer = &_buffers[bufferId];
 
-        buffer->Data = std::vector<uint8_t>(data, data + dataLength);
+        std::cout << "Update" << std::endl;
+
+        // Resize the buffer if it is not big enough, but otherwise, don't.
+        // This may use more memory in some situations, but it prevents unnecessary allocations.
+        if (dataLength > buffer->Data.size()) {
+            std::cout << "Resize" << std::endl;
+            buffer->Data.resize(dataLength);
+        }
+
+        std::copy(data, data + dataLength, buffer->Data.data());
+        buffer->DataLength = dataLength;
     }
 
     void Impl::SourceSubmitBuffer(size_t sourceId, size_t bufferId) {
@@ -371,7 +382,7 @@ namespace mixr {
     }
 
     void Impl::UpdateSource(Source* source) {
-        auto dataLength = _buffers[source->QueuedBuffers.front()].Data.size();
+        auto dataLength = _buffers[source->QueuedBuffers.front()].DataLength;
         auto byteAlign = source->ByteAlign;
         auto channels = 0;
 

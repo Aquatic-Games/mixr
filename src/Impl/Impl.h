@@ -13,6 +13,7 @@ namespace mixr {
 
     struct Buffer {
         std::vector<uint8_t> Data;
+        size_t DataLength;
     };
 
     struct Source {
