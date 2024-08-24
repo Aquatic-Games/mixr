@@ -10,4 +10,8 @@ namespace mixr {
     AudioBuffer::~AudioBuffer() {
         _impl->DestroyBuffer(_id);
     }
+
+    void AudioBuffer::Update(uint8_t* data, size_t dataLength) {
+        _impl->UpdateBuffer(_id, data, dataLength);
+    }
 }

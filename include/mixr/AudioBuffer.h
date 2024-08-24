@@ -18,6 +18,8 @@ namespace mixr {
         inline size_t ID() {
             return _id;
         }
+
+        void Update(uint8_t* data, size_t dataLength);
     };
 
 }

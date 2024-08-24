@@ -72,7 +72,7 @@ extern "C" {
     MIXR_C_API MxAudioSource mxContextCreateSource(MxContext *context, MxSourceDescription *description);
     MIXR_C_API void mxContextDestroySource(MxContext *context, MxAudioSource source);
 
-    MIXR_C_API void mxContextSetMasterVolume(MxContext *context, float volume);
+    MIXR_C_API void mxContextUpdateBuffer(MxContext *context, MxAudioBuffer buffer, uint8_t *data, size_t dataLength);
 
     MIXR_C_API void mxSourceSubmitBuffer(MxContext *context, MxAudioSource source, MxAudioBuffer buffer);
     MIXR_C_API void mxSourceClearBuffers(MxContext *context, MxAudioSource source);
@@ -84,6 +84,8 @@ extern "C" {
     MIXR_C_API void mxSourceSetLooping(MxContext *context, MxAudioSource source, bool looping);
     MIXR_C_API void mxSourceSetPanning(MxContext *context, MxAudioSource source, float panning);
     MIXR_C_API void mxSourceSetChannelVolumes(MxContext *context, MxAudioSource source, float volumeL, float volumeR);
+
+    MIXR_C_API void mxContextSetMasterVolume(MxContext *context, float volume);
 
 #ifdef __cplusplus
 }

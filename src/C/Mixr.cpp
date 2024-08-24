@@ -22,6 +22,7 @@ MxAudioBuffer mxContextCreateBuffer(MxContext *context, uint8_t *data, size_t da
 
 void mxContextDestroyBuffer(MxContext *context, MxAudioBuffer buffer) {
     Impl* impl = (Impl*) context;
+
     impl->DestroyBuffer(buffer);
 }
 
@@ -36,13 +37,14 @@ MxAudioSource mxContextCreateSource(MxContext *context, MxSourceDescription *des
 
 void mxContextDestroySource(MxContext *context, MxAudioSource source) {
     Impl* impl = (Impl*) context;
+
     impl->DestroySource(source);
 }
 
-void mxContextSetMasterVolume(MxContext *context, float volume) {
+void mxContextUpdateBuffer(MxContext *context, MxAudioBuffer buffer, uint8_t *data, size_t dataLength) {
     Impl* impl = (Impl*) context;
 
-    impl->SetMasterVolume(volume);
+    impl->UpdateBuffer(buffer, data, dataLength);
 }
 
 void mxSourceSubmitBuffer(MxContext *context, MxAudioSource source, MxAudioBuffer buffer) {
@@ -103,4 +105,10 @@ void mxSourceSetChannelVolumes(MxContext *context, MxAudioSource source, float v
     Impl* impl = (Impl*) context;
 
     impl->SourceSetChannelVolumes(source, volumeL, volumeR);
+}
+
+void mxContextSetMasterVolume(MxContext *context, float volume) {
+    Impl* impl = (Impl*) context;
+
+    impl->SetMasterVolume(volume);
 }

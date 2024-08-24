@@ -74,7 +74,7 @@ namespace mixr {
         size_t CreateSource(const SourceDescription& description);
         void DestroySource(size_t sourceId);
 
-        void SetMasterVolume(float volume);
+        void UpdateBuffer(size_t bufferId, uint8_t* data, size_t dataLength);
 
         void SourceSubmitBuffer(size_t sourceId, size_t bufferId);
         void SourceClearBuffers(size_t sourceId);
@@ -86,6 +86,8 @@ namespace mixr {
         void SourceSetLooping(size_t sourceId, bool looping);
         void SourceSetPanning(size_t sourceId, float panning);
         void SourceSetChannelVolumes(size_t sourceId, float volumeL, float volumeR);
+
+        void SetMasterVolume(float volume);
 
         void MixToStereoF32Buffer(float* buffer, size_t bufferLength);
     };

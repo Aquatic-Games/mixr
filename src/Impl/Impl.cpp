@@ -162,8 +162,10 @@ namespace mixr {
         _availableSources.push_back(sourceId);
     }
 
-    void Impl::SetMasterVolume(float volume) {
-        _masterVolume = volume;
+    void Impl::UpdateBuffer(size_t bufferId, uint8_t* data, size_t dataLength) {
+        Buffer* buffer = &_buffers[bufferId];
+
+        buffer->Data = std::vector<uint8_t>(data, data + dataLength);
     }
 
     void Impl::SourceSubmitBuffer(size_t sourceId, size_t bufferId) {
@@ -228,6 +230,10 @@ namespace mixr {
 
         source->VolumeL = volumeL;
         source->VolumeR = volumeR;
+    }
+
+    void Impl::SetMasterVolume(float volume) {
+        _masterVolume = volume;
     }
 
     inline float GetSample(const uint8_t* data, size_t index, DataType dataType) {
