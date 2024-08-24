@@ -128,6 +128,8 @@ namespace mixr {
            /* .Position = */ 0,
            /* .FinePosition = */ 0.0,
 
+           /* .BufferFinishedCallback = */ nullptr,
+
            /* .LastPosition = */ 0,
            /* .LastSampleL = */ 0.0f,
            /* .LastSampleR = */ 0.0f,
@@ -230,6 +232,10 @@ namespace mixr {
 
         source->VolumeL = volumeL;
         source->VolumeR = volumeR;
+    }
+
+    void Impl::SourceSetBufferFinishedCallback(size_t sourceId, void (*callback)()) {
+        _sources[sourceId].BufferFinishedCallback = callback;
     }
 
     void Impl::SetMasterVolume(float volume) {
@@ -336,12 +342,20 @@ namespace mixr {
                     // Right now the library relies on the queue having elements, since it gets the buffer by checking
                     // the front of the queue. Perhaps the "current buffer" should be stored in an index instead.
                     if (source->QueuedBuffers.size() > 1) {
+                        if (source->BufferFinishedCallback) {
+                            source->BufferFinishedCallback();
+                        }
+
                         source->QueuedBuffers.pop_front();
                         source->Position = 0;
                         UpdateSource(source);
                     } else if (source->Looping) {
                         source->Position -= source->LengthInSamples;
                     } else {
+                        if (source->BufferFinishedCallback) {
+                            source->BufferFinishedCallback();
+                        }
+
                         SourceStop(s);
                     }
                 }

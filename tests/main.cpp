@@ -12,13 +12,13 @@
 using namespace mixr;
 
 int main() {
-    Stream::Flac flac(R"(C:\Users\ollie\Music\Music\Various Artists\NOW Millennium- 2000 - 2001 (Disc 3)\19 Inner Smile.flac)");
-    auto format = flac.Format();
-    auto data = flac.GetPCM();
+    //Stream::Flac flac(R"(C:\Users\ollie\Music\Music\Various Artists\NOW Millennium- 2000 - 2001 (Disc 3)\19 Inner Smile.flac)");
+    //auto format = flac.Format();
+    //auto data = flac.GetPCM();
 
-    //Stream::Wav wav(R"(C:\Users\ollie\Music\1-04 SKYSCRAPER SEQUENCE.wav)");
-    //auto format = wav.Format();
-    //auto data = wav.GetPCM();
+    Stream::Wav wav(R"(C:\Users\ollie\Music\bbbb.wav)");
+    auto format = wav.Format();
+    auto data = wav.GetPCM();
 
     auto device = std::make_unique<Device::SdlDevice>(48000);
     Context* context = device->Context();
@@ -38,6 +38,8 @@ int main() {
     auto source = context->CreateSource(description);
     source->SubmitBuffer(buffer.get());
     source->SubmitBuffer(buffer.get());
+
+    source->SetBufferFinishedCallback([]() -> void { std::cout << "Finished" << std::endl; });
 
     source->Play();
 

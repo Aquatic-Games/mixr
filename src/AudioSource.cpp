@@ -51,4 +51,8 @@ namespace mixr {
     void AudioSource::Stop() {
         _impl->SourceStop(_id);
     }
+
+    void AudioSource::SetBufferFinishedCallback(void (*callback)()) {
+        _impl->SourceSetBufferFinishedCallback(_id, callback);
+    }
 }

@@ -29,6 +29,8 @@ namespace mixr {
         void SetPanning(float panning);
         void SetChannelVolumes(float volumeL, float volumeR);
 
+        void SetBufferFinishedCallback(void (*callback)());
+
         void Play();
         void Pause();
         void Stop();
