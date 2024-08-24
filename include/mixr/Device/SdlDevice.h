@@ -6,7 +6,7 @@
 
 namespace mixr::Device {
 
-    class SdlDevice : public AudioDevice {
+    class MIXR_CPP_API SdlDevice : public AudioDevice {
     private:
         uint32_t _device;
 

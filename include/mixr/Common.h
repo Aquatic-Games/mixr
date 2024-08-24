@@ -3,6 +3,12 @@
 #include <cstdint>
 #include <cstddef>
 
+#ifdef _WIN32
+#define MIXR_CPP_API __declspec(dllexport)
+#else
+#define MIXR_CPP_API
+#endif
+
 namespace mixr {
 
     class Impl;

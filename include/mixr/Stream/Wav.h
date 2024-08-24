@@ -16,10 +16,10 @@ extern "C" {
         size_t ChunkSize;
     } MxADPCMInfo;
 
-    MX_C_API_EXPORT void mxStreamLoadWav(const char* path, MxAudioStream **pAudioStream);
+    MIXR_C_API void mxStreamLoadWav(const char* path, MxAudioStream **pAudioStream);
 
-    MX_C_API_EXPORT bool mxWavIsADPCM(MxAudioStream *stream);
-    MX_C_API_EXPORT MxADPCMInfo mxWavGetADPCMInfo(MxAudioStream *stream);
+    MIXR_C_API bool mxWavIsADPCM(MxAudioStream *stream);
+    MIXR_C_API MxADPCMInfo mxWavGetADPCMInfo(MxAudioStream *stream);
 
 #ifdef __cplusplus
 }

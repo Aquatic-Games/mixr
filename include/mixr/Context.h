@@ -11,7 +11,7 @@ namespace mixr {
 
     class AudioDevice;
 
-    class Context {
+    class MIXR_CPP_API Context {
         friend class AudioDevice;
 
     private:

@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-    MX_C_API_EXPORT void mxStreamLoadFlac(const char* path, MxAudioStream **pAudioStream);
+    MIXR_C_API void mxStreamLoadFlac(const char* path, MxAudioStream **pAudioStream);
 
 #ifdef __cplusplus
 }

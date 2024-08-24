@@ -3,10 +3,10 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#ifdef _MSC_VER
-#define MX_C_API_EXPORT __declspec(dllexport)
+#ifdef _WIN32
+#define MIXR_C_API __declspec(dllexport)
 #else
-#define MX_C_API_EXPORT
+#define MIXR_C_API
 #endif
 
 #ifdef __cplusplus
@@ -56,31 +56,31 @@ extern "C" {
         };
     } MxSourceDescription;
 
-    MX_C_API_EXPORT void mxCreateContext(uint32_t sampleRate, MxContext **pContext);
-    MX_C_API_EXPORT void mxDestroyContext(MxContext *context);
+    MIXR_C_API void mxCreateContext(uint32_t sampleRate, MxContext **pContext);
+    MIXR_C_API void mxDestroyContext(MxContext *context);
 
     // TODO: Move this to a separate file
     // TODO: This implementation is temporary. This should be done properly at some point.
-    MX_C_API_EXPORT void mxCreateSDLDevice(uint32_t sampleRate, uint16_t periodSize, MxDevice **pDevice);
+    MIXR_C_API void mxCreateSDLDevice(uint32_t sampleRate, uint16_t periodSize, MxDevice **pDevice);
 
-    MX_C_API_EXPORT void mxDeviceGetContext(MxDevice *device, MxContext **pContext);
-    MX_C_API_EXPORT void mxDestroyDevice(MxDevice *device);
+    MIXR_C_API void mxDeviceGetContext(MxDevice *device, MxContext **pContext);
+    MIXR_C_API void mxDestroyDevice(MxDevice *device);
 
-    MX_C_API_EXPORT MxAudioBuffer mxContextCreateBuffer(MxContext *context, uint8_t *data, size_t dataLength);
-    MX_C_API_EXPORT MxAudioSource mxContextCreateSource(MxContext *context, MxSourceDescription *description);
+    MIXR_C_API MxAudioBuffer mxContextCreateBuffer(MxContext *context, uint8_t *data, size_t dataLength);
+    MIXR_C_API MxAudioSource mxContextCreateSource(MxContext *context, MxSourceDescription *description);
 
-    MX_C_API_EXPORT void mxContextSetMasterVolume(MxContext *context, float volume);
+    MIXR_C_API void mxContextSetMasterVolume(MxContext *context, float volume);
 
-    MX_C_API_EXPORT void mxSourceSubmitBuffer(MxContext *context, MxAudioSource source, MxAudioBuffer buffer);
-    MX_C_API_EXPORT void mxSourceClearBuffers(MxContext *context, MxAudioSource source);
-    MX_C_API_EXPORT void mxSourcePlay(MxContext *context, MxAudioSource source);
-    MX_C_API_EXPORT void mxSourcePause(MxContext *context, MxAudioSource source);
-    MX_C_API_EXPORT void mxSourceStop(MxContext *context, MxAudioSource source);
-    MX_C_API_EXPORT void mxSourceSetSpeed(MxContext *context, MxAudioSource source, double speed);
-    MX_C_API_EXPORT void mxSourceSetVolume(MxContext *context, MxAudioSource source, float volume);
-    MX_C_API_EXPORT void mxSourceSetLooping(MxContext *context, MxAudioSource source, bool looping);
-    MX_C_API_EXPORT void mxSourceSetPanning(MxContext *context, MxAudioSource source, float panning);
-    MX_C_API_EXPORT void mxSourceSetChannelVolumes(MxContext *context, MxAudioSource source, float volumeL, float volumeR);
+    MIXR_C_API void mxSourceSubmitBuffer(MxContext *context, MxAudioSource source, MxAudioBuffer buffer);
+    MIXR_C_API void mxSourceClearBuffers(MxContext *context, MxAudioSource source);
+    MIXR_C_API void mxSourcePlay(MxContext *context, MxAudioSource source);
+    MIXR_C_API void mxSourcePause(MxContext *context, MxAudioSource source);
+    MIXR_C_API void mxSourceStop(MxContext *context, MxAudioSource source);
+    MIXR_C_API void mxSourceSetSpeed(MxContext *context, MxAudioSource source, double speed);
+    MIXR_C_API void mxSourceSetVolume(MxContext *context, MxAudioSource source, float volume);
+    MIXR_C_API void mxSourceSetLooping(MxContext *context, MxAudioSource source, bool looping);
+    MIXR_C_API void mxSourceSetPanning(MxContext *context, MxAudioSource source, float panning);
+    MIXR_C_API void mxSourceSetChannelVolumes(MxContext *context, MxAudioSource source, float volumeL, float volumeR);
 
 #ifdef __cplusplus
 }

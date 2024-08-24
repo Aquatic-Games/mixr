@@ -7,7 +7,7 @@
 
 namespace mixr::Stream {
 
-    class AudioStream {
+    class MIXR_CPP_API AudioStream {
     public:
         virtual ~AudioStream() = default;
 

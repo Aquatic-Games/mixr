@@ -4,7 +4,7 @@
 
 namespace mixr {
 
-    class AudioDevice {
+    class MIXR_CPP_API AudioDevice {
     private:
         std::unique_ptr<mixr::Context> _context;
 

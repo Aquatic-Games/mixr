@@ -24,8 +24,8 @@ int main() {
     Context* context = device->Context();
 
     SourceDescription description {
-        .Type = SourceType::PCM,
-        .Format = format
+       /* .Type = */ SourceType::PCM,
+       /* .Format = */ format
     };
 
     //if (wav.IsADPCM()) {
@@ -88,6 +88,13 @@ int main() {
 
     while (true) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
+
+        /*std::cout << source->ID() << std::endl;
+        source.reset();
+
+        source = context->CreateSource(description);
+        source->SubmitBuffer(buffer.get());
+        source->Play();*/
 
         //source->Stop();
         //source->Play();

@@ -8,6 +8,10 @@ namespace mixr {
         _impl = impl;
     }
 
+    AudioSource::~AudioSource() {
+        _impl->DestroySource(_id);
+    }
+
     void AudioSource::SubmitBuffer(AudioBuffer* buffer) {
         _impl->SourceSubmitBuffer(_id, buffer->ID());
     }

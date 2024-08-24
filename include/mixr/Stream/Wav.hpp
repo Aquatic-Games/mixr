@@ -17,7 +17,7 @@ namespace mixr::Stream {
         size_t ChunkSize;
     };
 
-    class Wav : public AudioStream {
+    class MIXR_CPP_API Wav : public AudioStream {
     private:
         std::ifstream _stream;
         AudioFormat _format;

@@ -103,10 +103,29 @@ namespace mixr {
 
         };
 
-        size_t index = _sources.size();
-        _sources.push_back(source);
+        size_t index;
+
+        if (_availableSources.empty()) {
+            index = _sources.size();
+            _sources.push_back(source);
+        } else {
+            index = _availableSources.front();
+            _availableSources.pop();
+            _sources[index] = source;
+        }
 
         return index;
+    }
+
+    void Impl::DestroySource(size_t sourceId) {
+        Source* source = &_sources[sourceId];
+
+        SourceStop(sourceId);
+
+        source->QueuedBuffers = {};
+        delete source->MixBuffer;
+
+        _availableSources.push(sourceId);
     }
 
     void Impl::SetMasterVolume(float volume) {

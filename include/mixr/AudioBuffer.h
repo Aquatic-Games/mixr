@@ -6,7 +6,7 @@
 
 namespace mixr {
 
-    class AudioBuffer {
+    class MIXR_CPP_API AudioBuffer {
     private:
         size_t _id;
         Impl* _impl;

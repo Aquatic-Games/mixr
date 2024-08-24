@@ -8,7 +8,7 @@
 
 namespace mixr::Stream {
 
-    class Flac : public AudioStream {
+    class MIXR_CPP_API Flac : public AudioStream {
     private:
         std::unique_ptr<FLAC::Decoder::File> _file;
 

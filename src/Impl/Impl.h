@@ -60,13 +60,18 @@ namespace mixr {
         std::vector<Buffer> _buffers;
         std::vector<Source> _sources;
 
+        std::queue<size_t> _availableSources;
+
         void UpdateSource(Source* source);
 
     public:
         explicit Impl(uint32_t sampleRate);
 
         size_t CreateBuffer(uint8_t* data, size_t dataLength);
+        //void DestroyBuffer(size_t bufferId);
+
         size_t CreateSource(const SourceDescription& description);
+        void DestroySource(size_t sourceId);
 
         void SetMasterVolume(float volume);
 

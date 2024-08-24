@@ -7,13 +7,14 @@
 
 namespace mixr {
 
-    class AudioSource {
+    class MIXR_CPP_API AudioSource {
     private:
         size_t _id;
         Impl* _impl;
 
     public:
         AudioSource(size_t id, Impl* impl);
+        ~AudioSource();
 
         inline size_t ID() {
             return _id;
