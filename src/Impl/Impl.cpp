@@ -20,10 +20,44 @@ namespace mixr {
            /* .Data = */ std::vector<uint8_t>(data, data + dataLength)
         };
 
-        size_t index = _buffers.size();
-        _buffers.push_back(buffer);
+        size_t index;
+
+        if (_availableBuffers.empty()) {
+            index = _buffers.size();
+            _buffers.push_back(buffer);
+        } else {
+            index = _availableBuffers.front();
+            _availableBuffers.pop_front();
+            _buffers[index] = buffer;
+        }
 
         return index;
+    }
+
+    void Impl::DestroyBuffer(size_t bufferId) {
+        Buffer* buffer = &_buffers[bufferId];
+
+        // Search to see if the buffer is contained in the source.
+        // If it is, remove it. If the source is currently playing the buffer, then stop the source.
+        // This is susceptible to race conditions and you are not meant to call this while a source that contains it is
+        // playing, but it offers a bit of protection.
+        for (size_t i = 0; i < _sources.size(); i++) {
+            Source* source = &_sources[i];
+            auto queuedBuffers = &source->QueuedBuffers;
+
+            auto loc = std::find(queuedBuffers->begin(), queuedBuffers->end(), bufferId);
+            if (loc != queuedBuffers->end()) {
+                if (bufferId == queuedBuffers->front()) {
+                    SourceStop(i);
+                }
+
+                queuedBuffers->erase(std::remove(queuedBuffers->begin(), queuedBuffers->end(), bufferId), queuedBuffers->end());
+            }
+        }
+
+        buffer->Data = {};
+
+        _availableBuffers.push_back(bufferId);
     }
 
     size_t Impl::CreateSource(const SourceDescription& description) {
@@ -78,7 +112,7 @@ namespace mixr {
             // then this value will be 0.91xyzw, causing the mixer to play the buffer slightly slower to correct the speed.
            /* .SpeedCorrection = */ static_cast<float>(format.SampleRate) / static_cast<float>(_sampleRate),
 
-           /* .QueuedBuffers = */ std::queue<size_t>(),
+           /* .QueuedBuffers = */ {},
            /* .MixBuffer = */ buffer,
 
            /* .Playing = */ false,
@@ -110,7 +144,7 @@ namespace mixr {
             _sources.push_back(source);
         } else {
             index = _availableSources.front();
-            _availableSources.pop();
+            _availableSources.pop_front();
             _sources[index] = source;
         }
 
@@ -125,7 +159,7 @@ namespace mixr {
         source->QueuedBuffers = {};
         delete source->MixBuffer;
 
-        _availableSources.push(sourceId);
+        _availableSources.push_back(sourceId);
     }
 
     void Impl::SetMasterVolume(float volume) {
@@ -134,7 +168,7 @@ namespace mixr {
 
     void Impl::SourceSubmitBuffer(size_t sourceId, size_t bufferId) {
         Source* source = &_sources[sourceId];
-        source->QueuedBuffers.push(bufferId);
+        source->QueuedBuffers.push_back(bufferId);
 
         if (source->QueuedBuffers.size() == 1) {
             UpdateSource(source);
@@ -143,8 +177,7 @@ namespace mixr {
 
     void Impl::SourceClearBuffers(size_t sourceId) {
         SourceStop(sourceId);
-        std::queue<size_t> empty;
-        std::swap(_sources[sourceId].QueuedBuffers, empty);
+        _sources[sourceId].QueuedBuffers = {};
     }
 
     void Impl::SourcePlay(size_t sourceId) {
@@ -297,7 +330,7 @@ namespace mixr {
                     // Right now the library relies on the queue having elements, since it gets the buffer by checking
                     // the front of the queue. Perhaps the "current buffer" should be stored in an index instead.
                     if (source->QueuedBuffers.size() > 1) {
-                        source->QueuedBuffers.pop();
+                        source->QueuedBuffers.pop_front();
                         source->Position = 0;
                         UpdateSource(source);
                     } else if (source->Looping) {

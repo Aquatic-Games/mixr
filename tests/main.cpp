@@ -37,6 +37,7 @@ int main() {
 
     auto source = context->CreateSource(description);
     source->SubmitBuffer(buffer.get());
+    source->SubmitBuffer(buffer.get());
 
     source->Play();
 
@@ -88,6 +89,13 @@ int main() {
 
     while (true) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
+
+        //std::cout << buffer->ID() << std::endl;
+        //buffer.reset();
+
+        //buffer = context->CreateBuffer(data.data(), data.size());
+        //source->SubmitBuffer(buffer.get());
+        //source->Play();
 
         /*std::cout << source->ID() << std::endl;
         source.reset();

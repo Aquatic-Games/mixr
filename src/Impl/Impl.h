@@ -2,7 +2,7 @@
 
 #include <cstdint>
 #include <vector>
-#include <queue>
+#include <deque>
 
 #include "mixr/Context.h"
 #include "mixr/Common.h"
@@ -24,7 +24,7 @@ namespace mixr {
         double SpeedCorrection;
 
         // ----- Buffering -----
-        std::queue<size_t> QueuedBuffers;
+        std::deque<size_t> QueuedBuffers;
         uint8_t* MixBuffer;
 
         // ----- Playing Info ------
@@ -60,7 +60,8 @@ namespace mixr {
         std::vector<Buffer> _buffers;
         std::vector<Source> _sources;
 
-        std::queue<size_t> _availableSources;
+        std::deque<size_t> _availableBuffers;
+        std::deque<size_t> _availableSources;
 
         void UpdateSource(Source* source);
 
@@ -68,7 +69,7 @@ namespace mixr {
         explicit Impl(uint32_t sampleRate);
 
         size_t CreateBuffer(uint8_t* data, size_t dataLength);
-        //void DestroyBuffer(size_t bufferId);
+        void DestroyBuffer(size_t bufferId);
 
         size_t CreateSource(const SourceDescription& description);
         void DestroySource(size_t sourceId);

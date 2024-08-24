@@ -13,6 +13,7 @@ namespace mixr {
 
     public:
         AudioBuffer(size_t id, Impl* impl);
+        ~AudioBuffer();
 
         inline size_t ID() {
             return _id;
