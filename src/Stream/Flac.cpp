@@ -15,13 +15,51 @@ namespace mixr::Stream {
         size_t TotalSamples;
 
         ::FLAC__StreamDecoderWriteStatus write_callback(const ::FLAC__Frame* frame, const FLAC__int32* const buffer[]) override {
-            for (int i = 0; i < frame->header.blocksize; i++) {
-                uint16_t l = buffer[0][i];
-                uint16_t r = buffer[1][i];
-                BufferToWriteTo->push_back(l & 0xFF);
-                BufferToWriteTo->push_back(l >> 8);
-                BufferToWriteTo->push_back(r & 0xFF);
-                BufferToWriteTo->push_back(r >> 8);
+            switch (Format.DataType)
+            {
+                case DataType::U8:
+                {
+                    for (int i = 0; i < frame->header.blocksize; i++) {
+                        uint8_t l = buffer[0][i];
+                        uint8_t r = buffer[1][i];
+                        BufferToWriteTo->push_back(l);
+                        BufferToWriteTo->push_back(r);
+                    }
+
+                    break;
+                }
+
+                case DataType::I16:
+                {
+                    for (int i = 0; i < frame->header.blocksize; i++) {
+                        uint16_t l = buffer[0][i];
+                        uint16_t r = buffer[1][i];
+                        BufferToWriteTo->push_back(l & 0xFF);
+                        BufferToWriteTo->push_back(l >> 8);
+                        BufferToWriteTo->push_back(r & 0xFF);
+                        BufferToWriteTo->push_back(r >> 8);
+                    }
+
+                    break;
+                }
+
+                case DataType::I32:
+                {
+                    for (int i = 0; i < frame->header.blocksize; i++) {
+                        int32_t l = buffer[0][i];
+                        int32_t r = buffer[1][i];
+                        BufferToWriteTo->push_back(l & 0xFF);
+                        BufferToWriteTo->push_back(l >> 8);
+                        BufferToWriteTo->push_back(l >> 16);
+                        BufferToWriteTo->push_back(l >> 24);
+                        BufferToWriteTo->push_back(r & 0xFF);
+                        BufferToWriteTo->push_back(r >> 8);
+                        BufferToWriteTo->push_back(r >> 16);
+                        BufferToWriteTo->push_back(r >> 24);
+                    }
+
+                    break;
+                }
             }
 
             return FLAC__STREAM_DECODER_WRITE_STATUS_CONTINUE;
