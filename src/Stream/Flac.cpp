@@ -15,15 +15,18 @@ namespace mixr::Stream {
         size_t TotalSamples;
 
         ::FLAC__StreamDecoderWriteStatus write_callback(const ::FLAC__Frame* frame, const FLAC__int32* const buffer[]) override {
+            auto blockSize = frame->header.blocksize;
+            auto channels = frame->header.channels;
+
             switch (Format.DataType)
             {
                 case DataType::I8:
                 {
-                    for (int i = 0; i < frame->header.blocksize; i++) {
-                        uint8_t l = buffer[0][i];
-                        uint8_t r = buffer[1][i];
-                        BufferToWriteTo->push_back(l);
-                        BufferToWriteTo->push_back(r);
+                    for (int i = 0; i < blockSize; i++) {
+                        for (int c = 0; c < channels; c++) {
+                            uint8_t d = buffer[c][i];
+                            BufferToWriteTo->push_back(d);
+                        }
                     }
 
                     break;
@@ -31,13 +34,12 @@ namespace mixr::Stream {
 
                 case DataType::I16:
                 {
-                    for (int i = 0; i < frame->header.blocksize; i++) {
-                        uint16_t l = buffer[0][i];
-                        uint16_t r = buffer[1][i];
-                        BufferToWriteTo->push_back(l & 0xFF);
-                        BufferToWriteTo->push_back(l >> 8);
-                        BufferToWriteTo->push_back(r & 0xFF);
-                        BufferToWriteTo->push_back(r >> 8);
+                    for (int i = 0; i < blockSize; i++) {
+                        for (int c = 0; c < channels; c++) {
+                            uint16_t d = buffer[c][i];
+                            BufferToWriteTo->push_back(d & 0xFF);
+                            BufferToWriteTo->push_back(d >> 8);
+                        }
                     }
 
                     break;
@@ -45,17 +47,14 @@ namespace mixr::Stream {
 
                 case DataType::I32:
                 {
-                    for (int i = 0; i < frame->header.blocksize; i++) {
-                        int32_t l = buffer[0][i];
-                        int32_t r = buffer[1][i];
-                        BufferToWriteTo->push_back(l & 0xFF);
-                        BufferToWriteTo->push_back(l >> 8);
-                        BufferToWriteTo->push_back(l >> 16);
-                        BufferToWriteTo->push_back(l >> 24);
-                        BufferToWriteTo->push_back(r & 0xFF);
-                        BufferToWriteTo->push_back(r >> 8);
-                        BufferToWriteTo->push_back(r >> 16);
-                        BufferToWriteTo->push_back(r >> 24);
+                    for (int i = 0; i < blockSize; i++) {
+                        for (int c = 0; c < channels; c++) {
+                            int32_t d = buffer[c][i];
+                            BufferToWriteTo->push_back(d & 0xFF);
+                            BufferToWriteTo->push_back(d >> 8);
+                            BufferToWriteTo->push_back(d >> 16);
+                            BufferToWriteTo->push_back(d >> 24);
+                        }
                     }
 
                     break;

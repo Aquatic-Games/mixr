@@ -9,7 +9,7 @@
 using namespace mixr;
 
 int main() {
-    Stream::Flac flac(R"(C:\Users\ollie\Music\distrust_8bit.flac)");
+    Stream::Flac flac(R"(C:\Users\ollie\Music\distrust_mono.flac)");
     auto format = flac.Format();
     auto data = flac.GetPCM();
 
