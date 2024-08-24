@@ -11,14 +11,22 @@
 
 using namespace mixr;
 
+struct CallbackData {
+    std::unique_ptr<Stream::AudioStream> Stream;
+    AudioSource* Source;
+    std::vector<uint8_t> Buffer;
+    std::vector<std::unique_ptr<AudioBuffer>> Buffers;
+    int CurrentBuffer;
+};
+
 int main() {
     //Stream::Flac flac(R"(C:\Users\ollie\Music\Music\Various Artists\NOW Millennium- 2000 - 2001 (Disc 3)\19 Inner Smile.flac)");
     //auto format = flac.Format();
     //auto data = flac.GetPCM();
 
-    Stream::Wav wav(R"(C:\Users\ollie\Music\bbbb.wav)");
-    auto format = wav.Format();
-    auto data = wav.GetPCM();
+    auto stream = std::make_unique<Stream::Wav>(R"(C:\Users\ollie\Music\1-04 SKYSCRAPER SEQUENCE.wav)");
+    auto format = stream->Format();
+    //auto data = wav.GetPCM();
 
     auto device = std::make_unique<Device::SdlDevice>(48000);
     Context* context = device->Context();
@@ -33,13 +41,46 @@ int main() {
     //    description.ADPCM = { .ChunkSize = wav.ADPCMInfo().ChunkSize };
     //}
 
-    auto buffer = context->CreateBuffer(data.data(), data.size());
+    std::vector<uint8_t> buffer;
+    buffer.resize(format.SampleRate);
+
+    stream->GetBuffer(buffer.data(), buffer.size());
+    auto buffer1 = context->CreateBuffer(buffer.data(), buffer.size());
+
+    stream->GetBuffer(buffer.data(), buffer.size());
+    auto buffer2 = context->CreateBuffer(buffer.data(), buffer.size());
 
     auto source = context->CreateSource(description);
-    source->SubmitBuffer(buffer.get());
-    source->SubmitBuffer(buffer.get());
+    source->SubmitBuffer(buffer1.get());
+    source->SubmitBuffer(buffer2.get());
 
-    source->SetBufferFinishedCallback([]() -> void { std::cout << "Finished" << std::endl; });
+    std::vector<std::unique_ptr<AudioBuffer>> buffers;
+    buffers.push_back(std::move(buffer1));
+    buffers.push_back(std::move(buffer2));
+
+    auto cbData = std::make_unique<CallbackData>(CallbackData {
+        std::move(stream),
+        source.get(),
+        std::move(buffer),
+        std::move(buffers),
+        0
+    });
+
+    source->SetBufferFinishedCallback([](void* userData) -> void {
+        std::cout << "Request Buffer" << std::endl;
+
+        auto cbData = (CallbackData*) userData;
+
+        cbData->Stream->GetBuffer(cbData->Buffer.data(), cbData->Buffer.size());
+
+        cbData->Buffers[cbData->CurrentBuffer]->Update(cbData->Buffer.data(), cbData->Buffer.size());
+        cbData->Source->SubmitBuffer(cbData->Buffers[cbData->CurrentBuffer].get());
+
+        cbData->CurrentBuffer++;
+        if (cbData->CurrentBuffer >= cbData->Buffers.size())
+            cbData->CurrentBuffer = 0;
+
+    }, cbData.get());
 
     source->Play();
 

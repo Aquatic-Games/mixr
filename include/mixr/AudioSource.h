@@ -29,7 +29,7 @@ namespace mixr {
         void SetPanning(float panning);
         void SetChannelVolumes(float volumeL, float volumeR);
 
-        void SetBufferFinishedCallback(void (*callback)());
+        void SetBufferFinishedCallback(void (*callback)(void*), void* userData);
 
         void Play();
         void Pause();

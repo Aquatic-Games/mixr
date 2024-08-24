@@ -52,7 +52,7 @@ namespace mixr {
         _impl->SourceStop(_id);
     }
 
-    void AudioSource::SetBufferFinishedCallback(void (*callback)()) {
-        _impl->SourceSetBufferFinishedCallback(_id, callback);
+    void AudioSource::SetBufferFinishedCallback(void (*callback)(void*), void* userData) {
+        _impl->SourceSetBufferFinishedCallback(_id, callback, userData);
     }
 }

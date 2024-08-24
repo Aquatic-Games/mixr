@@ -25,6 +25,7 @@ namespace mixr::Stream {
         ADPCMInfo _adpcmInfo;
 
         size_t _dataStartPoint;
+        size_t _currentBufferPos;
         uint32_t _dataLength;
 
     public:
@@ -32,6 +33,8 @@ namespace mixr::Stream {
         ~Wav() override;
 
         AudioFormat Format() override;
+
+        size_t GetBuffer(uint8_t *buffer, size_t bufferLength) override;
 
         size_t PCMLengthInBytes() override;
         std::vector<uint8_t> GetPCM() override;

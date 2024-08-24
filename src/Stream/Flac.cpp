@@ -125,6 +125,10 @@ namespace mixr::Stream {
         return dynamic_cast<FlacDecoder*>(_file.get())->Format;
     }
 
+    size_t Flac::GetBuffer(uint8_t* buffer, size_t bufferLength) {
+        return 0;
+    }
+
     size_t Flac::PCMLengthInBytes() {
         return dynamic_cast<FlacDecoder*>(_file.get())->TotalSamples;
     }

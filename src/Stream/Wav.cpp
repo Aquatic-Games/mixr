@@ -131,6 +131,7 @@ namespace mixr::Stream {
 
                 case data: {
                     _dataStartPoint = _stream.tellg();
+                    _currentBufferPos = _dataStartPoint;
                     _dataLength = chunkSize;
 
                     return;
@@ -145,6 +146,21 @@ namespace mixr::Stream {
 
     AudioFormat Wav::Format() {
         return _format;
+    }
+
+    size_t Wav::GetBuffer(uint8_t* buffer, size_t bufferLength) {
+        size_t endPoint = _currentBufferPos + bufferLength;
+        size_t dataEnd = _dataStartPoint + _dataLength;
+        if (endPoint >= dataEnd) {
+            endPoint = dataEnd;
+        }
+
+        size_t outputLength = endPoint - _currentBufferPos;
+
+        _stream.read((char*) buffer, outputLength);
+        _currentBufferPos += outputLength;
+
+        return outputLength;
     }
 
     size_t Wav::PCMLengthInBytes() {
