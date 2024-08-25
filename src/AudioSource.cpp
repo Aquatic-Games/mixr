@@ -40,6 +40,18 @@ namespace mixr {
         _impl->SourceSetChannelVolumes(_id, volumeL, volumeR);
     }
 
+    SourceState AudioSource::State() const {
+        return _impl->SourceGetState(_id);
+    }
+
+    size_t AudioSource::Position() const {
+        return _impl->SourceGetPositionSamples(_id);
+    }
+
+    double AudioSource::PositionSecs() const {
+        return _impl->SourceGetPositionSeconds(_id);
+    }
+
     void AudioSource::Play() {
         _impl->SourcePlay(_id);
     }

@@ -74,8 +74,9 @@ int main(int argc, char* argv[]) {
         std::cout << "Request Buffer: " << size << " bytes returned" << std::endl;
 
         if (size < cbData->Buffer.size()) {
-            std::cout << "Restart" << std::endl;
-            cbData->Stream->Restart();
+            //std::cout << "Restart" << std::endl;
+            //cbData->Stream->Restart();
+            return;
         }
 
         cbData->Buffers[cbData->CurrentBuffer]->Update(cbData->Buffer.data(), size);
@@ -136,7 +137,7 @@ int main(int argc, char* argv[]) {
 
     bool test = false;*/
 
-    while (true) {
+    while (source->State() == SourceState::Playing) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
 
         //std::cout << buffer->ID() << std::endl;

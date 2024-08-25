@@ -28,8 +28,11 @@ namespace mixr {
         void SetLooping(bool looping);
         void SetPanning(float panning);
         void SetChannelVolumes(float volumeL, float volumeR);
-
         void SetBufferFinishedCallback(void (*callback)(void*), void* userData);
+
+        [[nodiscard]] SourceState State() const;
+        size_t Position() const;
+        double PositionSecs() const;
 
         void Play();
         void Pause();

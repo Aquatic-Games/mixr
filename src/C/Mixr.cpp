@@ -113,6 +113,24 @@ void mxSourceSetBufferFinishedCallback(MxContext *context, MxAudioSource source,
     impl->SourceSetBufferFinishedCallback(source, callback, userData);
 }
 
+MxSourceState mxSourceGetState(MxContext *context, MxAudioSource source) {
+    Impl* impl = (Impl*) context;
+
+    return static_cast<MxSourceState>(impl->SourceGetState(source));
+}
+
+size_t mxSourceGetPositionSamples(MxContext *context, MxAudioSource source) {
+    Impl* impl = (Impl*) context;
+
+    return impl->SourceGetPositionSamples(source);
+}
+
+double mxSourceGetPositionSeconds(MxContext *context, MxAudioSource source) {
+    Impl* impl = (Impl*) context;
+
+    return impl->SourceGetPositionSeconds(source);
+}
+
 void mxContextSetMasterVolume(MxContext *context, float volume) {
     Impl* impl = (Impl*) context;
 

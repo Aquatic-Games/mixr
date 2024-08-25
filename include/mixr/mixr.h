@@ -43,6 +43,12 @@ extern "C" {
         MX_SOURCE_TYPE_ADPCM
     } MxSourceType;
 
+    typedef enum {
+        MX_SOURCE_STATE_STOPPED,
+        MX_SOURCE_STATE_PAUSED,
+        MX_SOURCE_STATE_PLAYING
+    } MxSourceState;
+
     typedef struct {
         size_t ChunkSize;
     } MxADPCMDescription;
@@ -85,6 +91,10 @@ extern "C" {
     MIXR_C_API void mxSourceSetPanning(MxContext *context, MxAudioSource source, float panning);
     MIXR_C_API void mxSourceSetChannelVolumes(MxContext *context, MxAudioSource source, float volumeL, float volumeR);
     MIXR_C_API void mxSourceSetBufferFinishedCallback(MxContext *context, MxAudioSource source, void (*callback)(void*), void* userData);
+
+    MIXR_C_API MxSourceState mxSourceGetState(MxContext *context, MxAudioSource source);
+    MIXR_C_API size_t mxSourceGetPositionSamples(MxContext *context, MxAudioSource source);
+    MIXR_C_API double mxSourceGetPositionSeconds(MxContext *context, MxAudioSource source);
 
     MIXR_C_API void mxContextSetMasterVolume(MxContext *context, float volume);
 

@@ -37,6 +37,12 @@ namespace mixr {
         ADPCM
     };
 
+    enum class SourceState {
+        Stopped,
+        Paused,
+        Playing
+    };
+
     struct ADPCMDescription {
         size_t ChunkSize;
     };

@@ -250,6 +250,28 @@ namespace mixr {
         source->BufferFinishedUserData = userData;
     }
 
+    SourceState Impl::SourceGetState(size_t sourceId) {
+        Source* source = &_sources[sourceId];
+
+        if (source->Playing) {
+            return SourceState::Playing;
+        } else if (source->Position == 0 && source->QueuedBuffers.empty()) {
+            return SourceState::Stopped;
+        } else {
+            return SourceState::Paused;
+        }
+    }
+
+    size_t Impl::SourceGetPositionSamples(size_t sourceId) {
+        return _sources[sourceId].Position;
+    }
+
+    double Impl::SourceGetPositionSeconds(size_t sourceId) {
+        Source* source = &_sources[sourceId];
+
+        return (double) source->Position / (double) source->Format.SampleRate;
+    }
+
     void Impl::SetMasterVolume(float volume) {
         _masterVolume = volume;
     }

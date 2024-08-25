@@ -92,6 +92,10 @@ namespace mixr {
         void SourceSetChannelVolumes(size_t sourceId, float volumeL, float volumeR);
         void SourceSetBufferFinishedCallback(size_t sourceId, void (*callback)(void*), void* userData);
 
+        SourceState SourceGetState(size_t sourceId);
+        size_t SourceGetPositionSamples(size_t sourceId);
+        double SourceGetPositionSeconds(size_t sourceId);
+
         void SetMasterVolume(float volume);
 
         void MixToStereoF32Buffer(float* buffer, size_t bufferLength);
