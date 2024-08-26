@@ -262,6 +262,37 @@ namespace mixr {
         }
     }
 
+    double Impl::SourceGetSpeed(size_t sourceId) {
+        return _sources[sourceId].Speed;
+    }
+
+    float Impl::SourceGetVolume(size_t sourceId) {
+        return _sources[sourceId].MainVolume;
+    }
+
+    bool Impl::SourceGetLooping(size_t sourceId) {
+        return _sources[sourceId].Looping;
+    }
+
+    float Impl::SourceGetPanning(size_t sourceId) {
+        Source* source = &_sources[sourceId];
+
+        // -L + R
+        // -1 + 1 = Panning 0
+        // -0 + 1 = Panning 1
+        // etc
+        // The returned value may be "incorrect" if you set the channel volumes separately, but panning != channel volumes,
+        // they just affect the same values.
+        return Clamp(source->VolumeR + -source->VolumeL, -1, 1);
+    }
+
+    void Impl::SourceGetChannelVolumes(size_t sourceId, float* volumeL, float* volumeR) {
+        Source* source = &_sources[sourceId];
+
+        *volumeL = source->VolumeL;
+        *volumeR = source->VolumeR;
+    }
+
     size_t Impl::SourceGetPositionSamples(size_t sourceId) {
         return _sources[sourceId].Position;
     }

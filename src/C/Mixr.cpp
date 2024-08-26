@@ -119,6 +119,36 @@ MxSourceState mxSourceGetState(MxContext *context, MxAudioSource source) {
     return static_cast<MxSourceState>(impl->SourceGetState(source));
 }
 
+double mxSourceGetSpeed(MxContext *context, MxAudioSource source) {
+    Impl* impl = (Impl*) context;
+
+    return impl->SourceGetSpeed(source);
+}
+
+float mxSourceGetVolume(MxContext *context, MxAudioSource source) {
+    Impl* impl = (Impl*) context;
+
+    return impl->SourceGetVolume(source);
+}
+
+bool mxSourceGetLooping(MxContext *context, MxAudioSource source) {
+    Impl* impl = (Impl*) context;
+
+    return impl->SourceGetLooping(source);
+}
+
+float mxSourceGetPanning(MxContext *context, MxAudioSource source) {
+    Impl* impl = (Impl*) context;
+
+    return impl->SourceGetPanning(source);
+}
+
+void mxSourceGetChannelVolumes(MxContext *context, MxAudioSource source, float *volumeL, float *volumeR) {
+    Impl* impl = (Impl*) context;
+
+    return impl->SourceGetChannelVolumes(source, volumeL, volumeR);
+}
+
 size_t mxSourceGetPositionSamples(MxContext *context, MxAudioSource source) {
     Impl* impl = (Impl*) context;
 

@@ -20,20 +20,41 @@ namespace mixr {
         _impl->SourceClearBuffers(_id);
     }
 
+    double AudioSource::Speed() {
+        return _impl->SourceGetSpeed(_id);
+    }
+
     void AudioSource::SetSpeed(double speed) {
         _impl->SourceSetSpeed(_id, speed);
+    }
+
+
+    float AudioSource::Volume() {
+        return _impl->SourceGetVolume(_id);
     }
 
     void AudioSource::SetVolume(float volume) {
         _impl->SourceSetVolume(_id, volume);
     }
 
+    bool AudioSource::Looping() {
+        return _impl->SourceGetLooping(_id);
+    }
+
     void AudioSource::SetLooping(bool looping) {
         _impl->SourceSetLooping(_id, looping);
     }
 
+    float AudioSource::Panning() {
+        return _impl->SourceGetPanning(_id);
+    }
+
     void AudioSource::SetPanning(float panning) {
         _impl->SourceSetPanning(_id, panning);
+    }
+
+    void AudioSource::GetChannelVolumes(float* volumeL, float* volumeR) {
+        _impl->SourceGetChannelVolumes(_id, volumeL, volumeR);
     }
 
     void AudioSource::SetChannelVolumes(float volumeL, float volumeR) {

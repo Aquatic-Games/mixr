@@ -23,11 +23,21 @@ namespace mixr {
         void SubmitBuffer(AudioBuffer* buffer);
         void ClearBuffers();
 
+        double Speed();
         void SetSpeed(double speed);
+
+        float Volume();
         void SetVolume(float volume);
+
+        bool Looping();
         void SetLooping(bool looping);
+
+        float Panning();
         void SetPanning(float panning);
+
+        void GetChannelVolumes(float* volumeL, float* volumeR);
         void SetChannelVolumes(float volumeL, float volumeR);
+
         void SetBufferFinishedCallback(void (*callback)(void*), void* userData);
 
         [[nodiscard]] SourceState State() const;

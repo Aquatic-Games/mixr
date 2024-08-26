@@ -93,6 +93,11 @@ namespace mixr {
         void SourceSetBufferFinishedCallback(size_t sourceId, void (*callback)(void*), void* userData);
 
         SourceState SourceGetState(size_t sourceId);
+        double SourceGetSpeed(size_t sourceId);
+        float SourceGetVolume(size_t sourceId);
+        bool SourceGetLooping(size_t sourceId);
+        float SourceGetPanning(size_t sourceId);
+        void SourceGetChannelVolumes(size_t sourceId, float* volumeL, float* volumeR);
         size_t SourceGetPositionSamples(size_t sourceId);
         double SourceGetPositionSeconds(size_t sourceId);
 
