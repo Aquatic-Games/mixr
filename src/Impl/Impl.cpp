@@ -1,4 +1,5 @@
 #include <iostream>
+#include <algorithm>
 #include "Impl.h"
 
 inline float Clamp(float value, float min, float max) {
@@ -209,6 +210,7 @@ namespace mixr {
     void Impl::SourceStop(size_t sourceId) {
         Source* source = &_sources[sourceId];
         source->Playing = false;
+        source->QueuedBuffers.clear();
         source->Position = 0;
         source->LastPosition = 0;
         source->LastSampleL = 0.0f;
@@ -436,6 +438,7 @@ namespace mixr {
                             }
 
                             SourceStop(s);
+                            break;
                         }
                     }
                 }

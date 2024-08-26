@@ -88,7 +88,7 @@ int main(int argc, char* argv[]) {
 
     }, cbData.get());
 
-    source->SetSpeed(1.0);
+    source->SetSpeed(50.0);
     source->Play();
 
     /*MxAudioStream* stream;
@@ -137,7 +137,7 @@ int main(int argc, char* argv[]) {
 
     bool test = false;*/
 
-    while (source->State() == SourceState::Playing) {
+    while (source->State() != SourceState::Stopped) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
 
         //std::cout << buffer->ID() << std::endl;
