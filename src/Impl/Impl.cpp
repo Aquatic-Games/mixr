@@ -307,90 +307,105 @@ namespace mixr {
                 if (!source->Playing || source->MainVolume <= 0.01f)
                     continue;
 
-                Buffer* buf = &_buffers[source->QueuedBuffers.front()];
+                // If the source speed (the speed that the mixer actually plays at) is above 1, then aliasing is
+                // introduced. So, when the source speed is above 1, we instead sample at a multiple of the mixer
+                // sample rate. So if the source speed was 1.1, and the mixer was sampling at 48khz, then it would sample
+                // at 96khz instead.
+                // Then, at the end, we simply remove the samples that aren't needed. Doing it in this way removes aliasing.
+                // TODO: SampleRate * 3 sounds good? Instead of 2 -> 4, does 2 -> 3 -> 4 work?
+                double sourceSpeed = source->SpeedCorrection * source->Speed;
+                int sampleRateMultiplier = std::max((int) sourceSpeed, 1) << 1;
+                sourceSpeed /= sampleRateMultiplier;
 
-                uint8_t* bufferData = buf->Data.data();
-                AudioFormat* format = &source->Format;
+                // TODO: This works but could be optimized more.
+                for (int c = 0; c < sampleRateMultiplier; c++) {
+                    Buffer* buf = &_buffers[source->QueuedBuffers.front()];
 
-                size_t bytePosition = source->Position * (source->ByteAlign + source->StereoAlign);
+                    uint8_t* bufferData = buf->Data.data();
+                    AudioFormat* format = &source->Format;
 
-                float sampleL, sampleR;
+                    size_t bytePosition = source->Position * (source->ByteAlign + source->StereoAlign);
 
-                switch (source->Type) {
-                    case SourceType::PCM: {
-                        sampleL = GetSample(bufferData, bytePosition, format->DataType);
-                        sampleR = GetSample(bufferData, bytePosition + source->StereoAlign, format->DataType);
+                    float sampleL, sampleR;
 
-                        break;
+                    switch (source->Type) {
+                        case SourceType::PCM: {
+                            sampleL = GetSample(bufferData, bytePosition, format->DataType);
+                            sampleR = GetSample(bufferData, bytePosition + source->StereoAlign, format->DataType);
+
+                            break;
+                        }
+
+                        // This makes me uncomfortable..
+                        // The fact that it works and *fast* annoys me because now I don't want to change it even though
+                        // it could really do with some threading and being less awful.
+                        case SourceType::ADPCM: {
+                            bool stereo = source->Format.Channels == Channels::Stereo;
+                            size_t chunkSize = source->ChunkSize;
+                            size_t dataSize = (chunkSize - (stereo ? 8 : 4)) * 4;
+
+                            size_t chunk = bytePosition / dataSize;
+
+                            if (chunk < source->NumChunks && chunk != source->LastChunk) {
+                                source->LastChunk = chunk;
+                                Utils::ADPCM::DecodeIMAChunk(buf->Data.data() + (chunk * chunkSize), chunkSize, source->MixBuffer, stereo);
+                            }
+
+                            size_t newBytePosition = bytePosition % dataSize;
+
+                            uint8_t* sBuf = source->MixBuffer;
+
+                            sampleL = (float) (int16_t) (sBuf[newBytePosition + 0] | sBuf[newBytePosition + 1] << 8) / (float) INT16_MAX;
+                            sampleR = (float) (int16_t) (sBuf[newBytePosition + 2] | sBuf[newBytePosition + 3] << 8) / (float) INT16_MAX;
+
+                            break;
+                        }
                     }
 
-                    // This makes me uncomfortable..
-                    // The fact that it works and *fast* annoys me because now I don't want to change it even though
-                    // it could really do with some threading and being less awful.
-                    case SourceType::ADPCM: {
-                        bool stereo = source->Format.Channels == Channels::Stereo;
-                        size_t chunkSize = source->ChunkSize;
-                        size_t dataSize = (chunkSize - (stereo ? 8 : 4)) * 4;
+                    if (c == 0) {
+                        float lastSampleL = source->LastSampleL;
+                        float lastSampleR = source->LastSampleR;
 
-                        size_t chunk = bytePosition / dataSize;
+                        float outSampleL = Lerp(lastSampleL, sampleL, (float) source->FinePosition) * source->VolumeL * source->MainVolume;
+                        float outSampleR = Lerp(lastSampleR, sampleR, (float) source->FinePosition) * source->VolumeR * source->MainVolume;
 
-                        if (chunk < source->NumChunks && chunk != source->LastChunk) {
-                            source->LastChunk = chunk;
-                            Utils::ADPCM::DecodeIMAChunk(buf->Data.data() + (chunk * chunkSize), chunkSize, source->MixBuffer, stereo);
-                        }
-
-                        size_t newBytePosition = bytePosition % dataSize;
-
-                        uint8_t* sBuf = source->MixBuffer;
-
-                        sampleL = (float) (int16_t) (sBuf[newBytePosition + 0] | sBuf[newBytePosition + 1] << 8) / (float) INT16_MAX;
-                        sampleR = (float) (int16_t) (sBuf[newBytePosition + 2] | sBuf[newBytePosition + 3] << 8) / (float) INT16_MAX;
-
-                        break;
+                        buffer[i + 0] += Clamp(outSampleL, -1.0f, 1.0f);
+                        buffer[i + 1] += Clamp(outSampleR, -1.0f, 1.0f);
                     }
-                }
 
-                float lastSampleL = source->LastSampleL;
-                float lastSampleR = source->LastSampleR;
+                    source->FinePosition += sourceSpeed;
 
-                float outSampleL = Lerp(lastSampleL, sampleL, (float) source->FinePosition) * source->VolumeL * source->MainVolume;
-                float outSampleR = Lerp(lastSampleR, sampleR, (float) source->FinePosition) * source->VolumeR * source->MainVolume;
+                    int intPos = (int) source->FinePosition;
+                    source->Position += intPos;
+                    source->FinePosition -= intPos;
 
-                buffer[i + 0] += Clamp(outSampleL, -1.0f, 1.0f);
-                buffer[i + 1] += Clamp(outSampleR, -1.0f, 1.0f);
+                    if (source->Position != source->LastPosition) {
+                        source->LastPosition = source->Position;
+                        source->LastSampleL = sampleL;
+                        source->LastSampleR = sampleR;
+                    }
 
-                source->FinePosition += source->SpeedCorrection * source->Speed;
+                    if (source->Position >= source->LengthInSamples) {
+                        // Hmm. This doesn't seem ideal.
+                        // Right now the library relies on the queue having elements, since it gets the buffer by checking
+                        // the front of the queue. Perhaps the "current buffer" should be stored in an index instead.
+                        if (source->QueuedBuffers.size() > 1) {
+                            if (source->BufferFinishedCallback) {
+                                source->BufferFinishedCallback(source->BufferFinishedUserData);
+                            }
 
-                int intPos = (int) source->FinePosition;
-                source->Position += intPos;
-                source->FinePosition -= intPos;
+                            source->QueuedBuffers.pop_front();
+                            source->Position = 0;
+                            UpdateSource(source);
+                        } else if (source->Looping) {
+                            source->Position -= source->LengthInSamples;
+                        } else {
+                            if (source->BufferFinishedCallback) {
+                                source->BufferFinishedCallback(source->BufferFinishedUserData);
+                            }
 
-                if (source->Position != source->LastPosition) {
-                    source->LastPosition = source->Position;
-                    source->LastSampleL = sampleL;
-                    source->LastSampleR = sampleR;
-                }
-
-                if (source->Position >= source->LengthInSamples) {
-                    // Hmm. This doesn't seem ideal.
-                    // Right now the library relies on the queue having elements, since it gets the buffer by checking
-                    // the front of the queue. Perhaps the "current buffer" should be stored in an index instead.
-                    if (source->QueuedBuffers.size() > 1) {
-                        if (source->BufferFinishedCallback) {
-                            source->BufferFinishedCallback(source->BufferFinishedUserData);
+                            SourceStop(s);
                         }
-
-                        source->QueuedBuffers.pop_front();
-                        source->Position = 0;
-                        UpdateSource(source);
-                    } else if (source->Looping) {
-                        source->Position -= source->LengthInSamples;
-                    } else {
-                        if (source->BufferFinishedCallback) {
-                            source->BufferFinishedCallback(source->BufferFinishedUserData);
-                        }
-
-                        SourceStop(s);
                     }
                 }
             }

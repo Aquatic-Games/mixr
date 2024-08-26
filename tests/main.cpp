@@ -88,7 +88,7 @@ int main(int argc, char* argv[]) {
 
     }, cbData.get());
 
-    //source->SetSpeed(50);
+    source->SetSpeed(1.0);
     source->Play();
 
     /*MxAudioStream* stream;
