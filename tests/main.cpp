@@ -1,6 +1,7 @@
 #include <mixr/mixr.hpp>
 #include <mixr/Stream/Wav.hpp>
 #include <mixr/Stream/Flac.hpp>
+#include <mixr/Stream/Vorbis.hpp>
 
 #include <mixr/mixr.h>
 #include <mixr/Stream/Wav.h>
@@ -25,7 +26,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    auto stream = std::make_unique<Stream::Flac>(argv[1]);
+    auto stream = std::make_unique<Stream::Vorbis>(argv[1]);
     auto format = stream->Format();
     //auto data = wav.GetPCM();
 
@@ -43,7 +44,7 @@ int main(int argc, char* argv[]) {
     //}
 
     std::vector<uint8_t> buffer;
-    buffer.resize(format.SampleRate);
+    buffer.resize(48000);
 
     stream->GetBuffer(buffer.data(), buffer.size());
     auto buffer1 = context->CreateBuffer(buffer.data(), buffer.size());
@@ -88,7 +89,7 @@ int main(int argc, char* argv[]) {
 
     }, cbData.get());
 
-    source->SetSpeed(50.0);
+    source->SetSpeed(1.5);
     source->Play();
 
     /*MxAudioStream* stream;

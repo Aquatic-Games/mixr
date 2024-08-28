@@ -35,6 +35,8 @@ add_library(mixr SHARED
         src/Stream/Flac.cpp
         include/mixr/Stream/Flac.h
         src/C/Flac.cpp
+        include/mixr/Stream/Vorbis.hpp
+        src/Stream/Vorbis.cpp
 )
 
 target_include_directories(mixr PUBLIC include)
@@ -42,6 +44,9 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 add_subdirectory(lib/SDL)
 target_link_libraries(mixr PUBLIC SDL2::SDL2-static)
+
+add_subdirectory(lib/stb)
+target_link_libraries(mixr PUBLIC stb)
 
 set(WITH_OGG OFF)
 set(INSTALL_MANPAGES OFF)
