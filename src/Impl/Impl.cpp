@@ -1,4 +1,5 @@
 #include <iostream>
+#include <string>
 #include <algorithm>
 #include "Impl.h"
 
@@ -80,15 +81,10 @@ namespace mixr {
                 break;
         }
 
-        int channels;
-        switch (format.Channels) {
-            case Channels::Mono:
-                channels = 1;
-                break;
+        int channels = format.Channels;
 
-            case Channels::Stereo:
-                channels = 2;
-                break;
+        if (channels < 1 || channels > 2) {
+            throw std::runtime_error("Unsupported number of channels: " + std::to_string(channels));
         }
 
         SourceType type = description.Type;
@@ -373,7 +369,7 @@ namespace mixr {
                         // The fact that it works and *fast* annoys me because now I don't want to change it even though
                         // it could really do with some threading and being less awful.
                         case SourceType::ADPCM: {
-                            bool stereo = source->Format.Channels == Channels::Stereo;
+                            auto stereo = source->Format.Channels == 2;
                             size_t chunkSize = source->ChunkSize;
                             size_t dataSize = (chunkSize - (stereo ? 8 : 4)) * 4;
 
@@ -452,17 +448,7 @@ namespace mixr {
     void Impl::UpdateSource(Source* source) {
         auto dataLength = _buffers[source->QueuedBuffers.front()].DataLength;
         auto byteAlign = source->ByteAlign;
-        auto channels = 0;
-
-        switch (source->Format.Channels) {
-            case Channels::Mono:
-                channels = 1;
-                break;
-
-            case Channels::Stereo:
-                channels = 2;
-                break;
-        }
+        auto channels = source->Format.Channels;
 
         switch (source->Type) {
             case SourceType::PCM:

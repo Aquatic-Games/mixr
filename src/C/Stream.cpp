@@ -13,7 +13,7 @@ MxAudioFormat mxStreamGetFormat(MxAudioStream *stream) {
     return {
        /* .DataType = */ (MxDataType) format.DataType,
        /* .SampleRate = */format.SampleRate,
-       /* .Channels = */ (MxChannels) format.Channels
+       /* .Channels = */ format.Channels
     };
 }
 

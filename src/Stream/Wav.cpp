@@ -41,6 +41,7 @@ namespace mixr::Stream {
 
                     uint16_t channels;
                     _stream.read((char*) &channels, sizeof(channels));
+                    _format.Channels = static_cast<uint8_t>(channels);
 
                     uint32_t sampleRate;
                     _stream.read((char*) &sampleRate, sizeof(sampleRate));
@@ -54,19 +55,6 @@ namespace mixr::Stream {
                     _stream.read((char*) &bitsPerSample, sizeof(bitsPerSample));
 
                     _format.SampleRate = sampleRate;
-
-                    switch (channels) {
-                        case 1:
-                            _format.Channels = Channels::Mono;
-                            break;
-
-                        case 2:
-                            _format.Channels = Channels::Stereo;
-                            break;
-
-                        default:
-                            throw std::runtime_error("Unsupported number of channels.");
-                    }
 
                     switch (type) {
                         case 1: {

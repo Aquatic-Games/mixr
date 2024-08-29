@@ -21,15 +21,10 @@ namespace mixr {
         F32
     };
 
-    enum class Channels {
-        Mono,
-        Stereo
-    };
-
     struct AudioFormat {
         DataType DataType;
         uint32_t SampleRate;
-        Channels Channels;
+        uint8_t Channels;
     };
 
     enum class SourceType {

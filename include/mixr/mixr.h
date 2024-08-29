@@ -27,15 +27,10 @@ extern "C" {
         MX_DATA_TYPE_F32
     } MxDataType;
 
-    typedef enum {
-        MX_CHANNELS_MONO,
-        MX_CHANNELS_STEREO
-    } MxChannels;
-
     typedef struct {
         MxDataType DataType;
         uint32_t SampleRate;
-        MxChannels Channels;
+        uint8_t Channels;
     } MxAudioFormat;
 
     typedef enum {

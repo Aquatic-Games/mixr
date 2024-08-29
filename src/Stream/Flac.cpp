@@ -86,19 +86,7 @@ namespace mixr::Stream {
                     throw std::runtime_error("Unsupported bits per sample: " + std::to_string(streamInfo->bits_per_sample));
             }
 
-            Channels channels;
-            switch (streamInfo->channels) {
-                case 1:
-                    channels = Channels::Mono;
-                    break;
-
-                case 2:
-                    channels = Channels::Stereo;
-                    break;
-
-                default:
-                    throw std::runtime_error("Unsupported number of channels: " + std::to_string(streamInfo->channels));
-            }
+            auto channels = static_cast<uint8_t>(streamInfo->channels);
 
             Format = {
                /* .DataType = */ type,

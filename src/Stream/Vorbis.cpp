@@ -16,7 +16,7 @@ namespace mixr::Stream {
         _format = {
             /* DataType= */ DataType::F32,
             /* SampleRate= */ info.sample_rate,
-            /* Channels= */ info.channels == 2 ? Channels::Stereo : Channels::Mono
+            /* Channels= */ static_cast<uint8_t>(info.channels)
         };
 
         _lengthInBytes = stb_vorbis_stream_length_in_samples(_vorbis) * info.sample_rate * info.channels * sizeof(float);
