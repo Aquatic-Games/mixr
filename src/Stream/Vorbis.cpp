@@ -20,6 +20,7 @@ namespace mixr::Stream {
         };
 
         _lengthInBytes = stb_vorbis_stream_length_in_samples(_vorbis) * info.sample_rate * info.channels * sizeof(float);
+        _currentBufferPos = 0;
     }
 
     Vorbis::~Vorbis() {
@@ -31,9 +32,50 @@ namespace mixr::Stream {
     }
 
     size_t Vorbis::GetBuffer(uint8_t* buffer, size_t bufferLength) {
-        size_t numSamples = stb_vorbis_get_samples_float_interleaved(_vorbis, _format.Channels == Channels::Stereo ? 2 : 1, (float*) buffer, bufferLength / sizeof(float));
+        size_t currentIndex = 0;
 
-        return numSamples * (_format.Channels == Channels::Stereo ? 2 : 1) * sizeof(float);
+        while (currentIndex < bufferLength) {
+            if (_currentBufferPos == 0)
+            {
+                float** output;
+                int channels;
+                size_t frameSize = stb_vorbis_get_frame_float(_vorbis, &channels, &output);
+
+                if (frameSize == 0) {
+                    break;
+                }
+
+                _buffer.clear();
+                _buffer.reserve(frameSize * channels * sizeof(float));
+                for (size_t i = 0; i < frameSize; i++) {
+                    for (int c = 0; c < channels; c++) {
+                        uint32_t sample = *(uint32_t*) &output[c][i];
+
+                        _buffer.push_back(sample & 0xFF);
+                        _buffer.push_back(sample >> 8);
+                        _buffer.push_back(sample >> 16);
+                        _buffer.push_back(sample >> 24);
+                    }
+                }
+            }
+
+            auto copySize = (_buffer.size() - _currentBufferPos);
+            if (currentIndex + copySize > bufferLength) {
+                copySize = bufferLength - currentIndex;
+            }
+
+            std::copy(_buffer.data() + _currentBufferPos, _buffer.data() + _currentBufferPos + copySize, buffer + currentIndex);
+
+            currentIndex += copySize;
+
+            _currentBufferPos += copySize;
+
+            if (_currentBufferPos >= _buffer.size()) {
+                _currentBufferPos -= _buffer.size();
+            }
+        }
+
+        return currentIndex;
     }
 
     void Vorbis::Restart() {

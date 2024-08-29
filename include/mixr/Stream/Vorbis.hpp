@@ -3,6 +3,7 @@
 #include "AudioStream.hpp"
 
 #include <string>
+#include <iostream>
 
 #include <stb_vorbis.c>
 
@@ -13,6 +14,8 @@ namespace mixr::Stream {
         stb_vorbis* _vorbis;
         AudioFormat _format;
         size_t _lengthInBytes;
+        std::vector<uint8_t> _buffer;
+        size_t _currentBufferPos;
 
     public:
         explicit Vorbis(const std::string& path);

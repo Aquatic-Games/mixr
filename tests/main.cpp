@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
     //}
 
     std::vector<uint8_t> buffer;
-    buffer.resize(48000);
+    buffer.resize(8000 * 2 * 4);
 
     stream->GetBuffer(buffer.data(), buffer.size());
     auto buffer1 = context->CreateBuffer(buffer.data(), buffer.size());
@@ -75,9 +75,8 @@ int main(int argc, char* argv[]) {
         std::cout << "Request Buffer: " << size << " bytes returned" << std::endl;
 
         if (size < cbData->Buffer.size()) {
-            //std::cout << "Restart" << std::endl;
-            //cbData->Stream->Restart();
-            return;
+            std::cout << "Restart" << std::endl;
+            cbData->Stream->Restart();
         }
 
         cbData->Buffers[cbData->CurrentBuffer]->Update(cbData->Buffer.data(), size);
@@ -89,7 +88,8 @@ int main(int argc, char* argv[]) {
 
     }, cbData.get());
 
-    source->SetSpeed(1.5);
+    //source->SetSpeed(0.15);
+    //source->SetPanning(1.0);
     source->Play();
 
     /*MxAudioStream* stream;
