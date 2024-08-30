@@ -112,8 +112,8 @@ int main(int argc, char* argv[]) {
     //mxContextSetMasterVolume(context, 0.1f);
 
     MxSourceDescription description {
-        .Type = MX_SOURCE_TYPE_PCM,
-        .Format = format,
+        MX_SOURCE_TYPE_PCM,
+        format,
     };
 
     //if (mxWavIsADPCM(stream)) {
