@@ -5,13 +5,11 @@
 #include <string>
 #include <iostream>
 
-#include <stb_vorbis.c>
-
 namespace mixr::Stream {
 
     class MIXR_CPP_API Vorbis : public AudioStream {
     private:
-        stb_vorbis* _vorbis;
+        void* _vorbis;
         AudioFormat _format;
         size_t _lengthInBytes;
         std::vector<uint8_t> _buffer;

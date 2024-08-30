@@ -1,6 +1,7 @@
 #include "mixr/Stream/Vorbis.hpp"
 
 #include <stdexcept>
+#include <stb_vorbis.c>
 
 namespace mixr::Stream {
     Vorbis::Vorbis(const std::string& path) {
@@ -11,7 +12,7 @@ namespace mixr::Stream {
             throw std::runtime_error("Failed to load vorbis: Error code " + std::to_string(error));
         }
 
-        stb_vorbis_info info = stb_vorbis_get_info(_vorbis);
+        stb_vorbis_info info = stb_vorbis_get_info((stb_vorbis*) _vorbis);
 
         _format = {
             /* DataType= */ DataType::F32,
@@ -19,12 +20,12 @@ namespace mixr::Stream {
             /* Channels= */ static_cast<uint8_t>(info.channels)
         };
 
-        _lengthInBytes = stb_vorbis_stream_length_in_samples(_vorbis) * info.sample_rate * info.channels * sizeof(float);
+        _lengthInBytes = stb_vorbis_stream_length_in_samples((stb_vorbis*) _vorbis) * info.sample_rate * info.channels * sizeof(float);
         _currentBufferPos = 0;
     }
 
     Vorbis::~Vorbis() {
-        stb_vorbis_close(_vorbis);
+        stb_vorbis_close((stb_vorbis*) _vorbis);
     }
 
     AudioFormat Vorbis::Format() {
@@ -39,7 +40,7 @@ namespace mixr::Stream {
             {
                 float** output;
                 int channels;
-                size_t frameSize = stb_vorbis_get_frame_float(_vorbis, &channels, &output);
+                size_t frameSize = stb_vorbis_get_frame_float((stb_vorbis*) _vorbis, &channels, &output);
 
                 if (frameSize == 0) {
                     break;
@@ -79,7 +80,7 @@ namespace mixr::Stream {
     }
 
     void Vorbis::Restart() {
-        stb_vorbis_seek_start(_vorbis);
+        stb_vorbis_seek_start((stb_vorbis*) _vorbis);
     }
 
     size_t Vorbis::PCMLengthInBytes() {

@@ -6,6 +6,7 @@
 #include <mixr/mixr.h>
 #include <mixr/Stream/Wav.h>
 #include <mixr/Stream/Flac.h>
+#include <mixr/Stream/Vorbis.h>
 
 #include <thread>
 #include <iostream>
@@ -26,7 +27,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    auto stream = std::make_unique<Stream::Vorbis>(argv[1]);
+    /*auto stream = std::make_unique<Stream::Vorbis>(argv[1]);
     auto format = stream->Format();
     //auto data = wav.GetPCM();
 
@@ -34,8 +35,8 @@ int main(int argc, char* argv[]) {
     Context* context = device->Context();
 
     SourceDescription description {
-       /* .Type = */ SourceType::PCM,
-       /* .Format = */ format
+        SourceType::PCM,
+        format
     };
 
     //if (wav.IsADPCM()) {
@@ -90,10 +91,10 @@ int main(int argc, char* argv[]) {
 
     //source->SetSpeed(0.15);
     //source->SetPanning(1.0);
-    source->Play();
+    source->Play();*/
 
-    /*MxAudioStream* stream;
-    mxStreamLoadFlac(R"(C:\Users\ollie\Music\Music\Various Artists\NOW Millennium- 2000 - 2001 (Disc 3)\19 Inner Smile.flac)", &stream);
+    MxAudioStream* stream;
+    mxStreamLoadVorbis(argv[1], &stream);
 
     MxAudioFormat format = mxStreamGetFormat(stream);
 
@@ -115,12 +116,12 @@ int main(int argc, char* argv[]) {
         .Format = format,
     };
 
-    /*if (mxWavIsADPCM(stream)) {
-        MxADPCMInfo adpcm = mxWavGetADPCMInfo(stream);
+    //if (mxWavIsADPCM(stream)) {
+    //    MxADPCMInfo adpcm = mxWavGetADPCMInfo(stream);
 
-        description.Type = MX_SOURCE_TYPE_ADPCM;
-        description.ADPCM = { .ChunkSize = adpcm.ChunkSize };
-    }
+    //    description.Type = MX_SOURCE_TYPE_ADPCM;
+    //    description.ADPCM = { .ChunkSize = adpcm.ChunkSize };
+    //}
 
     mxDestroyStream(stream);
 
@@ -136,9 +137,8 @@ int main(int argc, char* argv[]) {
 
     mxSourcePlay(context, source);
 
-    bool test = false;*/
-
-    while (source->State() != SourceState::Stopped) {
+    //while (source->State() != SourceState::Stopped) {
+    while (mxSourceGetState(context, source) != MX_SOURCE_STATE_STOPPED) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
 
         //std::cout << buffer->ID() << std::endl;
@@ -167,7 +167,7 @@ int main(int argc, char* argv[]) {
         test = !test;*/
     }
 
-    //mxDestroyDevice(device);
+    mxDestroyDevice(device);
 
     return 0;
 }

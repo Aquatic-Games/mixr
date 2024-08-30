@@ -37,6 +37,8 @@ add_library(mixr SHARED
         src/C/Flac.cpp
         include/mixr/Stream/Vorbis.hpp
         src/Stream/Vorbis.cpp
+        include/mixr/Stream/Vorbis.h
+        src/C/Vorbis.cpp
 )
 
 target_include_directories(mixr PUBLIC include)
@@ -48,8 +50,8 @@ target_link_libraries(mixr PUBLIC SDL2::SDL2-static)
 add_subdirectory(lib/stb)
 target_link_libraries(mixr PUBLIC stb)
 
-set(WITH_OGG OFF)
-set(INSTALL_MANPAGES OFF)
+set(WITH_OGG OFF CACHE BOOL "" FORCE)
+set(INSTALL_MANPAGES OFF CACHE BOOL "" FORCE)
 add_subdirectory(lib/flac)
 target_link_libraries(mixr PUBLIC FLAC::FLAC++)
 
