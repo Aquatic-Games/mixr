@@ -8,3 +8,6 @@
 [submodule "lib/stb"]
 	path = lib/stb
 	url = https://github.com/Aquatic-Games/stb
+[submodule "lib/minimp3"]
+	path = lib/minimp3
+	url = https://github.com/lieff/minimp3

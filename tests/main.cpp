@@ -2,11 +2,13 @@
 #include <mixr/Stream/Wav.hpp>
 #include <mixr/Stream/Flac.hpp>
 #include <mixr/Stream/Vorbis.hpp>
+#include <mixr/Stream/Mp3.hpp>
 
 #include <mixr/mixr.h>
 #include <mixr/Stream/Wav.h>
 #include <mixr/Stream/Flac.h>
 #include <mixr/Stream/Vorbis.h>
+#include <mixr/Stream/Mp3.h>
 
 #include <thread>
 #include <iostream>
@@ -27,7 +29,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    /*auto stream = std::make_unique<Stream::Vorbis>(argv[1]);
+    /*auto stream = std::make_unique<Stream::Mp3>(argv[1]);
     auto format = stream->Format();
     //auto data = wav.GetPCM();
 
@@ -45,7 +47,7 @@ int main(int argc, char* argv[]) {
     //}
 
     std::vector<uint8_t> buffer;
-    buffer.resize(8000 * 2 * 4);
+    buffer.resize(48000);
 
     stream->GetBuffer(buffer.data(), buffer.size());
     auto buffer1 = context->CreateBuffer(buffer.data(), buffer.size());
@@ -89,12 +91,12 @@ int main(int argc, char* argv[]) {
 
     }, cbData.get());
 
-    //source->SetSpeed(0.15);
+    //source->SetSpeed(8);
     //source->SetPanning(1.0);
     source->Play();*/
 
     MxAudioStream* stream;
-    mxStreamLoadVorbis(argv[1], &stream);
+    mxStreamLoadMp3(argv[1], &stream);
 
     MxAudioFormat format = mxStreamGetFormat(stream);
 

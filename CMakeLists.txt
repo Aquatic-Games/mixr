@@ -39,6 +39,13 @@ add_library(mixr SHARED
         src/Stream/Vorbis.cpp
         include/mixr/Stream/Vorbis.h
         src/C/Vorbis.cpp
+        include/mixr/Stream/Mp3.hpp
+        src/Stream/Mp3.cpp
+
+        lib/minimp3/minimp3.h
+        lib/minimp3/minimp3_ex.h
+        include/mixr/Stream/Mp3.h
+        src/C/Mp3.cpp
 )
 
 target_include_directories(mixr PUBLIC include)
@@ -54,6 +61,8 @@ set(WITH_OGG OFF CACHE BOOL "" FORCE)
 set(INSTALL_MANPAGES OFF CACHE BOOL "" FORCE)
 add_subdirectory(lib/flac)
 target_link_libraries(mixr PUBLIC FLAC::FLAC++)
+
+target_include_directories(mixr PUBLIC lib/minimp3)
 
 #add_library(mixr SHARED $<TARGET_OBJECTS:mixr-obj>)
 #target_include_directories(mixr PUBLIC include)
