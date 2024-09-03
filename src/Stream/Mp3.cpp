@@ -23,7 +23,7 @@ namespace mixr::Stream {
             /* Channels= */ static_cast<uint8_t>(_mp3.info.channels)
         };
 
-        _lengthInBytes = _mp3.samples * sizeof(mp3d_sample_t) * _format.Channels;
+        _lengthInBytes = _mp3.samples * sizeof(mp3d_sample_t);
     }
 
     Mp3::~Mp3() {

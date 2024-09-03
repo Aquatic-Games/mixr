@@ -20,7 +20,7 @@ namespace mixr::Stream {
             /* Channels= */ static_cast<uint8_t>(info.channels)
         };
 
-        _lengthInBytes = stb_vorbis_stream_length_in_samples((stb_vorbis*) _vorbis) * info.sample_rate * info.channels * sizeof(float);
+        _lengthInBytes = stb_vorbis_stream_length_in_samples((stb_vorbis*) _vorbis) * info.channels * sizeof(float);
         _currentBufferPos = 0;
     }
 
