@@ -29,9 +29,11 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    /*auto stream = std::make_unique<Stream::Mp3>(argv[1]);
+    auto stream = std::make_unique<Stream::Flac>(argv[1]);
     auto format = stream->Format();
     //auto data = wav.GetPCM();
+
+    std::cout << stream->LengthInSamples() / format.SampleRate << std::endl;
 
     auto device = std::make_unique<Device::SdlDevice>(48000);
     Context* context = device->Context();
@@ -93,9 +95,9 @@ int main(int argc, char* argv[]) {
 
     //source->SetSpeed(8);
     //source->SetPanning(1.0);
-    source->Play();*/
+    source->Play();
 
-    MxAudioStream* stream;
+    /*MxAudioStream* stream;
     mxStreamLoadMp3(argv[1], &stream);
 
     MxAudioFormat format = mxStreamGetFormat(stream);
@@ -137,10 +139,10 @@ int main(int argc, char* argv[]) {
     mxSourceSetLooping(context, source, true);
     //mxSourceSetPanning(context, source, -1.0f);
 
-    mxSourcePlay(context, source);
+    mxSourcePlay(context, source);*/
 
-    //while (source->State() != SourceState::Stopped) {
-    while (mxSourceGetState(context, source) != MX_SOURCE_STATE_STOPPED) {
+    while (source->State() != SourceState::Stopped) {
+    //while (mxSourceGetState(context, source) != MX_SOURCE_STATE_STOPPED) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
 
         //std::cout << buffer->ID() << std::endl;
@@ -169,7 +171,7 @@ int main(int argc, char* argv[]) {
         test = !test;*/
     }
 
-    mxDestroyDevice(device);
+    //mxDestroyDevice(device);
 
     return 0;
 }

@@ -38,7 +38,7 @@ namespace mixr::Stream {
 
         void Restart() override;
 
-        size_t PCMLengthInBytes() override;
+        size_t LengthInSamples() override;
         std::vector<uint8_t> GetPCM() override;
 
         bool IsADPCM();

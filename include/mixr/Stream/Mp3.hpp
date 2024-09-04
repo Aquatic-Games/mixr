@@ -13,7 +13,7 @@ namespace mixr::Stream {
         mp3dec_ex_t _mp3;
 
         AudioFormat _format;
-        size_t _lengthInBytes;
+        size_t _lengthInSamples;
 
     public:
         explicit Mp3(const std::string& path);
@@ -25,7 +25,7 @@ namespace mixr::Stream {
 
         void Restart() override;
 
-        size_t PCMLengthInBytes() override;
+        size_t LengthInSamples() override;
 
         std::vector<uint8_t> GetPCM() override;
     };

@@ -20,7 +20,7 @@ namespace mixr::Stream {
             /* Channels= */ static_cast<uint8_t>(info.channels)
         };
 
-        _lengthInBytes = stb_vorbis_stream_length_in_samples((stb_vorbis*) _vorbis) * info.channels * sizeof(float);
+        _lengthInSamples = stb_vorbis_stream_length_in_samples((stb_vorbis*) _vorbis);
         _currentBufferPos = 0;
     }
 
@@ -83,15 +83,15 @@ namespace mixr::Stream {
         stb_vorbis_seek_start((stb_vorbis*) _vorbis);
     }
 
-    size_t Vorbis::PCMLengthInBytes() {
-        return _lengthInBytes;
+    size_t Vorbis::LengthInSamples() {
+        return _lengthInSamples;
     }
 
     std::vector<uint8_t> Vorbis::GetPCM() {
         std::vector<uint8_t> data;
-        data.resize(_lengthInBytes);
+        data.resize(_lengthInSamples * _format.Channels * sizeof(float));
 
-        GetBuffer(data.data(), _lengthInBytes);
+        GetBuffer(data.data(), data.size());
 
         return data;
     }

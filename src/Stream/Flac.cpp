@@ -13,6 +13,7 @@ namespace mixr::Stream {
 
         AudioFormat Format;
         size_t MaxBufferSize;
+        size_t BytesPerSample;
         size_t TotalSamples;
 
         ::FLAC__StreamDecoderWriteStatus write_callback(const ::FLAC__Frame* frame, const FLAC__int32* const buffer[]) override {
@@ -94,8 +95,10 @@ namespace mixr::Stream {
                /* .Channels = */ channels
             };
 
-            MaxBufferSize = streamInfo->min_blocksize * streamInfo->channels * streamInfo->bits_per_sample / 8;
-            TotalSamples = streamInfo->total_samples * streamInfo->channels * streamInfo->bits_per_sample / 8;
+            BytesPerSample = streamInfo->bits_per_sample / 8;
+
+            MaxBufferSize = streamInfo->min_blocksize * streamInfo->channels * BytesPerSample;
+            TotalSamples = streamInfo->total_samples;
             CurrentBufferPos = 0;
         }
 
@@ -164,7 +167,7 @@ namespace mixr::Stream {
         decoder->CurrentBufferPos = 0;
     }
 
-    size_t Flac::PCMLengthInBytes() {
+    size_t Flac::LengthInSamples() {
         return dynamic_cast<FlacDecoder*>(_file.get())->TotalSamples;
     }
 
@@ -172,7 +175,7 @@ namespace mixr::Stream {
         auto decoder = dynamic_cast<FlacDecoder*>(_file.get());
 
         std::vector<uint8_t> buffer;
-        buffer.reserve(decoder->TotalSamples);
+        buffer.reserve(decoder->TotalSamples * decoder->Format.Channels * decoder->BytesPerSample);
 
         decoder->BufferToWriteTo = &buffer;
         decoder->process_until_end_of_stream();

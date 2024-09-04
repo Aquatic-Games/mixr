@@ -29,16 +29,16 @@ void mxStreamRestart(MxAudioStream *stream) {
     aStream->Restart();
 }
 
-size_t mxStreamGetPCMLengthInBytes(MxAudioStream *stream) {
+size_t mxStreamGetLengthInSamples(MxAudioStream *stream) {
     AudioStream* aStream = (AudioStream*) stream;
 
-    return aStream->PCMLengthInBytes();
+    return aStream->LengthInSamples();
 }
 
 void mxStreamGetPCM(MxAudioStream *stream, uint8_t *data, size_t *dataLength) {
     AudioStream* aStream = (AudioStream*) stream;
 
-    *dataLength = aStream->PCMLengthInBytes();
+    *dataLength = aStream->LengthInSamples();
 
     if (data) {
         auto pcmData = aStream->GetPCM();

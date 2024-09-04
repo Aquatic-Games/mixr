@@ -14,7 +14,7 @@ extern "C" {
 
     MIXR_C_API void mxStreamRestart(MxAudioStream *stream);
 
-    MIXR_C_API size_t mxStreamGetPCMLengthInBytes(MxAudioStream *stream);
+    MIXR_C_API size_t mxStreamGetLengthInSamples(MxAudioStream *stream);
     MIXR_C_API void mxStreamGetPCM(MxAudioStream *stream, uint8_t *data, size_t *dataLength);
 
     MIXR_C_API void mxDestroyStream(MxAudioStream *stream);

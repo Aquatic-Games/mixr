@@ -11,7 +11,7 @@ namespace mixr::Stream {
     private:
         void* _vorbis;
         AudioFormat _format;
-        size_t _lengthInBytes;
+        size_t _lengthInSamples;
         std::vector<uint8_t> _buffer;
         size_t _currentBufferPos;
 
@@ -25,7 +25,7 @@ namespace mixr::Stream {
 
         void Restart() override;
 
-        size_t PCMLengthInBytes() override;
+        size_t LengthInSamples() override;
 
         std::vector<uint8_t> GetPCM() override;
     };

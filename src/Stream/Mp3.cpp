@@ -23,7 +23,7 @@ namespace mixr::Stream {
             /* Channels= */ static_cast<uint8_t>(_mp3.info.channels)
         };
 
-        _lengthInBytes = _mp3.samples * sizeof(mp3d_sample_t);
+        _lengthInSamples = _mp3.samples / _format.Channels;
     }
 
     Mp3::~Mp3() {
@@ -42,13 +42,13 @@ namespace mixr::Stream {
         mp3dec_ex_seek(&_mp3, 0);
     }
 
-    size_t Mp3::PCMLengthInBytes() {
-        return _lengthInBytes;
+    size_t Mp3::LengthInSamples() {
+        return _lengthInSamples;
     }
 
     std::vector<uint8_t> Mp3::GetPCM() {
         std::vector<uint8_t> pcm;
-        pcm.resize(_lengthInBytes);
+        pcm.resize(_lengthInSamples * _format.Channels * sizeof(mp3d_sample_t));
 
         GetBuffer(pcm.data(), pcm.size());
 

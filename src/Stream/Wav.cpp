@@ -157,8 +157,8 @@ namespace mixr::Stream {
         _currentBufferPos = _dataStartPoint;
     }
 
-    size_t Wav::PCMLengthInBytes() {
-        return _dataLength;
+    size_t Wav::LengthInSamples() {
+        return _dataLength / _format.Channels / _format.BytesPerSample();
     }
 
     std::vector<uint8_t> Wav::GetPCM() {
