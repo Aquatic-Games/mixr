@@ -91,7 +91,7 @@ int main(int argc, char* argv[]) {
         auto cbData = (CallbackData*) userData;
 
         auto size = cbData->Stream->GetBuffer(cbData->Buffer.data(), cbData->Buffer.size());
-        std::cout << "Request Buffer: " << size << " bytes returned" << std::endl;
+        //std::cout << "Request Buffer: " << size << " bytes returned" << std::endl;
 
         /*if (size < cbData->Buffer.size()) {
             std::cout << "Restart" << std::endl;
@@ -163,9 +163,9 @@ int main(int argc, char* argv[]) {
 
     while (source->State() != SourceState::Stopped) {
     //while (mxSourceGetState(context, source) != MX_SOURCE_STATE_STOPPED) {
-        std::this_thread::sleep_for(std::chrono::seconds(5));
+        std::this_thread::sleep_for(std::chrono::seconds(1));
 
-        cbData->Stream->SeekToSample(5000000);
+        std::cout << cbData->Stream->PositionInSamples() << std::endl;
 
         /*value++;
 

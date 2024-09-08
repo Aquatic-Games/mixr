@@ -22,6 +22,8 @@ namespace mixr::Stream {
         void Restart() override;
         void SeekToSample(size_t sample) override;
 
+        size_t PositionInSamples() override;
+
         size_t LengthInSamples() override;
         std::vector<uint8_t> GetPCM() override;
     };

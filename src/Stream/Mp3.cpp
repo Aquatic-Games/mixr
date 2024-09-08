@@ -46,6 +46,10 @@ namespace mixr::Stream {
         mp3dec_ex_seek(&_mp3, sample * _mp3.info.channels);
     }
 
+    size_t Mp3::PositionInSamples() {
+        return static_cast<size_t>(_mp3.cur_sample / _mp3.info.channels);
+    }
+
     size_t Mp3::LengthInSamples() {
         return _lengthInSamples;
     }

@@ -87,6 +87,10 @@ namespace mixr::Stream {
         stb_vorbis_seek((stb_vorbis*) _vorbis, sample);
     }
 
+    size_t Vorbis::PositionInSamples() {
+        return static_cast<size_t>(stb_vorbis_get_sample_offset((stb_vorbis*) _vorbis));
+    }
+
     size_t Vorbis::LengthInSamples() {
         return _lengthInSamples;
     }
