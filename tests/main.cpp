@@ -29,7 +29,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    auto stream = std::make_unique<Stream::Vorbis>(argv[1]);
+    auto stream = std::make_unique<Stream::Mp3>(argv[1]);
     auto format = stream->Format();
     //auto data = wav.GetPCM();
 
@@ -111,7 +111,7 @@ int main(int argc, char* argv[]) {
 
     }, cbData.get());
 
-    source->SetSpeed(8);
+    //source->SetSpeed(8);
     //source->SetPanning(1.0);
     source->Play();
 
@@ -163,7 +163,9 @@ int main(int argc, char* argv[]) {
 
     while (source->State() != SourceState::Stopped) {
     //while (mxSourceGetState(context, source) != MX_SOURCE_STATE_STOPPED) {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::this_thread::sleep_for(std::chrono::seconds(5));
+
+        cbData->Stream->SeekToSample(5000000);
 
         /*value++;
 

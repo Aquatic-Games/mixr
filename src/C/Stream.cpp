@@ -29,6 +29,12 @@ void mxStreamRestart(MxAudioStream *stream) {
     aStream->Restart();
 }
 
+void mxStreamSeekToSample(MxAudioStream *stream, size_t sample) {
+    AudioStream* aStream = (AudioStream*) stream;
+
+    aStream->SeekToSample(sample);
+}
+
 size_t mxStreamGetLengthInSamples(MxAudioStream *stream) {
     AudioStream* aStream = (AudioStream*) stream;
 

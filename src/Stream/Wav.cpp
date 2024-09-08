@@ -157,6 +157,10 @@ namespace mixr::Stream {
         _currentBufferPos = _dataStartPoint;
     }
 
+    void Wav::SeekToSample(size_t sample) {
+        _currentBufferPos = sample * _format.Channels * _format.BytesPerSample();
+    }
+
     size_t Wav::LengthInSamples() {
         return _dataLength / _format.Channels / _format.BytesPerSample();
     }

@@ -167,6 +167,11 @@ namespace mixr::Stream {
         decoder->CurrentBufferPos = 0;
     }
 
+    void Flac::SeekToSample(size_t sample) {
+        auto decoder = dynamic_cast<FlacDecoder*>(_file.get());
+        decoder->seek_absolute(sample);
+    }
+
     size_t Flac::LengthInSamples() {
         return dynamic_cast<FlacDecoder*>(_file.get())->TotalSamples;
     }

@@ -37,6 +37,7 @@ namespace mixr::Stream {
         size_t GetBuffer(uint8_t *buffer, size_t bufferLength) override;
 
         void Restart() override;
+        void SeekToSample(size_t sample) override;
 
         size_t LengthInSamples() override;
         std::vector<uint8_t> GetPCM() override;

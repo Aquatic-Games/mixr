@@ -83,6 +83,10 @@ namespace mixr::Stream {
         stb_vorbis_seek_start((stb_vorbis*) _vorbis);
     }
 
+    void Vorbis::SeekToSample(size_t sample) {
+        stb_vorbis_seek((stb_vorbis*) _vorbis, sample);
+    }
+
     size_t Vorbis::LengthInSamples() {
         return _lengthInSamples;
     }
