@@ -129,6 +129,9 @@ namespace mixr {
            /* .BufferFinishedCallback = */ nullptr,
            /* .BufferFinishedUserData = */ nullptr,
 
+           /* .SourceFinishedCallback = */ nullptr,
+           /* .SourceFinishedUserData = */ nullptr,
+
            /* .LastPosition = */ 0,
            /* .LastSampleL = */ 0.0f,
            /* .LastSampleR = */ 0.0f,
@@ -192,19 +195,33 @@ namespace mixr {
 
     void Impl::SourcePlay(size_t sourceId) {
         Source* source = &_sources[sourceId];
+        SourceState state = SourceGetState(sourceId);
 
         if (source->QueuedBuffers.empty())
             return;
 
         source->Playing = true;
+
+        if (state != SourceState::Playing) {
+            source->StateChangedCallback(SourceState::Playing, source->StateChangedUserData);
+        }
     }
 
     void Impl::SourcePause(size_t sourceId) {
-        _sources[sourceId].Playing = false;
+        Source* source = &_sources[sourceId];
+        SourceState state = SourceGetState(sourceId);
+
+        source->Playing = false;
+
+        if (state != SourceState::Paused) {
+            source->StateChangedCallback(SourceState::Paused, source->StateChangedUserData);
+        }
     }
 
     void Impl::SourceStop(size_t sourceId) {
         Source* source = &_sources[sourceId];
+        SourceState state = SourceGetState(sourceId);
+
         source->Playing = false;
         source->QueuedBuffers.clear();
         source->Position = 0;
@@ -213,6 +230,11 @@ namespace mixr {
         source->LastSampleR = 0.0f;
         source->FinePosition = 0.0;
         source->LastChunk = -1;
+
+        // Only invoke the callback AFTER everything is set for extra safety.
+        if (state != SourceState::Stopped) {
+            source->StateChangedCallback(SourceState::Stopped, source->StateChangedUserData);
+        }
     }
 
     void Impl::SourceSetSpeed(size_t sourceId, double speed) {
@@ -246,6 +268,13 @@ namespace mixr {
 
         source->BufferFinishedCallback = callback;
         source->BufferFinishedUserData = userData;
+    }
+
+    void Impl::SourceSetStateChangedCallback(size_t sourceId, void (*callback)(SourceState, void*), void* userData) {
+        Source* source = &_sources[sourceId];
+
+        source->StateChangedCallback = callback;
+        source->StateChangedUserData = userData;
     }
 
     SourceState Impl::SourceGetState(size_t sourceId) {
@@ -429,11 +458,12 @@ namespace mixr {
                         } else if (source->Looping) {
                             source->Position -= source->LengthInSamples;
                         } else {
+                            SourceStop(s);
+
                             if (source->BufferFinishedCallback) {
                                 source->BufferFinishedCallback(source->BufferFinishedUserData);
                             }
 
-                            SourceStop(s);
                             break;
                         }
                     }

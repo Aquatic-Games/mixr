@@ -45,6 +45,9 @@ namespace mixr {
         void (*BufferFinishedCallback)(void*);
         void* BufferFinishedUserData;
 
+        void (*StateChangedCallback)(SourceState, void*);
+        void* StateChangedUserData;
+
         // ----- Interpolation -----
         size_t LastPosition;
         float LastSampleL;
@@ -91,6 +94,7 @@ namespace mixr {
         void SourceSetPanning(size_t sourceId, float panning);
         void SourceSetChannelVolumes(size_t sourceId, float volumeL, float volumeR);
         void SourceSetBufferFinishedCallback(size_t sourceId, void (*callback)(void*), void* userData);
+        void SourceSetStateChangedCallback(size_t sourceId, void (*callback)(SourceState, void*), void* userData);
 
         SourceState SourceGetState(size_t sourceId);
         double SourceGetSpeed(size_t sourceId);

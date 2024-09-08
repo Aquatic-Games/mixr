@@ -29,7 +29,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    auto stream = std::make_unique<Stream::Flac>(argv[1]);
+    auto stream = std::make_unique<Stream::Vorbis>(argv[1]);
     auto format = stream->Format();
     //auto data = wav.GetPCM();
 
@@ -73,15 +73,33 @@ int main(int argc, char* argv[]) {
         0
     });
 
+    source->SetStateChangedCallback([](SourceState state, void* userData) -> void {
+        switch (state) {
+            case SourceState::Stopped:
+                std::cout << "Stopped" << std::endl;
+                break;
+            case SourceState::Paused:
+                std::cout << "Paused" << std::endl;
+                break;
+            case SourceState::Playing:
+                std::cout << "Playing" << std::endl;
+                break;
+        }
+    }, nullptr);
+
     source->SetBufferFinishedCallback([](void* userData) -> void {
         auto cbData = (CallbackData*) userData;
 
         auto size = cbData->Stream->GetBuffer(cbData->Buffer.data(), cbData->Buffer.size());
         std::cout << "Request Buffer: " << size << " bytes returned" << std::endl;
 
-        if (size < cbData->Buffer.size()) {
+        /*if (size < cbData->Buffer.size()) {
             std::cout << "Restart" << std::endl;
             cbData->Stream->Restart();
+        }*/
+
+        if (size == 0) {
+            return;
         }
 
         cbData->Buffers[cbData->CurrentBuffer]->Update(cbData->Buffer.data(), size);
@@ -93,7 +111,7 @@ int main(int argc, char* argv[]) {
 
     }, cbData.get());
 
-    //source->SetSpeed(8);
+    source->SetSpeed(8);
     //source->SetPanning(1.0);
     source->Play();
 
@@ -141,9 +159,21 @@ int main(int argc, char* argv[]) {
 
     mxSourcePlay(context, source);*/
 
+    int value = 0;
+
     while (source->State() != SourceState::Stopped) {
     //while (mxSourceGetState(context, source) != MX_SOURCE_STATE_STOPPED) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
+
+        /*value++;
+
+        if (value >= 5 && value < 10) {
+            source->Pause();
+        }
+
+        if (value >= 10) {
+            source->Play();
+        }*/
 
         //std::cout << buffer->ID() << std::endl;
         //buffer.reset();

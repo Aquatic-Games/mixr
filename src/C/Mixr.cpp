@@ -113,6 +113,12 @@ void mxSourceSetBufferFinishedCallback(MxContext *context, MxAudioSource source,
     impl->SourceSetBufferFinishedCallback(source, callback, userData);
 }
 
+void mxSourceSetStateChangedCallback(MxContext *context, MxAudioSource source, void (*callback)(MxSourceState, void*), void* userData) {
+    Impl* impl = (Impl*) context;
+
+    impl->SourceSetStateChangedCallback(source, reinterpret_cast<void (*)(SourceState, void*)>(callback), userData);
+}
+
 MxSourceState mxSourceGetState(MxContext *context, MxAudioSource source) {
     Impl* impl = (Impl*) context;
 

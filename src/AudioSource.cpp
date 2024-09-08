@@ -88,4 +88,8 @@ namespace mixr {
     void AudioSource::SetBufferFinishedCallback(void (*callback)(void*), void* userData) {
         _impl->SourceSetBufferFinishedCallback(_id, callback, userData);
     }
+
+    void AudioSource::SetStateChangedCallback(void (*callback)(SourceState, void*), void* userData) {
+        _impl->SourceSetStateChangedCallback(_id, callback, userData);
+    }
 }

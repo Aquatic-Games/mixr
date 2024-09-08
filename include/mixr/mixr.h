@@ -86,6 +86,7 @@ extern "C" {
     MIXR_C_API void mxSourceSetPanning(MxContext *context, MxAudioSource source, float panning);
     MIXR_C_API void mxSourceSetChannelVolumes(MxContext *context, MxAudioSource source, float volumeL, float volumeR);
     MIXR_C_API void mxSourceSetBufferFinishedCallback(MxContext *context, MxAudioSource source, void (*callback)(void*), void* userData);
+    MIXR_C_API void mxSourceSetStateChangedCallback(MxContext *context, MxAudioSource source, void (*callback)(MxSourceState, void*), void* userData);
 
     MIXR_C_API MxSourceState mxSourceGetState(MxContext *context, MxAudioSource source);
     MIXR_C_API double mxSourceGetSpeed(MxContext *context, MxAudioSource source);

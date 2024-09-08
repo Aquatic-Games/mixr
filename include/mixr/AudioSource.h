@@ -39,6 +39,7 @@ namespace mixr {
         void SetChannelVolumes(float volumeL, float volumeR);
 
         void SetBufferFinishedCallback(void (*callback)(void*), void* userData);
+        void SetStateChangedCallback(void (*callback)(SourceState, void*), void* userData);
 
         [[nodiscard]] SourceState State() const;
         size_t Position() const;
