@@ -158,6 +158,10 @@ namespace mixr {
     void Impl::DestroySource(size_t sourceId) {
         Source* source = &_sources[sourceId];
 
+        // Simple hack, unregister the state changed callback to prevent SourceStop from calling it.
+        source->StateChangedCallback = nullptr;
+        source->BufferFinishedCallback = nullptr;
+
         SourceStop(sourceId);
 
         source->QueuedBuffers = {};
@@ -202,7 +206,7 @@ namespace mixr {
 
         source->Playing = true;
 
-        if (state != SourceState::Playing) {
+        if (state != SourceState::Playing && source->StateChangedCallback) {
             source->StateChangedCallback(SourceState::Playing, source->StateChangedUserData);
         }
     }
@@ -213,7 +217,7 @@ namespace mixr {
 
         source->Playing = false;
 
-        if (state != SourceState::Paused) {
+        if (state != SourceState::Paused && source->StateChangedCallback) {
             source->StateChangedCallback(SourceState::Paused, source->StateChangedUserData);
         }
     }
@@ -232,7 +236,7 @@ namespace mixr {
         source->LastChunk = -1;
 
         // Only invoke the callback AFTER everything is set for extra safety.
-        if (state != SourceState::Stopped) {
+        if (state != SourceState::Stopped && source->StateChangedCallback) {
             source->StateChangedCallback(SourceState::Stopped, source->StateChangedUserData);
         }
     }
