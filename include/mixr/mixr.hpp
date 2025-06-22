@@ -7,3 +7,4 @@
 #include "AudioDevice.h"
 
 #include "Device/SdlDevice.h"
+#include "Device/AlsaDevice.h"

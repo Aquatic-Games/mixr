@@ -46,6 +46,8 @@ add_library(mixr SHARED
         lib/minimp3/minimp3_ex.h
         include/mixr/Stream/Mp3.h
         src/C/Mp3.cpp
+        src/Device/AlsaDevice.cpp
+        include/mixr/Device/AlsaDevice.h
 )
 
 target_include_directories(mixr PUBLIC include)
@@ -56,6 +58,8 @@ target_link_libraries(mixr PUBLIC SDL2::SDL2-static)
 
 add_subdirectory(lib/stb)
 target_link_libraries(mixr PUBLIC stb)
+
+target_link_libraries(mixr PUBLIC asound)
 
 set(WITH_OGG OFF CACHE BOOL "" FORCE)
 set(INSTALL_MANPAGES OFF CACHE BOOL "" FORCE)

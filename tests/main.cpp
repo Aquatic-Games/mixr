@@ -35,7 +35,7 @@ int main(int argc, char* argv[]) {
 
     std::cout << stream->LengthInSamples() / format.SampleRate << std::endl;
 
-    auto device = std::make_unique<Device::SdlDevice>(48000);
+    auto device = std::make_unique<Device::AlsaDevice>(48000);
     Context* context = device->Context();
 
     SourceDescription description {
