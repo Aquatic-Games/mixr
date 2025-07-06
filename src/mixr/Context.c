@@ -86,14 +86,14 @@ float GetSample(const uint8_t* buffer, const size_t pos, const MxDataType type)
 {
     switch (type)
     {
-        case MX_DATA_TYPE_U8:
-            break;
+        /*case MX_DATA_TYPE_U8:
+            return (float) (int8_t) (buffer[pos] - INT8_MAX) / INT8_MAX;*/
         case MX_DATA_TYPE_I8:
-            break;
+            return (float) (int8_t) buffer[pos] / INT8_MAX;
         case MX_DATA_TYPE_I16:
-            break;
+            return (float) (int16_t) (buffer[pos] | (buffer[pos + 1] << 8)) / INT16_MAX;
         case MX_DATA_TYPE_I32:
-            break;
+            return (float) (buffer[pos] | (buffer[pos + 1] << 8) | (buffer[pos + 2] << 16) | (buffer[pos + 3] << 24)) / INT32_MAX;
         case MX_DATA_TYPE_F32:
             uint32_t sample = (buffer[pos] | (buffer[pos + 1] << 8) | (buffer[pos + 2] << 16) | (buffer[pos + 3] << 24));
             return *(float*) &sample;
@@ -110,12 +110,10 @@ void mxMixInterleavedStereo(MxContext *context, float* buffer, const size_t leng
 
     for (size_t i = 0; i < length; i += 2)
     {
-        int position = ctx->temp * 8;
+        int position = ctx->temp * 4;
 
-        buffer[i] = GetSample(data, position, MX_DATA_TYPE_F32);
-        buffer[i + 1] = GetSample(data, position + 4, MX_DATA_TYPE_F32);
-
-        //printf("%f", buffer[i]);
+        buffer[i] = GetSample(data, position, MX_DATA_TYPE_I16);
+        buffer[i + 1] = GetSample(data, position + 2, MX_DATA_TYPE_I16);
 
         ctx->temp += 1;
     }

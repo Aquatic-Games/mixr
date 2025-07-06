@@ -18,7 +18,7 @@ typedef enum
 
 typedef enum
 {
-    MX_DATA_TYPE_U8,
+    //MX_DATA_TYPE_U8,
     MX_DATA_TYPE_I8,
     MX_DATA_TYPE_I16,
     MX_DATA_TYPE_I32,

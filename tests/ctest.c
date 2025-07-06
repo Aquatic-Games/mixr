@@ -47,7 +47,7 @@ int main(int argc, char** argv)
 
     SDL_AudioDeviceID device = SDL_OpenAudioDevice(NULL, 0, &spec, NULL, 0);
 
-    FILE* file = fopen("/home/aqua/Music/TESTFILES/Always There-32bitfloat.raw", "rb");
+    FILE* file = fopen("/home/aqua/Music/TESTFILES/Feeling-16bitshort.raw", "rb");
     fseek(file, 0, SEEK_END);
     size_t length = ftell(file);
     rewind(file);
