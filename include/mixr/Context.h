@@ -45,6 +45,7 @@ extern "C" {
     MxResult mxCreateSource(MxContext *context, const MxSourceInfo* info, MxSource *source);
     MxResult mxDestroySource(MxContext *context, MxSource source);
     MxResult mxSourceQueueBuffer(MxContext *context, MxSource source, MxBuffer buffer);
+    MxResult mxSourceClearQueue(MxContext *context, MxSource source);
     MxResult mxSourcePlay(MxContext *context, MxSource source);
     MxResult mxSourcePause(MxContext *context, MxSource source);
     MxResult mxSourceStop(MxContext *context, MxSource source);

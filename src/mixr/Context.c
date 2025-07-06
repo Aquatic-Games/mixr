@@ -6,6 +6,8 @@
 
 #include "utils/vector.h"
 
+#define LERP(A, B, Amount) Amount * (B - A) + A;
+
 #define GET_SOURCE(Context, Name, Src) if (Src.id >= Context->sources.length) {\
         ctx->errorMsg = "An invalid source was provided.";\
         return MX_RESULT_INVALID_SOURCE;\
@@ -39,7 +41,6 @@ typedef struct
     double speedCorrection;
 
     SourceQueueNode* queue;
-    size_t queueLength;
 
     size_t bufferLength;
     uint8_t* sourceBuffer;
@@ -49,8 +50,14 @@ typedef struct
     size_t position;
     double finePosition;
 
+    size_t lengthInSamples;
+
     float volume;
     double speed;
+
+    size_t lastPosition;
+    float lastSampleL;
+    float lastSampleR;
 } Source;
 
 typedef struct
@@ -61,6 +68,26 @@ typedef struct
     Vector buffers;
     Vector sources;
 } Context;
+
+void ClearSourceQueue(Source* source)
+{
+    SourceQueueNode* node = source->queue;
+
+    while (node)
+    {
+        SourceQueueNode* next = node->next;
+        free(node);
+        node = next;
+    }
+}
+
+void StopSource(Source* source)
+{
+    source->playing = false;
+    source->position = 0;
+    source->finePosition = 0;
+    ClearSourceQueue(source);
+}
 
 MxResult mxCreateContext(const MxContextInfo* info, MxContext** context)
 {
@@ -170,6 +197,10 @@ MxResult mxCreateSource(MxContext* context, const MxSourceInfo* info, MxSource* 
     src.volume = 1.0f;
     src.speed = 1.0;
 
+    src.lastPosition = 0;
+    src.lastSampleL = 0.0f;
+    src.lastSampleR = 0.0f;
+
     size_t currentId = ctx->sources.length;
 
     if (!VectorAppend(&ctx->sources, &src))
@@ -199,6 +230,8 @@ MxResult mxSourceQueueBuffer(MxContext* context, MxSource source, MxBuffer buffe
         return MX_RESULT_INVALID_BUFFER;
     }
 
+    Buffer* buf = VectorGet(&ctx->buffers, buffer.id);
+
     SourceQueueNode* node = malloc(sizeof(SourceQueueNode));
     node->buffer = buffer.id;
     node->next = NULL;
@@ -215,17 +248,22 @@ MxResult mxSourceQueueBuffer(MxContext* context, MxSource source, MxBuffer buffe
             src->queue->next = node;
             src->queue->prev = node;
         }
-
-        src->queueLength++;
     }
     else
     {
         node->prev = NULL;
         src->queue = node;
-        src->queueLength = 1;
+        src->lengthInSamples = buf->length / src->sampleStride;
     }
 
     return MX_RESULT_OK;
+}
+
+MxResult mxSourceClearQueue(MxContext* context, MxSource source)
+{
+    Context* ctx = (Context*) context;
+    GET_SOURCE(ctx, src, source);
+    ClearSourceQueue(src);
 }
 
 MxResult mxSourcePlay(MxContext* context, MxSource source)
@@ -257,10 +295,7 @@ MxResult mxSourceStop(MxContext* context, MxSource source)
 {
     Context* ctx = (Context*) context;
     GET_SOURCE(ctx, src, source);
-    src->playing = false;
-    src->position = 0;
-    src->finePosition = 0;
-    // TODO: Clear the source queue?
+    StopSource(src);
 
     return MX_RESULT_OK;
 }
@@ -343,16 +378,44 @@ void mxMixInterleavedStereo(MxContext *context, float* buffer, const size_t leng
 
             size_t position = source->position * source->sampleStride;
 
-            float sampleL = GetSample(data, position, dataType);
-            float sampleR = GetSample(data, position + source->channelStride, dataType);
+            const float sampleL = GetSample(data, position, dataType);
+            const float sampleR = GetSample(data, position + source->channelStride, dataType);
 
-            buffer[i + 0] += sampleL * source->volume;
-            buffer[i + 1] += sampleR * source->volume;
+            const float lastSampleL = source->lastSampleL;
+            const float lastSampleR = source->lastSampleR;
+            const double finePos = source->finePosition;
+
+            const float lerpL = LERP(lastSampleL, sampleL, finePos);
+            const float lerpR = LERP(lastSampleR, sampleR, finePos);
+
+            buffer[i + 0] += lerpL * source->volume;
+            buffer[i + 1] += lerpR * source->volume;
 
             source->finePosition += source->speedCorrection * source->speed;
             const size_t intPos = (size_t) source->finePosition;
             source->position += intPos;
             source->finePosition -= (double) intPos;
+
+            if (source->position != source->lastPosition)
+            {
+                source->lastPosition = source->position;
+                source->lastSampleL = sampleL;
+                source->lastSampleR = sampleR;
+            }
+
+            if (source->position >= source->lengthInSamples)
+            {
+                if (source->queue->next)
+                {
+                    SourceQueueNode* currentNode = source->queue;
+                    currentNode->next->prev = currentNode->prev;
+                    source->queue = source->queue->next;
+                    free(currentNode);
+                    source->position = 0;
+                }
+                else
+                    StopSource(source);
+            }
         }
     }
 }
