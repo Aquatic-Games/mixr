@@ -300,6 +300,21 @@ MxResult mxSourceStop(MxContext* context, MxSource source)
     return MX_RESULT_OK;
 }
 
+MxResult mxSourceGetState(MxContext* context, MxSource source, MxSourceState* state)
+{
+    Context* ctx = (Context*) context;
+    GET_SOURCE(ctx, src, source);
+
+    if (src->playing)
+        *state = MX_SOURCE_STATE_PLAYING;
+    else if (src->position == 0)
+        *state = MX_SOURCE_STATE_STOPPED;
+    else
+        *state = MX_SOURCE_STATE_PAUSED;
+
+    return MX_RESULT_OK;
+}
+
 MxResult mxSourceSetVolume(MxContext* context, MxSource source, float volume)
 {
     Context* ctx = (Context*) context;

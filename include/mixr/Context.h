@@ -23,6 +23,13 @@ extern "C" {
         MxAudioFormat format;
     } MxSourceInfo;
 
+    typedef enum
+    {
+        MX_SOURCE_STATE_STOPPED,
+        MX_SOURCE_STATE_PAUSED,
+        MX_SOURCE_STATE_PLAYING,
+    } MxSourceState;
+
     typedef struct MxContext MxContext;
 
     typedef struct
@@ -49,6 +56,7 @@ extern "C" {
     MxResult mxSourcePlay(MxContext *context, MxSource source);
     MxResult mxSourcePause(MxContext *context, MxSource source);
     MxResult mxSourceStop(MxContext *context, MxSource source);
+    MxResult mxSourceGetState(MxContext *context, MxSource source, MxSourceState *state);
     MxResult mxSourceSetVolume(MxContext *context, MxSource source, float volume);
     MxResult mxSourceSetSpeed(MxContext *context, MxSource source, double speed);
 
