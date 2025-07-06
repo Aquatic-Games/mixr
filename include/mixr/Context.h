@@ -20,10 +20,17 @@ extern "C" {
 
     typedef struct MxContext MxContext;
 
+    typedef struct
+    {
+        size_t id;
+    } MxBuffer;
+
     MxResult mxCreateContext(const MxContextInfo *info, MxContext **context);
     void mxDestroyContext(MxContext *context);
-
     const char* mxGetLastErrorString(MxContext *context);
+
+    MxResult mxCreateBuffer(MxContext *context, const uint8_t* data, size_t length, MxBuffer *buffer);
+    MxResult mxDestroyBuffer(MxContext *context, MxBuffer buffer);
 
 #ifdef __cplusplus
 }
