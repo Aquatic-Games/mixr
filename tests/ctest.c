@@ -68,6 +68,8 @@ int main(int argc, char** argv)
     MxSource source;
     printf("Creating source.\n");
     MX_CHECK_ERROR(mxCreateSource(context, &srcInfo, &source));
+    MX_CHECK_ERROR(mxSourceQueueBuffer(context, source, buffer));
+    mxSourcePlay(context, source);
 
     while (true)
     {
