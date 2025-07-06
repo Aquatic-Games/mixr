@@ -1,5 +1,6 @@
 #include <mixr/mixr.h>
 #include <SDL2/SDL.h>
+#include <unistd.h>
 
 #include <stdio.h>
 
@@ -13,7 +14,8 @@
 
 void Callback(void* userData, Uint8* stream, int length)
 {
-
+    MxContext* context = (MxContext*) userData;
+    mxMixInterleavedStereo(context, (float*) stream, length / 4);
 }
 
 int main(int argc, char** argv)
@@ -45,7 +47,7 @@ int main(int argc, char** argv)
 
     SDL_AudioDeviceID device = SDL_OpenAudioDevice(NULL, 0, &spec, NULL, 0);
 
-    FILE* file = fopen("/home/aqua/Music/TESTFILES/Feeling-16bitshort.raw", "rb");
+    FILE* file = fopen("/home/aqua/Music/TESTFILES/Always There-32bitfloat.raw", "rb");
     fseek(file, 0, SEEK_END);
     size_t length = ftell(file);
     rewind(file);
@@ -56,6 +58,13 @@ int main(int argc, char** argv)
     MxBuffer buffer;
     printf("Creating buffer.\n");
     MX_CHECK_ERROR(mxCreateBuffer(context, fbuffer, length, &buffer));
+
+    SDL_PauseAudioDevice(device, 0);
+
+    while (true)
+    {
+        sleep(1);
+    }
 
     SDL_CloseAudioDevice(device);
 

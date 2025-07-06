@@ -47,12 +47,8 @@ bool VectorAppend(Vector* vector, void* element)
     return true;
 }
 
-bool VectorGet(const Vector* vector, const size_t index, void** element)
+void* VectorGet(const Vector* vector, const size_t index)
 {
-    if (index >= vector->length)
-        return false;
+     return vector->data + (index * vector->elemSize);
 
-    *element = &vector->data[index * vector->elemSize];
-
-    return true;
 }

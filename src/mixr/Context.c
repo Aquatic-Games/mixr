@@ -17,6 +17,8 @@ typedef struct
     uint32_t sampleRate;
     const char* errorMsg;
     Vector buffers;
+
+    size_t temp;
 } Context;
 
 MxResult mxCreateContext(const MxContextInfo* info, MxContext** context)
@@ -25,6 +27,7 @@ MxResult mxCreateContext(const MxContextInfo* info, MxContext** context)
     ctx->sampleRate = info->sampleRate;
     ctx->errorMsg = NULL;
     ctx->buffers = VectorCreate(sizeof(Buffer), 0);
+    ctx->temp = 0;
 
     *context = (MxContext*) ctx;
     return MX_RESULT_OK;
@@ -48,7 +51,7 @@ MxResult mxCreateBuffer(MxContext* context, const uint8_t* data, const size_t le
     Context* ctx = (Context*) context;
     Vector* buffers = &ctx->buffers;
 
-    uint8_t* bufferData = malloc(length * sizeof(uint8_t*));
+    uint8_t* bufferData = malloc(length);
     if (!bufferData)
     {
         ctx->errorMsg = "Could not allocate buffer data.";
@@ -77,4 +80,43 @@ MxResult mxCreateBuffer(MxContext* context, const uint8_t* data, const size_t le
 MxResult mxDestroyBuffer(MxContext* context, MxBuffer buffer)
 {
 
+}
+
+float GetSample(const uint8_t* buffer, const size_t pos, const MxDataType type)
+{
+    switch (type)
+    {
+        case MX_DATA_TYPE_U8:
+            break;
+        case MX_DATA_TYPE_I8:
+            break;
+        case MX_DATA_TYPE_I16:
+            break;
+        case MX_DATA_TYPE_I32:
+            break;
+        case MX_DATA_TYPE_F32:
+            uint32_t sample = (buffer[pos] | (buffer[pos + 1] << 8) | (buffer[pos + 2] << 16) | (buffer[pos + 3] << 24));
+            return *(float*) &sample;
+    }
+
+    return 0;
+}
+
+void mxMixInterleavedStereo(MxContext *context, float* buffer, const size_t length)
+{
+    Context* ctx = (Context*) context;
+    const Buffer* buf = VectorGet(&ctx->buffers, 0);
+    const uint8_t* data = buf->data;
+
+    for (size_t i = 0; i < length; i += 2)
+    {
+        int position = ctx->temp * 8;
+
+        buffer[i] = GetSample(data, position, MX_DATA_TYPE_F32);
+        buffer[i + 1] = GetSample(data, position + 4, MX_DATA_TYPE_F32);
+
+        //printf("%f", buffer[i]);
+
+        ctx->temp += 1;
+    }
 }

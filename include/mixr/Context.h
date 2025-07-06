@@ -32,6 +32,8 @@ extern "C" {
     MxResult mxCreateBuffer(MxContext *context, const uint8_t* data, size_t length, MxBuffer *buffer);
     MxResult mxDestroyBuffer(MxContext *context, MxBuffer buffer);
 
+    void mxMixInterleavedStereo(MxContext *context, float* buffer, size_t length);
+
 #ifdef __cplusplus
 }
 #endif
