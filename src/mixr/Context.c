@@ -12,13 +12,31 @@ typedef struct
     size_t length;
 } Buffer;
 
+typedef struct SourceQueueNode
+{
+    size_t buffer;
+    struct SourceQueueNode* next;
+} SourceQueueNode;
+
+typedef struct
+{
+    MxAudioFormat format;
+
+    SourceQueueNode* queue;
+
+    bool playing;
+
+    size_t position;
+    double finePosition;
+} Source;
+
 typedef struct
 {
     uint32_t sampleRate;
     const char* errorMsg;
-    Vector buffers;
 
-    size_t temp;
+    Vector buffers;
+    Vector sources;
 } Context;
 
 MxResult mxCreateContext(const MxContextInfo* info, MxContext** context)
@@ -27,7 +45,7 @@ MxResult mxCreateContext(const MxContextInfo* info, MxContext** context)
     ctx->sampleRate = info->sampleRate;
     ctx->errorMsg = NULL;
     ctx->buffers = VectorCreate(sizeof(Buffer), 0);
-    ctx->temp = 0;
+    ctx->sources = VectorCreate(sizeof(Source), 0);
 
     *context = (MxContext*) ctx;
     return MX_RESULT_OK;
@@ -82,6 +100,32 @@ MxResult mxDestroyBuffer(MxContext* context, MxBuffer buffer)
 
 }
 
+MxResult mxCreateSource(MxContext* context, const MxSourceInfo* info, MxSource* source)
+{
+    Context* ctx = (Context*) context;
+
+    Source src;
+
+    src.format = info->format;
+    src.queue = NULL;
+
+    src.playing = false;
+    src.position = 0;
+    src.finePosition = 0.0f;
+
+    size_t currentId = ctx->sources.length;
+
+    if (!VectorAppend(&ctx->sources, &source))
+    {
+        ctx->errorMsg = "Sources vector ran out of space. This is likely a bug.";
+        return MX_RESULT_OUT_OF_MEMORY;
+    }
+
+    source->id = currentId;
+
+    return MX_RESULT_OK;
+}
+
 float GetSample(const uint8_t* buffer, const size_t pos, const MxDataType type)
 {
     switch (type)
@@ -105,16 +149,25 @@ float GetSample(const uint8_t* buffer, const size_t pos, const MxDataType type)
 void mxMixInterleavedStereo(MxContext *context, float* buffer, const size_t length)
 {
     Context* ctx = (Context*) context;
-    const Buffer* buf = VectorGet(&ctx->buffers, 0);
-    const uint8_t* data = buf->data;
+    const Vector* buffers = &ctx->buffers;
+    const Vector* sources = &ctx->sources;
 
-    for (size_t i = 0; i < length; i += 2)
+    for (size_t s = 0; s < sources->length; s++)
     {
-        int position = ctx->temp * 4;
+        Source* source = VectorGet(sources, s);
 
-        buffer[i] = GetSample(data, position, MX_DATA_TYPE_I16);
-        buffer[i + 1] = GetSample(data, position + 2, MX_DATA_TYPE_I16);
+        if (!source->playing)
+            continue;
 
-        ctx->temp += 1;
+        const Buffer* buf = VectorGet(buffers, source->queue->buffer);
+        const uint8_t* data = buf->data;
+
+        for (size_t i = 0; i < length; i += 2)
+        {
+            //int position = ctx->temp * 4;
+
+            //buffer[i] = GetSample(data, position, MX_DATA_TYPE_I16);
+            //buffer[i + 1] = GetSample(data, position + 2, MX_DATA_TYPE_I16);
+        }
     }
 }

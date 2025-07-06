@@ -26,18 +26,18 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    const MxContextInfo info =
+    const MxContextInfo ctxInfo =
     {
         .sampleRate = 44100
     };
 
     MxContext* context;
     printf("Creating context.\n");
-    MX_CHECK_ERROR(mxCreateContext(&info, &context));
+    MX_CHECK_ERROR(mxCreateContext(&ctxInfo, &context));
 
     SDL_AudioSpec spec =
     {
-        .freq = info.sampleRate,
+        .freq = ctxInfo.sampleRate,
         .format = AUDIO_F32,
         .channels = 2,
         .samples = 512,
@@ -46,6 +46,7 @@ int main(int argc, char** argv)
     };
 
     SDL_AudioDeviceID device = SDL_OpenAudioDevice(NULL, 0, &spec, NULL, 0);
+    SDL_PauseAudioDevice(device, 0);
 
     FILE* file = fopen("/home/aqua/Music/TESTFILES/Feeling-16bitshort.raw", "rb");
     fseek(file, 0, SEEK_END);
@@ -59,7 +60,14 @@ int main(int argc, char** argv)
     printf("Creating buffer.\n");
     MX_CHECK_ERROR(mxCreateBuffer(context, fbuffer, length, &buffer));
 
-    SDL_PauseAudioDevice(device, 0);
+    MxSourceInfo srcInfo =
+    {
+        .format = { .dataType = MX_DATA_TYPE_I16, .sampleRate = 44100, .channels = 2 }
+    };
+
+    MxSource source;
+    printf("Creating source.\n");
+    MX_CHECK_ERROR(mxCreateSource(context, &srcInfo, &source));
 
     while (true)
     {

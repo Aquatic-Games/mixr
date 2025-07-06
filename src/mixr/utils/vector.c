@@ -22,7 +22,7 @@ void VectorDestroy(Vector* vector)
     vector->data = NULL;
 }
 
-bool VectorAppend(Vector* vector, void* element)
+bool VectorAppend(Vector* vector, const void* element)
 {
     if (vector->data == NULL)
     {
