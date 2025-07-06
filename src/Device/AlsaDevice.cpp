@@ -1,4 +1,4 @@
-#include "mixr/Device/AlsaDevice.h"
+#include "AlsaDevice.h"
 
 #include <iostream>
 #include <stdexcept>

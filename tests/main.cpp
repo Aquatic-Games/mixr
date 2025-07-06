@@ -29,13 +29,13 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    auto stream = std::make_unique<Stream::Mp3>(argv[1]);
+    auto stream = std::make_unique<Stream::Flac>(argv[1]);
     auto format = stream->Format();
     //auto data = wav.GetPCM();
 
     std::cout << stream->LengthInSamples() / format.SampleRate << std::endl;
 
-    auto device = std::make_unique<Device::AlsaDevice>(48000);
+    auto device = AudioDevice::Create(48000);
     Context* context = device->Context();
 
     SourceDescription description {

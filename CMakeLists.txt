@@ -4,8 +4,7 @@ project(mixr)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 17)
 
-add_library(mixr SHARED
-        include/mixr/mixr.hpp
+set(files include/mixr/mixr.hpp
         src/Context.cpp
         include/mixr/Context.h
         src/Impl/Impl.cpp
@@ -17,11 +16,8 @@ add_library(mixr SHARED
         include/mixr/AudioSource.h
         src/AudioDevice.cpp
         include/mixr/AudioDevice.h
-        src/Device/SdlDevice.cpp
-        include/mixr/Device/SdlDevice.h
         include/mixr/mixr.h
         src/C/Mixr.cpp
-        src/C/MixrSDL.cpp
         include/mixr/Stream/AudioStream.hpp
         src/Stream/Wav.cpp
         include/mixr/Stream/Wav.hpp
@@ -41,20 +37,26 @@ add_library(mixr SHARED
         src/C/Vorbis.cpp
         include/mixr/Stream/Mp3.hpp
         src/Stream/Mp3.cpp
-
         lib/minimp3/minimp3.h
         lib/minimp3/minimp3_ex.h
         include/mixr/Stream/Mp3.h
-        src/C/Mp3.cpp
-        src/Device/AlsaDevice.cpp
-        include/mixr/Device/AlsaDevice.h
-)
+        src/C/Mp3.cpp)
+
+if (WIN32)
+    list(APPEND files src/Device/SdlDevice.h src/Device/SdlDevice.cpp)
+elseif (LINUX)
+    list(APPEND files src/Device/AlsaDevice.h src/Device/AlsaDevice.cpp)
+endif()
+
+add_library(mixr SHARED ${files})
 
 target_include_directories(mixr PUBLIC include)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-add_subdirectory(lib/SDL)
-target_link_libraries(mixr PUBLIC SDL2::SDL2-static)
+if (WIN32)
+    add_subdirectory(lib/SDL)
+    target_link_libraries(mixr PUBLIC SDL2::SDL2-static)
+endif ()
 
 add_subdirectory(lib/stb)
 target_link_libraries(mixr PUBLIC stb)
@@ -67,10 +69,6 @@ add_subdirectory(lib/flac)
 target_link_libraries(mixr PUBLIC FLAC::FLAC++)
 
 target_include_directories(mixr PUBLIC lib/minimp3)
-
-#add_library(mixr SHARED $<TARGET_OBJECTS:mixr-obj>)
-#target_include_directories(mixr PUBLIC include)
-#target_link_libraries(mixr PUBLIC SDL2::SDL2-static)
 
 if (MSVC)
     set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /O2")

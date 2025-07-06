@@ -1,18 +1,18 @@
-#include "mixr/Device/SdlDevice.h"
+#include "SdlDevice.h"
 
 #include <SDL.h>
 #include <stdexcept>
 #include <string>
 
 namespace mixr::Device {
-    SdlDevice::SdlDevice(uint32_t sampleRate, uint16_t periodSize) : AudioDevice(sampleRate) {
+    SdlDevice::SdlDevice(uint32_t sampleRate) : AudioDevice(sampleRate) {
         if (SDL_Init(SDL_INIT_AUDIO) < 0) {
             throw std::runtime_error("Failed to initialize SDL: " + std::string(SDL_GetError()));
         }
 
         SDL_AudioSpec spec {};
         spec.freq = static_cast<int>(sampleRate);
-        spec.samples = periodSize;
+        spec.samples = 512;
         spec.channels = 2;
         spec.format = AUDIO_F32;
         spec.userdata = this;

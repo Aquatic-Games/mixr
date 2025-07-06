@@ -1,6 +1,7 @@
 #include "mixr/mixr.h"
 
 #include "../Impl/Impl.h"
+#include "mixr/AudioDevice.h"
 
 using namespace mixr;
 
@@ -171,4 +172,22 @@ void mxContextSetMasterVolume(MxContext *context, float volume) {
     Impl* impl = (Impl*) context;
 
     impl->SetMasterVolume(volume);
+}
+
+void mxCreateDevice(uint32_t sampleRate, MxDevice** pDevice)
+{
+    auto device = AudioDevice::Create(sampleRate);
+    *pDevice = (MxDevice*) device.release();
+}
+
+void mxDeviceGetContext(MxDevice* device, MxContext** pContext)
+{
+    auto mxDevice = (AudioDevice*) device;
+    *pContext = (MxContext*) mxDevice->Context();
+}
+
+void mxDestroyDevice(MxDevice* device)
+{
+    auto mxDevice = (AudioDevice*) device;
+    delete mxDevice;
 }

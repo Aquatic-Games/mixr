@@ -1,6 +1,12 @@
 #include "mixr/AudioDevice.h"
 #include "Impl/Impl.h"
 
+#if defined(_WIN32)
+#include "Device/SdlDevice.h"
+#elif defined(__linux__)
+#include "Device/AlsaDevice.h"
+#endif
+
 namespace mixr {
     AudioDevice::AudioDevice(uint32_t sampleRate) {
         _context = std::make_unique<mixr::Context>(sampleRate);
@@ -12,5 +18,14 @@ namespace mixr {
 
     Context* AudioDevice::Context() {
         return _context.get();
+    }
+
+    std::unique_ptr<AudioDevice> AudioDevice::Create(uint32_t sampleRate)
+    {
+#if defined(_WIN32)
+        return std::make_unique<Device::SdlDevice>(sampleRate);
+#elif defined(__linux__)
+        return std::make_unique<Device::AlsaDevice>(sampleRate);
+#endif
     }
 }

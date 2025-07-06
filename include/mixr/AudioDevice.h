@@ -10,12 +10,15 @@ namespace mixr {
 
     protected:
         explicit AudioDevice(uint32_t sampleRate);
-        virtual ~AudioDevice() = default;
 
         void GetBuffer(uint8_t* buffer, size_t dataLength);
 
     public:
+        virtual ~AudioDevice() = default;
+
         Context* Context();
+
+        static std::unique_ptr<AudioDevice> Create(uint32_t sampleRate = 44100);
     };
 
 }

@@ -60,10 +60,7 @@ extern "C" {
     MIXR_C_API void mxCreateContext(uint32_t sampleRate, MxContext **pContext);
     MIXR_C_API void mxDestroyContext(MxContext *context);
 
-    // TODO: Move this to a separate file
-    // TODO: This implementation is temporary. This should be done properly at some point.
-    MIXR_C_API void mxCreateSDLDevice(uint32_t sampleRate, uint16_t periodSize, MxDevice **pDevice);
-
+    MIXR_C_API void mxCreateDevice(uint32_t sampleRate, MxDevice **pDevice);
     MIXR_C_API void mxDeviceGetContext(MxDevice *device, MxContext **pContext);
     MIXR_C_API void mxDestroyDevice(MxDevice *device);
 

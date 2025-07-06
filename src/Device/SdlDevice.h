@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-#include "../AudioDevice.h"
+#include "../../include/mixr/AudioDevice.h"
 
 namespace mixr::Device {
 
@@ -13,7 +13,7 @@ namespace mixr::Device {
         static void AudioCallback(void* userData, uint8_t* buffer, int length);
 
     public:
-        explicit SdlDevice(uint32_t sampleRate, uint16_t periodSize = 512);
+        explicit SdlDevice(uint32_t sampleRate);
         ~SdlDevice() override;
     };
 
