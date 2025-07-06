@@ -23,6 +23,8 @@ extern "C" {
     MxResult mxCreateContext(const MxContextInfo *info, MxContext **context);
     void mxDestroyContext(MxContext *context);
 
+    const char* mxGetLastErrorString(MxContext *context);
+
 #ifdef __cplusplus
 }
 #endif
