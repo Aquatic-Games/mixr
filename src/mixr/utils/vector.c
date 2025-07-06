@@ -46,8 +46,3 @@ bool VectorAppend(Vector* vector, const void* element)
 
     return true;
 }
-
-void* VectorGet(const Vector* vector, const size_t index)
-{
-     return vector->data + (index * vector->elemSize);
-}

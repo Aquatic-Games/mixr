@@ -6,6 +6,12 @@
 
 #include "utils/vector.h"
 
+#define GET_SOURCE(Context, Name, Src) if (Src.id >= Context->sources.length) {\
+        ctx->errorMsg = "An invalid source was provided.";\
+        return MX_RESULT_INVALID_SOURCE;\
+    }\
+    Source* Name = VectorGet(&Context->sources, Src.id);
+
 typedef struct
 {
     uint8_t* data;
@@ -42,6 +48,9 @@ typedef struct
 
     size_t position;
     double finePosition;
+
+    float volume;
+    double speed;
 } Source;
 
 typedef struct
@@ -158,6 +167,9 @@ MxResult mxCreateSource(MxContext* context, const MxSourceInfo* info, MxSource* 
     src.position = 0;
     src.finePosition = 0.0f;
 
+    src.volume = 1.0f;
+    src.speed = 1.0;
+
     size_t currentId = ctx->sources.length;
 
     if (!VectorAppend(&ctx->sources, &src))
@@ -179,20 +191,13 @@ MxResult mxDestroySource(MxContext* context, MxSource source)
 MxResult mxSourceQueueBuffer(MxContext* context, MxSource source, MxBuffer buffer)
 {
     Context* ctx = (Context*) context;
-
-    if (source.id >= ctx->sources.length)
-    {
-        ctx->errorMsg = "An invalid source was provided.";
-        return MX_RESULT_INVALID_SOURCE;
-    }
+    GET_SOURCE(ctx, src, source);
 
     if (buffer.id >= ctx->buffers.length)
     {
         ctx->errorMsg = "An invalid buffer was provided.";
         return MX_RESULT_INVALID_BUFFER;
     }
-
-    Source* src = VectorGet(&ctx->sources, source.id);
 
     SourceQueueNode* node = malloc(sizeof(SourceQueueNode));
     node->buffer = buffer.id;
@@ -226,14 +231,8 @@ MxResult mxSourceQueueBuffer(MxContext* context, MxSource source, MxBuffer buffe
 MxResult mxSourcePlay(MxContext* context, MxSource source)
 {
     Context* ctx = (Context*) context;
+    GET_SOURCE(ctx, src, source);
 
-    if (source.id >= ctx->sources.length)
-    {
-        ctx->errorMsg = "An invalid source was provided.";
-        return MX_RESULT_INVALID_SOURCE;
-    }
-
-    Source* src = VectorGet(&ctx->sources, source.id);
     if (!src->queue)
     {
         ctx->errorMsg = "Nothing in the source queue. Cannot play.";
@@ -241,9 +240,46 @@ MxResult mxSourcePlay(MxContext* context, MxSource source)
     }
 
     src->playing = true;
+
+    return MX_RESULT_OK;
 }
 
-float GetSample(const uint8_t* buffer, const size_t pos, const MxDataType type)
+MxResult mxSourcePause(MxContext* context, MxSource source)
+{
+    Context* ctx = (Context*) context;
+    GET_SOURCE(ctx, src, source);
+    src->playing = false;
+
+    return MX_RESULT_OK;
+}
+
+MxResult mxSourceStop(MxContext* context, MxSource source)
+{
+    Context* ctx = (Context*) context;
+    GET_SOURCE(ctx, src, source);
+    src->playing = false;
+    src->position = 0;
+    src->finePosition = 0;
+    // TODO: Clear the source queue?
+
+    return MX_RESULT_OK;
+}
+
+MxResult mxSourceSetVolume(MxContext* context, MxSource source, float volume)
+{
+    Context* ctx = (Context*) context;
+    GET_SOURCE(ctx, src, source);
+    src->volume = volume;
+}
+
+MxResult mxSourceSetSpeed(MxContext* context, MxSource source, double speed)
+{
+    Context* ctx = (Context*) context;
+    GET_SOURCE(ctx, src, source);
+    src->speed = speed;
+}
+
+static float GetSample(const uint8_t* buffer, const size_t pos, const MxDataType type)
 {
     switch (type)
     {
@@ -310,10 +346,10 @@ void mxMixInterleavedStereo(MxContext *context, float* buffer, const size_t leng
             float sampleL = GetSample(data, position, dataType);
             float sampleR = GetSample(data, position + source->channelStride, dataType);
 
-            buffer[i + 0] += sampleL;
-            buffer[i + 1] += sampleR;
+            buffer[i + 0] += sampleL * source->volume;
+            buffer[i + 1] += sampleR * source->volume;
 
-            source->finePosition += source->speedCorrection;
+            source->finePosition += source->speedCorrection * source->speed;
             const size_t intPos = (size_t) source->finePosition;
             source->position += intPos;
             source->finePosition -= (double) intPos;

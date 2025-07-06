@@ -15,6 +15,9 @@ typedef struct
 Vector VectorCreate(size_t elemSize, size_t initialCapacity);
 void VectorDestroy(Vector *vector);
 bool VectorAppend(Vector *vector, const void *element);
-void* VectorGet(const Vector *vector, size_t index);
+static void* VectorGet(const Vector *vector, size_t index)
+{
+    return vector->data + (index * vector->elemSize);
+}
 
 #endif

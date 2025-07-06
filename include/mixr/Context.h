@@ -46,6 +46,10 @@ extern "C" {
     MxResult mxDestroySource(MxContext *context, MxSource source);
     MxResult mxSourceQueueBuffer(MxContext *context, MxSource source, MxBuffer buffer);
     MxResult mxSourcePlay(MxContext *context, MxSource source);
+    MxResult mxSourcePause(MxContext *context, MxSource source);
+    MxResult mxSourceStop(MxContext *context, MxSource source);
+    MxResult mxSourceSetVolume(MxContext *context, MxSource source, float volume);
+    MxResult mxSourceSetSpeed(MxContext *context, MxSource source, double speed);
 
     void mxMixInterleavedStereo(MxContext *context, float* buffer, size_t length);
 
