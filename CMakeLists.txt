@@ -15,6 +15,8 @@ add_library(mixr SHARED
         src/mixr/device/device.c
         src/mixr/device/SDL/sdl_device.h
         src/mixr/device/SDL/sdl_device.c
+        src/mixr/internal.c
+        src/mixr/internal.h
 )
 
 target_include_directories(mixr PUBLIC include)

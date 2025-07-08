@@ -1,5 +1,7 @@
 #include "sdl_device.h"
 
+#include "../../internal.h"
+
 void AudioCallback(void* userData, Uint8* buffer, int length)
 {
     MxContext* context = ((DeviceImpl*) userData)->context;
@@ -13,12 +15,17 @@ void SDL_DestroyDevice(void* device)
     free(sdlDevice);
 }
 
-DeviceImpl* mxSDLCreateDevice(const MxDeviceInfo* info)
+MxResult mxSDLCreateDevice(const MxDeviceInfo* info, DeviceImpl** impl)
 {
-    DeviceImpl* impl = malloc(sizeof(DeviceImpl));
-    impl->destroyDevice = SDL_DestroyDevice;
+    DeviceImpl* dev = malloc(sizeof(DeviceImpl));
+    *impl = dev;
+    dev->destroyDevice = SDL_DestroyDevice;
 
-    SDL_Init(SDL_INIT_AUDIO);
+    if (SDL_Init(SDL_INIT_AUDIO) < 0)
+    {
+        mxSetErrorString(SDL_GetError());
+        return MX_RESULT_GENERAL_FAILURE;
+    }
 
     const SDL_AudioSpec inSpec =
     {
@@ -27,26 +34,29 @@ DeviceImpl* mxSDLCreateDevice(const MxDeviceInfo* info)
         .channels = 2,
         .samples = 512,
         .callback = AudioCallback,
-        .userdata = impl
+        .userdata = dev
     };
 
     SDLDevice* deviceData = malloc(sizeof(SDLDevice));
-    impl->deviceData = deviceData;
+    dev->deviceData = deviceData;
 
     SDL_AudioSpec outSpec;
     deviceData->id = SDL_OpenAudioDevice(NULL, 0, &inSpec, &outSpec, SDL_AUDIO_ALLOW_FREQUENCY_CHANGE | SDL_AUDIO_ALLOW_SAMPLES_CHANGE);
 
     if (!deviceData->id)
-        printf("%s", SDL_GetError());
+    {
+        mxSetErrorString(SDL_GetError());
+        return MX_RESULT_UNKNOWN_ERROR;
+    }
 
     const MxContextInfo contextInfo =
     {
         .sampleRate = (uint32_t) outSpec.freq
     };
 
-    mxCreateContext(&contextInfo, &impl->context);
+    mxCreateContext(&contextInfo, &dev->context);
 
     SDL_PauseAudioDevice(deviceData->id, 0);
 
-    return impl;
+    return MX_RESULT_OK;
 }

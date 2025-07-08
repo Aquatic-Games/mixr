@@ -44,7 +44,6 @@ extern "C" {
 
     MxResult mxCreateContext(const MxContextInfo *info, MxContext **context);
     void mxDestroyContext(MxContext *context);
-    const char* mxGetLastErrorString(MxContext *context);
     void mxSetMasterVolume(MxContext *context, float volume);
     float mxGetMasterVolume(MxContext *context);
 

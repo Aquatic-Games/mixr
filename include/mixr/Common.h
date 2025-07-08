@@ -10,6 +10,8 @@ extern "C" {
 typedef enum
 {
     MX_RESULT_OK,
+    MX_RESULT_UNKNOWN_ERROR,
+    MX_RESULT_GENERAL_FAILURE,
     MX_RESULT_INVALID_BUFFER,
     MX_RESULT_INVALID_SOURCE,
     MX_RESULT_INVALID_NUM_CHANNELS,
@@ -32,6 +34,8 @@ typedef struct
     uint32_t sampleRate;
     uint8_t channels;
 } MxAudioFormat;
+
+const char* mxGetLastErrorString();
 
 #ifdef __cplusplus
 }

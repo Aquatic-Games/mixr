@@ -5,13 +5,14 @@
 #include <string.h>
 #include <pthread.h>
 
+#include "internal.h"
 #include "utils/vector.h"
 
 #define LERP(A, B, Amount) Amount * (B - A) + A
 #define CLAMP(Value, Min, Max) Value < Min ? Min : Value > Max ? Max : Value
 
 #define GET_SOURCE(Context, Name, Src) if (Src.id >= Context->sources.length) {\
-        ctx->errorMsg = "An invalid source was provided.";\
+        mxSetErrorString("An invalid source was provided.");\
         return MX_RESULT_INVALID_SOURCE;\
     }\
     Source* Name = VectorGet(&Context->sources, Src.id);
@@ -67,7 +68,6 @@ typedef struct
 typedef struct
 {
     uint32_t sampleRate;
-    const char* errorMsg;
     float masterVolume;
 
     Vector buffers;
@@ -100,7 +100,7 @@ MxResult mxCreateContext(const MxContextInfo* info, MxContext** context)
 {
     Context* ctx = malloc(sizeof(Context));
     ctx->sampleRate = info->sampleRate;
-    ctx->errorMsg = NULL;
+    mxSetErrorString(NULL);
     ctx->masterVolume = 1.0f;
     ctx->buffers = VectorCreate(sizeof(Buffer), 0);
     ctx->sources = VectorCreate(sizeof(Source), 0);
@@ -120,12 +120,6 @@ void mxDestroyContext(MxContext* context)
     free(ctx);
     pthread_mutex_unlock(&mutex);
     pthread_mutex_destroy(&mutex);
-}
-
-const char* mxGetLastErrorString(MxContext *context)
-{
-    const Context* ctx = (Context*) context;
-    return ctx->errorMsg;
 }
 
 void mxSetMasterVolume(MxContext* context, float volume)
@@ -148,7 +142,7 @@ MxResult mxCreateBuffer(MxContext* context, const uint8_t* data, const size_t le
     uint8_t* bufferData = malloc(length);
     if (!bufferData)
     {
-        ctx->errorMsg = "Could not allocate buffer data.";
+        mxSetErrorString("Could not allocate buffer data.");
         return MX_RESULT_OUT_OF_MEMORY;
     }
 
@@ -162,7 +156,7 @@ MxResult mxCreateBuffer(MxContext* context, const uint8_t* data, const size_t le
 
     if (!VectorAppend(buffers, &buf))
     {
-        ctx->errorMsg = "Buffers vector ran out of space. This is likely a bug.";
+        mxSetErrorString("Buffers vector ran out of space. This is likely a bug.");
         return MX_RESULT_OUT_OF_MEMORY;
     }
 
@@ -203,7 +197,7 @@ MxResult mxCreateSource(MxContext* context, const MxSourceInfo* info, MxSource* 
 
     if (info->format.channels > 2)
     {
-        ctx->errorMsg = "Maximum 2 channels allowed for a source.";
+        mxSetErrorString("Maximum 2 channels allowed for a source.");
         return MX_RESULT_INVALID_NUM_CHANNELS;
     }
 
@@ -231,7 +225,7 @@ MxResult mxCreateSource(MxContext* context, const MxSourceInfo* info, MxSource* 
 
     if (!VectorAppend(&ctx->sources, &src))
     {
-        ctx->errorMsg = "Sources vector ran out of space. This is likely a bug.";
+        mxSetErrorString("Sources vector ran out of space. This is likely a bug.");
         return MX_RESULT_OUT_OF_MEMORY;
     }
 
@@ -252,7 +246,7 @@ MxResult mxSourceQueueBuffer(MxContext* context, MxSource source, MxBuffer buffe
 
     if (buffer.id >= ctx->buffers.length)
     {
-        ctx->errorMsg = "An invalid buffer was provided.";
+        mxSetErrorString("An invalid buffer was provided.");
         return MX_RESULT_INVALID_BUFFER;
     }
 
@@ -299,7 +293,7 @@ MxResult mxSourcePlay(MxContext* context, MxSource source)
 
     if (!src->queue)
     {
-        ctx->errorMsg = "Nothing in the source queue. Cannot play.";
+        mxSetErrorString("Nothing in the source queue. Cannot play.");
         return MX_RESULT_SOURCE_QUEUE_EMPTY;
     }
 

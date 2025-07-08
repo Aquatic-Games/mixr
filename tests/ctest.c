@@ -8,7 +8,7 @@
 #define MX_CHECK_ERROR(Operation) {\
     MxResult res = Operation;\
     if (res != MX_RESULT_OK) {\
-        printf("Operation %s failed: %s", #Operation, mxGetLastErrorString(context));\
+        printf("Operation %s failed: %s", #Operation, mxGetLastErrorString());\
         return 1;\
     }\
 }
@@ -33,7 +33,7 @@ int main(int argc, char** argv)
     };
 
     MxDevice* device;
-    mxCreateDevice(&devInfo, &device);
+    MX_CHECK_ERROR(mxCreateDevice(&devInfo, &device));
     MxContext* context = mxDeviceGetContext(device);
     //mxSetMasterVolume(context, 0.25f);
 
@@ -59,7 +59,7 @@ int main(int argc, char** argv)
     printf("Creating source.\n");
     MX_CHECK_ERROR(mxCreateSource(context, &srcInfo, &source));
     MX_CHECK_ERROR(mxSourceQueueBuffer(context, source, buffer));
-    mxSourceSetSpeed(context, source, 1.0);
+    mxSourceSetSpeed(context, source, 0.5);
     mxSourceSetVolume(context, source, 1.0f);
     mxSourcePlay(context, source);
 

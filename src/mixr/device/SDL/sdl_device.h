@@ -9,6 +9,6 @@ typedef struct
     SDL_AudioDeviceID id;
 } SDLDevice;
 
-DeviceImpl* mxSDLCreateDevice(const MxDeviceInfo *info);
+MxResult mxSDLCreateDevice(const MxDeviceInfo *info, DeviceImpl **impl);
 
 #endif

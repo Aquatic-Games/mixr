@@ -7,9 +7,10 @@
 
 MxResult mxCreateDevice(const MxDeviceInfo* info, MxDevice** device)
 {
-    DeviceImpl* dev = mxSDLCreateDevice(info);
-    *device = (MxDevice*) dev;
-    return MX_RESULT_OK;
+    DeviceImpl* impl;
+    const MxResult result = mxSDLCreateDevice(info, &impl);
+    *device = (MxDevice*) impl;
+    return result;
 }
 
 void mxDestroyDevice(MxDevice* device)
