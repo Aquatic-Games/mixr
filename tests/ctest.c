@@ -20,6 +20,12 @@ void Callback(void* userData, Uint8* stream, int length)
 
 int main(int argc, char** argv)
 {
+    if (argc < 2)
+    {
+        printf("Invalid number of arguments. Expected 1.\n");
+        return 1;
+    }
+
     if (SDL_Init(SDL_INIT_AUDIO) < 0)
     {
         printf("Failed to initialize SDL: %s", SDL_GetError());
@@ -34,6 +40,7 @@ int main(int argc, char** argv)
     MxContext* context;
     printf("Creating context.\n");
     MX_CHECK_ERROR(mxCreateContext(&ctxInfo, &context));
+    //mxSetMasterVolume(context, 0.25f);
 
     SDL_AudioSpec spec =
     {
@@ -48,7 +55,7 @@ int main(int argc, char** argv)
     SDL_AudioDeviceID device = SDL_OpenAudioDevice(NULL, 0, &spec, NULL, 0);
     SDL_PauseAudioDevice(device, 0);
 
-    FILE* file = fopen("/home/aqua/Music/TESTFILES/MakeNoSound-16bitshort.raw", "rb");
+    FILE* file = fopen(argv[1], "rb");
     fseek(file, 0, SEEK_END);
     size_t length = ftell(file);
     rewind(file);
@@ -70,7 +77,7 @@ int main(int argc, char** argv)
     printf("Creating source.\n");
     MX_CHECK_ERROR(mxCreateSource(context, &srcInfo, &source));
     MX_CHECK_ERROR(mxSourceQueueBuffer(context, source, buffer));
-    mxSourceSetSpeed(context, source, 1.0);
+    mxSourceSetSpeed(context, source, 1.3);
     mxSourceSetVolume(context, source, 1.0f);
     mxSourcePlay(context, source);
 

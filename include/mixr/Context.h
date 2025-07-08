@@ -45,6 +45,8 @@ extern "C" {
     MxResult mxCreateContext(const MxContextInfo *info, MxContext **context);
     void mxDestroyContext(MxContext *context);
     const char* mxGetLastErrorString(MxContext *context);
+    void mxSetMasterVolume(MxContext *context, float volume);
+    float mxGetMasterVolume(MxContext *context);
 
     MxResult mxCreateBuffer(MxContext *context, const uint8_t* data, size_t length, MxBuffer *buffer);
     MxResult mxDestroyBuffer(MxContext *context, MxBuffer buffer);
@@ -58,7 +60,9 @@ extern "C" {
     MxResult mxSourceStop(MxContext *context, MxSource source);
     MxResult mxSourceGetState(MxContext *context, MxSource source, MxSourceState *state);
     MxResult mxSourceSetVolume(MxContext *context, MxSource source, float volume);
+    MxResult mxSourceGetVolume(MxContext *context, MxSource source, float *volume);
     MxResult mxSourceSetSpeed(MxContext *context, MxSource source, double speed);
+    MxResult mxSourceGetSpeed(MxContext *context, MxSource source, double *speed);
 
     void mxMixInterleavedStereo(MxContext *context, float* buffer, size_t length);
 

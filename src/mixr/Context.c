@@ -68,6 +68,7 @@ typedef struct
 {
     uint32_t sampleRate;
     const char* errorMsg;
+    float masterVolume;
 
     Vector buffers;
     Vector sources;
@@ -100,6 +101,7 @@ MxResult mxCreateContext(const MxContextInfo* info, MxContext** context)
     Context* ctx = malloc(sizeof(Context));
     ctx->sampleRate = info->sampleRate;
     ctx->errorMsg = NULL;
+    ctx->masterVolume = 1.0f;
     ctx->buffers = VectorCreate(sizeof(Buffer), 0);
     ctx->sources = VectorCreate(sizeof(Source), 0);
     pthread_mutex_init(&ctx->mutex, NULL);
@@ -124,6 +126,18 @@ const char* mxGetLastErrorString(MxContext *context)
 {
     const Context* ctx = (Context*) context;
     return ctx->errorMsg;
+}
+
+void mxSetMasterVolume(MxContext* context, float volume)
+{
+    Context* ctx = (Context*) context;
+    ctx->masterVolume = volume;
+}
+
+float mxGetMasterVolume(MxContext* context)
+{
+    Context* ctx = (Context*) context;
+    return ctx->masterVolume;
 }
 
 MxResult mxCreateBuffer(MxContext* context, const uint8_t* data, const size_t length, MxBuffer* buffer)
@@ -332,6 +346,15 @@ MxResult mxSourceSetVolume(MxContext* context, MxSource source, float volume)
     Context* ctx = (Context*) context;
     GET_SOURCE(ctx, src, source);
     src->volume = volume;
+    return MX_RESULT_OK;
+}
+
+MxResult mxSourceGetVolume(MxContext* context, MxSource source, float* volume)
+{
+    Context* ctx = (Context*) context;
+    GET_SOURCE(ctx, src, source);
+    *volume = src->volume;
+    return MX_RESULT_OK;
 }
 
 MxResult mxSourceSetSpeed(MxContext* context, MxSource source, double speed)
@@ -339,6 +362,15 @@ MxResult mxSourceSetSpeed(MxContext* context, MxSource source, double speed)
     Context* ctx = (Context*) context;
     GET_SOURCE(ctx, src, source);
     src->speed = speed;
+    return MX_RESULT_OK;
+}
+
+MxResult mxSourceGetSpeed(MxContext* context, MxSource source, double* speed)
+{
+    Context* ctx = (Context*) context;
+    GET_SOURCE(ctx, src, source);
+    *speed = src->speed;
+    return MX_RESULT_OK;
 }
 
 static float GetSample(const uint8_t* buffer, const size_t pos, const MxDataType type)
@@ -433,8 +465,8 @@ void mxMixInterleavedStereo(MxContext *context, float* buffer, const size_t leng
                     const float lerpL = LERP(lastSampleL, sampleL, finePos);
                     const float lerpR = LERP(lastSampleR, sampleR, finePos);
 
-                    const float finalL = lerpL * source->volume;
-                    const float finalR = lerpR * source->volume;
+                    const float finalL = lerpL * source->volume * ctx->masterVolume;
+                    const float finalR = lerpR * source->volume * ctx->masterVolume;
 
                     buffer[i + 0] += CLAMP(finalL, -1, 1);
                     buffer[i + 1] += CLAMP(finalR, -1, 1);
