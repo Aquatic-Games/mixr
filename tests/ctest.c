@@ -1,4 +1,5 @@
 #include <mixr/mixr.h>
+#include <mixr/Device.h>
 #include <SDL2/SDL.h>
 #include <unistd.h>
 
@@ -26,34 +27,15 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    if (SDL_Init(SDL_INIT_AUDIO) < 0)
-    {
-        printf("Failed to initialize SDL: %s", SDL_GetError());
-        return 1;
-    }
-
-    const MxContextInfo ctxInfo =
+    const MxDeviceInfo devInfo =
     {
         .sampleRate = 48000
     };
 
-    MxContext* context;
-    printf("Creating context.\n");
-    MX_CHECK_ERROR(mxCreateContext(&ctxInfo, &context));
+    MxDevice* device;
+    mxCreateDevice(&devInfo, &device);
+    MxContext* context = mxDeviceGetContext(device);
     //mxSetMasterVolume(context, 0.25f);
-
-    SDL_AudioSpec spec =
-    {
-        .freq = ctxInfo.sampleRate,
-        .format = AUDIO_F32,
-        .channels = 2,
-        .samples = 512,
-        .callback = Callback,
-        .userdata = context
-    };
-
-    SDL_AudioDeviceID device = SDL_OpenAudioDevice(NULL, 0, &spec, NULL, 0);
-    SDL_PauseAudioDevice(device, 0);
 
     FILE* file = fopen(argv[1], "rb");
     fseek(file, 0, SEEK_END);
@@ -77,7 +59,7 @@ int main(int argc, char** argv)
     printf("Creating source.\n");
     MX_CHECK_ERROR(mxCreateSource(context, &srcInfo, &source));
     MX_CHECK_ERROR(mxSourceQueueBuffer(context, source, buffer));
-    mxSourceSetSpeed(context, source, 1.3);
+    mxSourceSetSpeed(context, source, 1.0);
     mxSourceSetVolume(context, source, 1.0f);
     mxSourcePlay(context, source);
 
@@ -90,10 +72,7 @@ int main(int argc, char** argv)
         MX_CHECK_ERROR(mxSourceGetState(context, source, &state));
     }
 
-    SDL_CloseAudioDevice(device);
-
-    printf("Destroying context.\n");
-    mxDestroyContext(context);
+    mxDestroyDevice(device);
 
     return 0;
 }

@@ -15,7 +15,7 @@ extern "C" {
 
     typedef struct MxDevice MxDevice;
 
-    MxResult mxCreateDevice(const MxDeviceInfo *info, MxDevice *device);
+    MxResult mxCreateDevice(const MxDeviceInfo *info, MxDevice **device);
     void mxDestroyDevice(MxDevice *device);
     MxContext *mxDeviceGetContext(MxDevice *device);
 

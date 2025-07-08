@@ -11,7 +11,10 @@ add_library(mixr SHARED
         src/mixr/utils/vector.c
         src/mixr/utils/vector.h
         include/mixr/Device.h
-        src/mixr/device/impl_device.h
+        src/mixr/device/deviceimpl.h
+        src/mixr/device/device.c
+        src/mixr/device/SDL/sdl_device.h
+        src/mixr/device/SDL/sdl_device.c
 )
 
 target_include_directories(mixr PUBLIC include)
