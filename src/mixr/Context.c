@@ -3,16 +3,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
 
 #include "utils/vector.h"
 
-#define LERP(A, B, Amount) Amount * (B - A) + A;
+#define LERP(A, B, Amount) Amount * (B - A) + A
+#define CLAMP(Value, Min, Max) Value < Min ? Min : Value > Max ? Max : Value
 
 #define GET_SOURCE(Context, Name, Src) if (Src.id >= Context->sources.length) {\
         ctx->errorMsg = "An invalid source was provided.";\
         return MX_RESULT_INVALID_SOURCE;\
     }\
     Source* Name = VectorGet(&Context->sources, Src.id);
+
+#define MAX(A, B) (A > B ? A : B)
 
 typedef struct
 {
@@ -67,6 +71,8 @@ typedef struct
 
     Vector buffers;
     Vector sources;
+
+    pthread_mutex_t mutex;
 } Context;
 
 void ClearSourceQueue(Source* source)
@@ -96,6 +102,7 @@ MxResult mxCreateContext(const MxContextInfo* info, MxContext** context)
     ctx->errorMsg = NULL;
     ctx->buffers = VectorCreate(sizeof(Buffer), 0);
     ctx->sources = VectorCreate(sizeof(Source), 0);
+    pthread_mutex_init(&ctx->mutex, NULL);
 
     *context = (MxContext*) ctx;
     return MX_RESULT_OK;
@@ -104,8 +111,13 @@ MxResult mxCreateContext(const MxContextInfo* info, MxContext** context)
 void mxDestroyContext(MxContext* context)
 {
     Context* ctx = (Context*) context;
+    pthread_mutex_t mutex = ctx->mutex;
+    pthread_mutex_lock(&mutex);
+    VectorDestroy(&ctx->sources);
     VectorDestroy(&ctx->buffers);
     free(ctx);
+    pthread_mutex_unlock(&mutex);
+    pthread_mutex_destroy(&mutex);
 }
 
 const char* mxGetLastErrorString(MxContext *context)
@@ -352,6 +364,8 @@ static float GetSample(const uint8_t* buffer, const size_t pos, const MxDataType
 void mxMixInterleavedStereo(MxContext *context, float* buffer, const size_t length)
 {
     Context* ctx = (Context*) context;
+    pthread_mutex_lock(&ctx->mutex);
+
     const Vector* buffers = &ctx->buffers;
     const Vector* sources = &ctx->sources;
 
@@ -391,46 +405,69 @@ void mxMixInterleavedStereo(MxContext *context, float* buffer, const size_t leng
             const Buffer* buf = VectorGet(buffers, source->queue->buffer);
             const uint8_t* data = buf->data;
 
-            size_t position = source->position * source->sampleStride;
-
-            const float sampleL = GetSample(data, position, dataType);
-            const float sampleR = GetSample(data, position + source->channelStride, dataType);
-
-            const float lastSampleL = source->lastSampleL;
-            const float lastSampleR = source->lastSampleR;
-            const double finePos = source->finePosition;
-
-            const float lerpL = LERP(lastSampleL, sampleL, finePos);
-            const float lerpR = LERP(lastSampleR, sampleR, finePos);
-
-            buffer[i + 0] += lerpL * source->volume;
-            buffer[i + 1] += lerpR * source->volume;
-
-            source->finePosition += source->speedCorrection * source->speed;
-            const size_t intPos = (size_t) source->finePosition;
-            source->position += intPos;
-            source->finePosition -= (double) intPos;
-
-            if (source->position != source->lastPosition)
+            // TODO: I don't like this solution at all.
+            // Super Sampling reduces aliasing, but it's not overly efficient.
+            // At speeds above 1, linear interpolation can't be used and so we end up using nearest-neighbour interpolation
+            // again. As such at speeds such as 1.3, this can produce aliasing.
+            // Here, we perform "super sampling". So at a speed of 1.2 for example, it will sample at double the sample
+            // rate, and play at half the speed. Then, we only use half of the samples, since downscaling by a factor
+            // of 2 will not result in aliasing.
+            // This is quite inefficient though, and I need to find something better.
+            double sourceSpeed = source->speedCorrection * source->speed;
+            const int intSourceSpeed = (int) sourceSpeed;
+            const int sampleRateMultiplier = MAX(intSourceSpeed, 1) << 1;
+            sourceSpeed /= sampleRateMultiplier;
+            for (int c = 0; c < sampleRateMultiplier; c++)
             {
-                source->lastPosition = source->position;
-                source->lastSampleL = sampleL;
-                source->lastSampleR = sampleR;
-            }
+                const size_t position = source->position * source->sampleStride;
 
-            if (source->position >= source->lengthInSamples)
-            {
-                if (source->queue->next)
+                const float sampleL = GetSample(data, position, dataType);
+                const float sampleR = GetSample(data, position + source->channelStride, dataType);
+
+                if (c == 0)
                 {
-                    SourceQueueNode* currentNode = source->queue;
-                    currentNode->next->prev = currentNode->prev;
-                    source->queue = source->queue->next;
-                    free(currentNode);
-                    source->position = 0;
+                    const float lastSampleL = source->lastSampleL;
+                    const float lastSampleR = source->lastSampleR;
+                    const double finePos = source->finePosition;
+
+                    const float lerpL = LERP(lastSampleL, sampleL, finePos);
+                    const float lerpR = LERP(lastSampleR, sampleR, finePos);
+
+                    const float finalL = lerpL * source->volume;
+                    const float finalR = lerpR * source->volume;
+
+                    buffer[i + 0] += CLAMP(finalL, -1, 1);
+                    buffer[i + 1] += CLAMP(finalR, -1, 1);
                 }
-                else
-                    StopSource(source);
+
+                source->finePosition += sourceSpeed;
+                const size_t intPos = (size_t) source->finePosition;
+                source->position += intPos;
+                source->finePosition -= (double) intPos;
+
+                if (source->position != source->lastPosition)
+                {
+                    source->lastPosition = source->position;
+                    source->lastSampleL = sampleL;
+                    source->lastSampleR = sampleR;
+                }
+
+                if (source->position >= source->lengthInSamples)
+                {
+                    if (source->queue->next)
+                    {
+                        SourceQueueNode* currentNode = source->queue;
+                        currentNode->next->prev = currentNode->prev;
+                        source->queue = source->queue->next;
+                        free(currentNode);
+                        source->position = 0;
+                    }
+                    else
+                        StopSource(source);
+                }
             }
         }
     }
+
+    pthread_mutex_unlock(&ctx->mutex);
 }

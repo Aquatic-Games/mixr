@@ -48,7 +48,7 @@ int main(int argc, char** argv)
     SDL_AudioDeviceID device = SDL_OpenAudioDevice(NULL, 0, &spec, NULL, 0);
     SDL_PauseAudioDevice(device, 0);
 
-    FILE* file = fopen("/home/aqua/Music/TESTFILES/house2-i16.raw", "rb");
+    FILE* file = fopen("/home/aqua/Music/TESTFILES/MakeNoSound-16bitshort.raw", "rb");
     fseek(file, 0, SEEK_END);
     size_t length = ftell(file);
     rewind(file);
@@ -61,16 +61,17 @@ int main(int argc, char** argv)
     MX_CHECK_ERROR(mxCreateBuffer(context, fbuffer, length, &buffer));
     free(fbuffer);
 
-    MxSourceInfo srcInfo =
+    const MxSourceInfo srcInfo =
     {
-        .format = { .dataType = MX_DATA_TYPE_I16, .sampleRate = 48000, .channels = 2 }
+        .format = { .dataType = MX_DATA_TYPE_I16, .sampleRate = 44100, .channels = 2 }
     };
 
     MxSource source;
     printf("Creating source.\n");
     MX_CHECK_ERROR(mxCreateSource(context, &srcInfo, &source));
     MX_CHECK_ERROR(mxSourceQueueBuffer(context, source, buffer));
-    mxSourceSetSpeed(context, source, 8.0);
+    mxSourceSetSpeed(context, source, 1.0);
+    mxSourceSetVolume(context, source, 1.0f);
     mxSourcePlay(context, source);
 
     MxSourceState state;
