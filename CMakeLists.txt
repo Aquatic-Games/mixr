@@ -9,7 +9,10 @@ add_library(mixr SHARED
         include/mixr/Common.h
         src/mixr/Context.c
         src/mixr/utils/vector.c
-        src/mixr/utils/vector.h)
+        src/mixr/utils/vector.h
+        include/mixr/Device.h
+        src/mixr/device/impl_device.h
+)
 
 target_include_directories(mixr PUBLIC include)
 
