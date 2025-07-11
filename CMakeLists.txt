@@ -13,8 +13,8 @@ add_library(mixr SHARED
         include/mixr/Device.h
         src/mixr/device/deviceimpl.h
         src/mixr/device/device.c
-        src/mixr/device/SDL/sdl_device.h
-        src/mixr/device/SDL/sdl_device.c
+        #src/mixr/device/SDL/sdl_device.h
+        #src/mixr/device/SDL/sdl_device.c
         src/mixr/internal.c
         src/mixr/internal.h
         src/mixr/device/ALSA/alsa_device.c
@@ -22,6 +22,8 @@ add_library(mixr SHARED
 )
 
 target_include_directories(mixr PUBLIC include)
+
+target_link_libraries(mixr PUBLIC asound)
 
 add_executable(mixrtest tests/ctest.c)
 target_link_libraries(mixrtest PUBLIC mixr)

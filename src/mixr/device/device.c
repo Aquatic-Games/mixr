@@ -2,13 +2,24 @@
 
 #include "mixr/Device.h"
 #include "deviceimpl.h"
+#include "../internal.h"
 
-#include "SDL/sdl_device.h"
+#if defined(__linux__)
+#include "ALSA/alsa_device.h"
+#endif
 
 MxResult mxCreateDevice(const MxDeviceInfo* info, MxDevice** device)
 {
     DeviceImpl* impl;
-    const MxResult result = mxSDLCreateDevice(info, &impl);
+    MxResult result = MX_RESULT_UNKNOWN_ERROR;
+
+#if defined(_WIN32)
+    mxSetErrorString("Windows device not yet implemented.");
+    return MX_RESULT_GENERAL_FAILURE;
+#elif defined(__linux__)
+    result = mxALSACreateDevice(info, &impl);
+#endif
+
     *device = (MxDevice*) impl;
     return result;
 }
