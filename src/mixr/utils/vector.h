@@ -12,10 +12,10 @@ typedef struct
     size_t elemSize;
 } Vector;
 
-Vector VectorCreate(size_t elemSize, size_t initialCapacity);
-void VectorDestroy(Vector *vector);
-bool VectorAppend(Vector *vector, const void *element);
-static void* VectorGet(const Vector *vector, size_t index)
+Vector mxVectorCreate(size_t elemSize, size_t initialCapacity);
+void mxVectorDestroy(Vector *vector);
+bool mxVectorAppend(Vector *vector, const void *element);
+static void* mxVectorGet(const Vector *vector, size_t index)
 {
     return vector->data + (index * vector->elemSize);
 }

@@ -1,7 +1,7 @@
 #ifndef IMPL_DEVICE_H
 #define IMPL_DEVICE_H
 
-#include "mixr/Device.h"
+#include "mixr/device.h"
 
 typedef struct
 {

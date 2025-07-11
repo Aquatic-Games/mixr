@@ -1,6 +1,6 @@
 #include <stdlib.h>
 
-#include "mixr/Device.h"
+#include "mixr/device.h"
 #include "deviceimpl.h"
 #include "../internal.h"
 

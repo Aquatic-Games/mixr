@@ -1,8 +1,8 @@
 #ifndef MIXR_DEVICE_H
 #define MIXR_DEVICE_H
 
-#include "Common.h"
-#include "Context.h"
+#include "common.h"
+#include "context.h"
 
 #ifdef __cplusplus
 extern "C" {

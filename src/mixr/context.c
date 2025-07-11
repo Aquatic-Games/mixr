@@ -1,4 +1,4 @@
-#include "mixr/Context.h"
+#include "mixr/context.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,7 +15,7 @@
         mxSetErrorString("An invalid source was provided.");\
         return MX_RESULT_INVALID_SOURCE;\
     }\
-    Source* Name = VectorGet(&Context->sources, Src.id);
+    Source* Name = mxVectorGet(&Context->sources, Src.id);
 
 #define MAX(A, B) (A > B ? A : B)
 
@@ -102,8 +102,8 @@ MxResult mxCreateContext(const MxContextInfo* info, MxContext** context)
     ctx->sampleRate = info->sampleRate;
     mxSetErrorString(NULL);
     ctx->masterVolume = 1.0f;
-    ctx->buffers = VectorCreate(sizeof(Buffer), 0);
-    ctx->sources = VectorCreate(sizeof(Source), 0);
+    ctx->buffers = mxVectorCreate(sizeof(Buffer), 0);
+    ctx->sources = mxVectorCreate(sizeof(Source), 0);
     pthread_mutex_init(&ctx->mutex, NULL);
 
     *context = (MxContext*) ctx;
@@ -115,8 +115,8 @@ void mxDestroyContext(MxContext* context)
     Context* ctx = (Context*) context;
     pthread_mutex_t mutex = ctx->mutex;
     pthread_mutex_lock(&mutex);
-    VectorDestroy(&ctx->sources);
-    VectorDestroy(&ctx->buffers);
+    mxVectorDestroy(&ctx->sources);
+    mxVectorDestroy(&ctx->buffers);
     free(ctx);
     pthread_mutex_unlock(&mutex);
     pthread_mutex_destroy(&mutex);
@@ -154,7 +154,7 @@ MxResult mxCreateBuffer(MxContext* context, const uint8_t* data, const size_t le
 
     const size_t currentId = buffers->length;
 
-    if (!VectorAppend(buffers, &buf))
+    if (!mxVectorAppend(buffers, &buf))
     {
         mxSetErrorString("Buffers vector ran out of space. This is likely a bug.");
         return MX_RESULT_OUT_OF_MEMORY;
@@ -223,7 +223,7 @@ MxResult mxCreateSource(MxContext* context, const MxSourceInfo* info, MxSource* 
 
     size_t currentId = ctx->sources.length;
 
-    if (!VectorAppend(&ctx->sources, &src))
+    if (!mxVectorAppend(&ctx->sources, &src))
     {
         mxSetErrorString("Sources vector ran out of space. This is likely a bug.");
         return MX_RESULT_OUT_OF_MEMORY;
@@ -250,7 +250,7 @@ MxResult mxSourceQueueBuffer(MxContext* context, MxSource source, MxBuffer buffe
         return MX_RESULT_INVALID_BUFFER;
     }
 
-    Buffer* buf = VectorGet(&ctx->buffers, buffer.id);
+    Buffer* buf = mxVectorGet(&ctx->buffers, buffer.id);
 
     SourceQueueNode* node = malloc(sizeof(SourceQueueNode));
     node->buffer = buffer.id;
@@ -422,13 +422,13 @@ void mxMixInterleavedStereo(MxContext *context, float* buffer, const size_t leng
 
         for (size_t s = 0; s < sources->length; s++)
         {
-            Source* source = VectorGet(sources, s);
+            Source* source = mxVectorGet(sources, s);
 
             if (!source->playing)
                 continue;
 
             const MxDataType dataType = source->format.dataType;
-            const Buffer* buf = VectorGet(buffers, source->queue->buffer);
+            const Buffer* buf = mxVectorGet(buffers, source->queue->buffer);
             const uint8_t* data = buf->data;
 
             // TODO: I don't like this solution at all.

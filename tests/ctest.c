@@ -1,5 +1,5 @@
 #include <mixr/mixr.h>
-#include <mixr/Device.h>
+#include <mixr/device.h>
 #include <SDL2/SDL.h>
 #include <unistd.h>
 

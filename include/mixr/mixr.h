@@ -1,7 +1,7 @@
 #ifndef MIXR_H
 #define MIXR_H
 
-#include "Common.h"
-#include "Context.h"
+#include "common.h"
+#include "context.h"
 
 #endif

@@ -5,12 +5,12 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 
 add_library(mixr SHARED
-        include/mixr/Context.h
-        include/mixr/Common.h
-        src/mixr/Context.c
+        include/mixr/context.h
+        include/mixr/common.h
+        src/mixr/context.c
         src/mixr/utils/vector.c
         src/mixr/utils/vector.h
-        include/mixr/Device.h
+        include/mixr/device.h
         src/mixr/device/deviceimpl.h
         src/mixr/device/device.c
         #src/mixr/device/SDL/sdl_device.h

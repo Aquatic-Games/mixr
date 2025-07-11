@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-Vector VectorCreate(const size_t elemSize, const size_t initialCapacity)
+Vector mxVectorCreate(const size_t elemSize, const size_t initialCapacity)
 {
     Vector vec;
     vec.length = 0;
@@ -16,13 +16,13 @@ Vector VectorCreate(const size_t elemSize, const size_t initialCapacity)
     return vec;
 }
 
-void VectorDestroy(Vector* vector)
+void mxVectorDestroy(Vector* vector)
 {
     free(vector->data);
     vector->data = NULL;
 }
 
-bool VectorAppend(Vector* vector, const void* element)
+bool mxVectorAppend(Vector* vector, const void* element)
 {
     if (vector->data == NULL)
     {
