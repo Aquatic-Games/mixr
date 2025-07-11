@@ -13,12 +13,6 @@
     }\
 }
 
-void Callback(void* userData, Uint8* stream, int length)
-{
-    MxContext* context = (MxContext*) userData;
-    mxMixInterleavedStereo(context, (float*) stream, length / 4);
-}
-
 int main(int argc, char** argv)
 {
     if (argc < 2)

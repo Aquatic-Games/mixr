@@ -7,8 +7,6 @@
 
 #include "Common.h"
 
-#define MIXR_C_API
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -42,28 +40,28 @@ extern "C" {
         size_t id;
     } MxSource;
 
-    MxResult mxCreateContext(const MxContextInfo *info, MxContext **context);
-    void mxDestroyContext(MxContext *context);
-    void mxSetMasterVolume(MxContext *context, float volume);
-    float mxGetMasterVolume(MxContext *context);
+    MIXR_C_API MxResult mxCreateContext(const MxContextInfo *info, MxContext **context);
+    MIXR_C_API void mxDestroyContext(MxContext *context);
+    MIXR_C_API void mxSetMasterVolume(MxContext *context, float volume);
+    MIXR_C_API float mxGetMasterVolume(MxContext *context);
 
-    MxResult mxCreateBuffer(MxContext *context, const uint8_t* data, size_t length, MxBuffer *buffer);
-    MxResult mxDestroyBuffer(MxContext *context, MxBuffer buffer);
+    MIXR_C_API MxResult mxCreateBuffer(MxContext *context, const uint8_t* data, size_t length, MxBuffer *buffer);
+    MIXR_C_API MxResult mxDestroyBuffer(MxContext *context, MxBuffer buffer);
 
-    MxResult mxCreateSource(MxContext *context, const MxSourceInfo* info, MxSource *source);
-    MxResult mxDestroySource(MxContext *context, MxSource source);
-    MxResult mxSourceQueueBuffer(MxContext *context, MxSource source, MxBuffer buffer);
-    MxResult mxSourceClearQueue(MxContext *context, MxSource source);
-    MxResult mxSourcePlay(MxContext *context, MxSource source);
-    MxResult mxSourcePause(MxContext *context, MxSource source);
-    MxResult mxSourceStop(MxContext *context, MxSource source);
-    MxResult mxSourceGetState(MxContext *context, MxSource source, MxSourceState *state);
-    MxResult mxSourceSetVolume(MxContext *context, MxSource source, float volume);
-    MxResult mxSourceGetVolume(MxContext *context, MxSource source, float *volume);
-    MxResult mxSourceSetSpeed(MxContext *context, MxSource source, double speed);
-    MxResult mxSourceGetSpeed(MxContext *context, MxSource source, double *speed);
+    MIXR_C_API MxResult mxCreateSource(MxContext *context, const MxSourceInfo* info, MxSource *source);
+    MIXR_C_API MxResult mxDestroySource(MxContext *context, MxSource source);
+    MIXR_C_API MxResult mxSourceQueueBuffer(MxContext *context, MxSource source, MxBuffer buffer);
+    MIXR_C_API MxResult mxSourceClearQueue(MxContext *context, MxSource source);
+    MIXR_C_API MxResult mxSourcePlay(MxContext *context, MxSource source);
+    MIXR_C_API MxResult mxSourcePause(MxContext *context, MxSource source);
+    MIXR_C_API MxResult mxSourceStop(MxContext *context, MxSource source);
+    MIXR_C_API MxResult mxSourceGetState(MxContext *context, MxSource source, MxSourceState *state);
+    MIXR_C_API MxResult mxSourceSetVolume(MxContext *context, MxSource source, float volume);
+    MIXR_C_API MxResult mxSourceGetVolume(MxContext *context, MxSource source, float *volume);
+    MIXR_C_API MxResult mxSourceSetSpeed(MxContext *context, MxSource source, double speed);
+    MIXR_C_API MxResult mxSourceGetSpeed(MxContext *context, MxSource source, double *speed);
 
-    void mxMixInterleavedStereo(MxContext *context, float* buffer, size_t length);
+    MIXR_C_API void mxMixInterleavedStereo(MxContext *context, float* buffer, size_t length);
 
 #ifdef __cplusplus
 }

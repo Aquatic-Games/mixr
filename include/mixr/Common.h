@@ -3,6 +3,12 @@
 
 #include <stdint.h>
 
+#if defined(_WIN32)
+#define MIXR_C_API __declspec(dllexport)
+#else
+#define MIXR_C_API
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -35,7 +41,7 @@ typedef struct
     uint8_t channels;
 } MxAudioFormat;
 
-const char* mxGetLastErrorString();
+MIXR_C_API const char* mxGetLastErrorString();
 
 #ifdef __cplusplus
 }
