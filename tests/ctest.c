@@ -1,5 +1,7 @@
 #include <mixr/mixr.h>
 #include <mixr/device.h>
+#include <mixr/stream/stream.h>
+#include <mixr/stream/wav.h>
 #include <SDL2/SDL.h>
 #include <unistd.h>
 
@@ -31,22 +33,30 @@ int main(int argc, char** argv)
     MxContext* context = mxDeviceGetContext(device);
     //mxSetMasterVolume(context, 0.25f);
 
-    FILE* file = fopen(argv[1], "rb");
+    /*FILE* file = fopen(argv[1], "rb");
     fseek(file, 0, SEEK_END);
     size_t length = ftell(file);
     rewind(file);
     uint8_t* fbuffer = malloc(length * sizeof(uint8_t*));
     fread(fbuffer, length, 1, file);
-    fclose(file);
+    fclose(file);*/
+
+    MxStream* stream;
+    MX_CHECK_ERROR(mxStreamLoadWav(argv[1], &stream));
+
+    size_t bufSize;
+    mxStreamGetPCM(stream, NULL, &bufSize);
+    uint8_t* buf = malloc(bufSize);
+    mxStreamGetPCM(stream, buf, &bufSize);
 
     MxBuffer buffer;
     printf("Creating buffer.\n");
-    MX_CHECK_ERROR(mxCreateBuffer(context, fbuffer, length, &buffer));
-    free(fbuffer);
+    MX_CHECK_ERROR(mxCreateBuffer(context, buf, bufSize, &buffer));
 
     const MxSourceInfo srcInfo =
     {
-        .format = { .dataType = MX_DATA_TYPE_I16, .sampleRate = 44100, .channels = 2 }
+        //.format = { .dataType = MX_DATA_TYPE_I16, .sampleRate = 44100, .channels = 2 }
+        .format = mxStreamGetAudioFormat(stream)
     };
 
     MxSource source;

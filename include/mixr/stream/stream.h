@@ -14,10 +14,10 @@ extern "C" {
     MIXR_C_API void mxDestroyStream(MxStream *stream);
 
     MIXR_C_API MxAudioFormat mxStreamGetAudioFormat(MxStream *stream);
-    MIXR_C_API size_t mxStreamGetLength(MxStream *stream);
+    MIXR_C_API size_t mxStreamGetLengthInSamples(MxStream *stream);
 
-    MIXR_C_API void mxStreamGetBuffer(MxStream *stream, uint8_t *buffer, size_t length);
-    MIXR_C_API void mxStreamGetPCM(MxStream *stream, uint8_t *pcm);
+    MIXR_C_API size_t mxStreamGetBuffer(MxStream *stream, uint8_t *buffer, size_t length);
+    MIXR_C_API void mxStreamGetPCM(MxStream *stream, uint8_t *pcm, size_t *length);
 
 #ifdef __cplusplus
 }
