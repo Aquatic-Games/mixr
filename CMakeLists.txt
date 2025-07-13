@@ -4,6 +4,8 @@ project(mixr)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 
+option(MX_FLAC "Enable FLAC file loading." ON)
+
 add_library(mixr SHARED
         include/mixr/context.h
         include/mixr/common.h
@@ -23,11 +25,21 @@ add_library(mixr SHARED
         src/mixr/stream/stream.c
         src/mixr/stream/wav.c
         src/mixr/stream/stream_internal.h
+        src/mixr/stream/vorbis.c
+        src/mixr/stream/flac.c
+        src/mixr/stream/mp3.c
 )
 
 target_include_directories(mixr PUBLIC include)
 
 target_link_libraries(mixr PUBLIC asound)
+
+if (MX_FLAC)
+    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+    set(INSTALL_MANPAGES OFF CACHE BOOL "" FORCE)
+    add_subdirectory(lib/flac)
+    target_link_libraries(mixr PUBLIC FLAC::FLAC)
+endif()
 
 add_executable(mixrtest tests/ctest.c)
 target_link_libraries(mixrtest PUBLIC mixr)

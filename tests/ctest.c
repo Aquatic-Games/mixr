@@ -39,7 +39,8 @@ int main(int argc, char** argv)
     fclose(file);*/
 
     MxStream* stream;
-    MX_CHECK_ERROR(mxStreamLoadWav(argv[1], &stream));
+    //MX_CHECK_ERROR(mxStreamLoadWav(argv[1], &stream));
+    MX_CHECK_ERROR(mxStreamLoadFlac(argv[1], &stream));
 
     size_t bufSize;
     mxStreamGetPCM(stream, NULL, &bufSize);

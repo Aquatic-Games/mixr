@@ -12,6 +12,9 @@ extern "C" {
     typedef struct MxStream MxStream;
 
     MIXR_C_API MxResult mxStreamLoadWav(const char *path, MxStream **stream);
+    MIXR_C_API MxResult mxStreamLoadVorbis(const char *path, MxStream **stream);
+    MIXR_C_API MxResult mxStreamLoadFlac(const char* path, MxStream **stream);
+    MIXR_C_API MxResult mxStreamLoadMP3(const char* path, MxStream **stream);
 
     MIXR_C_API void mxDestroyStream(MxStream *stream);
 

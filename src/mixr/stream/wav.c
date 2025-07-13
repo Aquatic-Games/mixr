@@ -102,9 +102,9 @@ MxResult mxStreamLoadWav(const char* path, MxStream** stream)
 
                 switch (bitsPerSample)
                 {
-                    case 8:
-                        format.dataType = MX_DATA_TYPE_I8;
-                        break;
+                    //case 8:
+                    //    format.dataType = MX_DATA_TYPE_U8;
+                    //    break;
                     case 16:
                         format.dataType = MX_DATA_TYPE_I16;
                         break;
