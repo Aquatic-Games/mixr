@@ -47,6 +47,26 @@ typedef struct
 
 MIXR_C_API const char* mxGetLastErrorString();
 
+static MIXR_C_API uint8_t mxDataTypeToBits(const MxDataType type)
+{
+    switch (type)
+    {
+        case MX_DATA_TYPE_I8:
+            return 8;
+        case MX_DATA_TYPE_I16:
+            return 16;
+        case MX_DATA_TYPE_I32:
+            return 32;
+        case MX_DATA_TYPE_F32:
+            return 32;
+    }
+}
+
+static MIXR_C_API uint8_t mxDataTypeToBytes(const MxDataType type)
+{
+    return mxDataTypeToBits(type) / 8;
+}
+
 #ifdef __cplusplus
 }
 #endif

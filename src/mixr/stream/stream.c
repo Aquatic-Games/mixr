@@ -36,5 +36,5 @@ void mxStreamGetPCM(MxStream* stream, uint8_t* pcm, size_t* length)
         *length = size;
 
     if (pcm != NULL)
-        s->getBuffer(s->streamData, pcm, size);
+        s->getPCM(s->streamData, pcm);
 }

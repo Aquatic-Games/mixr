@@ -30,14 +30,6 @@ int main(int argc, char** argv)
     MxContext* context = mxDeviceGetContext(device);
     //mxSetMasterVolume(context, 0.25f);
 
-    /*FILE* file = fopen(argv[1], "rb");
-    fseek(file, 0, SEEK_END);
-    size_t length = ftell(file);
-    rewind(file);
-    uint8_t* fbuffer = malloc(length * sizeof(uint8_t*));
-    fread(fbuffer, length, 1, file);
-    fclose(file);*/
-
     MxStream* stream;
     //MX_CHECK_ERROR(mxStreamLoadWav(argv[1], &stream));
     MX_CHECK_ERROR(mxStreamLoadFlac(argv[1], &stream));
@@ -53,9 +45,10 @@ int main(int argc, char** argv)
 
     const MxSourceInfo srcInfo =
     {
-        //.format = { .dataType = MX_DATA_TYPE_I16, .sampleRate = 44100, .channels = 2 }
         .format = mxStreamGetAudioFormat(stream)
     };
+
+    mxDestroyStream(stream);
 
     MxSource source;
     printf("Creating source.\n");
@@ -68,8 +61,12 @@ int main(int argc, char** argv)
     MxSourceState state;
     MX_CHECK_ERROR(mxSourceGetState(context, source, &state));
 
+    uint32_t secs = 0;
+
     while (state == MX_SOURCE_STATE_PLAYING)
     {
+        printf("%d\n", secs);
+        secs++;
         sleep(1);
         MX_CHECK_ERROR(mxSourceGetState(context, source, &state));
     }

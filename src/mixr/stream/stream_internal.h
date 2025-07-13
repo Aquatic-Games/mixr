@@ -11,6 +11,8 @@ typedef struct
     void (*destroyStream)(void* stream);
     size_t (*getBuffer)(void* stream, uint8_t* buffer, size_t length);
     size_t (*getDataSize)(void* stream);
+
+    void (*getPCM)(void* stream, uint8_t* buffer);
 } Stream;
 
 #endif

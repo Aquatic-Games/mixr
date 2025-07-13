@@ -37,13 +37,21 @@ size_t mxWAVGetDataSize(void* stream)
 
 size_t mxWAVGetBuffer(void* stream, uint8_t* buffer, size_t length)
 {
-    Wav* wav = (Wav*) stream;
+    const Wav* wav = (Wav*) stream;
 
     const size_t currentPos = ftell(wav->wav);
     if (currentPos >= wav->dataStartPos + wav->dataSize)
         return 0;
 
     return fread(buffer, length, 1, wav->wav);
+}
+
+void mxWAVGetPCM(void* stream, uint8_t* buffer)
+{
+    const Wav* wav = (Wav*) stream;
+    fseek(wav->wav, wav->dataStartPos, SEEK_SET);
+    fread(buffer, wav->dataSize, 1, wav->wav);
+    fseek(wav->wav, wav->dataStartPos, SEEK_SET);
 }
 
 MxResult mxStreamLoadWav(const char* path, MxStream** stream)
@@ -161,6 +169,7 @@ MxResult mxStreamLoadWav(const char* path, MxStream** stream)
     s->destroyStream = mxWAVDestroyStream;
     s->getDataSize = mxWAVGetDataSize;
     s->getBuffer = mxWAVGetBuffer;
+    s->getPCM = mxWAVGetPCM;
 
     *stream = (MxStream*) s;
 
