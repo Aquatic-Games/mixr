@@ -1,7 +1,4 @@
 #include <mixr/mixr.h>
-#include <mixr/device.h>
-#include <mixr/stream/stream.h>
-#include <mixr/stream/wav.h>
 #include <SDL2/SDL.h>
 #include <unistd.h>
 

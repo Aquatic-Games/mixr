@@ -1,7 +1,7 @@
 #ifndef MIXR_INT_STREAM_H
 #define MIXR_INT_STREAM_H
 
-#include "mixr/stream/stream.h"
+#include "mixr/stream.h"
 
 typedef struct
 {

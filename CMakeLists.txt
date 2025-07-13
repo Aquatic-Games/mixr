@@ -19,9 +19,8 @@ add_library(mixr SHARED
         src/mixr/internal.h
         src/mixr/device/ALSA/alsa_device.c
         src/mixr/device/ALSA/alsa_device.h
-        include/mixr/stream/stream.h
+        include/mixr/stream.h
         src/mixr/stream/stream.c
-        include/mixr/stream/wav.h
         src/mixr/stream/wav.c
         src/mixr/stream/stream_internal.h
 )

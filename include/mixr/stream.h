@@ -3,13 +3,15 @@
 
 #include <stdlib.h>
 
-#include "../common.h"
+#include "common.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
     typedef struct MxStream MxStream;
+
+    MIXR_C_API MxResult mxStreamLoadWav(const char *path, MxStream **stream);
 
     MIXR_C_API void mxDestroyStream(MxStream *stream);
 

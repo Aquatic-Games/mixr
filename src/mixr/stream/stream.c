@@ -1,4 +1,4 @@
-#include "mixr/stream/stream.h"
+#include "mixr/stream.h"
 #include "stream_internal.h"
 
 void mxDestroyStream(MxStream* stream)

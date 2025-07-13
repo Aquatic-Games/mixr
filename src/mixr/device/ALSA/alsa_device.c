@@ -73,7 +73,7 @@ MxResult mxALSACreateDevice(const MxDeviceInfo *info, DeviceImpl **impl)
     MX_ALSA_CHECK(snd_pcm_hw_params_set_format(alsa, params, SND_PCM_FORMAT_FLOAT));
     MX_ALSA_CHECK(snd_pcm_hw_params_set_rate(alsa, params, info->sampleRate, 0));
     MX_ALSA_CHECK(snd_pcm_hw_params_set_channels(alsa, params, 2));
-    MX_ALSA_CHECK(snd_pcm_hw_params_set_period_size(alsa, params, 256, 0));
+    MX_ALSA_CHECK(snd_pcm_hw_params_set_period_size(alsa, params, 512, 0));
     MX_ALSA_CHECK(snd_pcm_hw_params_set_periods(alsa, params, 2, 0));
 
     MX_ALSA_CHECK(snd_pcm_hw_params(alsa, params));
