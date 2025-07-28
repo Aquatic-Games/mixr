@@ -48,7 +48,7 @@ FLAC__StreamDecoderWriteStatus mxFLACWriteCallback(const FLAC__StreamDecoder* de
             {
                 for (uint32_t i = 0; i < blockSize; i++)
                 {
-                    outBuffer[c * 2 + i * 4] = buffer[c][i];
+                    outBuffer[c * 4 + i * 8] = buffer[c][i];
                 }
             }
 
