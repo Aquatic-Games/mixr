@@ -1,2 +1,2 @@
-# The mixr Sound Engine
-Mixr 2.0. More powerful. More expandable. Yes.
+# The mixr Audio API
+mixr is a fast, simple API for playing sounds on the CPU.
