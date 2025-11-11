@@ -191,3 +191,9 @@ void mxDestroyDevice(MxDevice* device)
     auto mxDevice = (AudioDevice*) device;
     delete mxDevice;
 }
+
+void mxContextMixToStereoF32Buffer(MxContext* context, float* buffer, size_t length)
+{
+    Impl* impl = (Impl*) context;
+    impl->MixToStereoF32Buffer(buffer, length);
+}

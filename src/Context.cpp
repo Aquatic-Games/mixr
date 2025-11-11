@@ -23,4 +23,9 @@ namespace mixr {
     void Context::SetMasterVolume(float volume) {
         _impl->SetMasterVolume(volume);
     }
+
+    void Context::MixToStereoF32Buffer(float* buffer, size_t length)
+    {
+        _impl->MixToStereoF32Buffer(buffer, length);
+    }
 }

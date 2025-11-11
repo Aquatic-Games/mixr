@@ -96,6 +96,8 @@ extern "C" {
 
     MIXR_C_API void mxContextSetMasterVolume(MxContext *context, float volume);
 
+    MIXR_C_API void mxContextMixToStereoF32Buffer(MxContext *context, float *buffer, size_t length);
+
 #ifdef __cplusplus
 }
 #endif

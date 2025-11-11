@@ -25,6 +25,8 @@ namespace mixr {
         std::unique_ptr<AudioSource> CreateSource(const SourceDescription& description);
 
         void SetMasterVolume(float volume);
+
+        void MixToStereoF32Buffer(float* buffer, size_t length);
     };
 
 }

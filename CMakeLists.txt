@@ -61,7 +61,9 @@ endif ()
 add_subdirectory(lib/stb)
 target_link_libraries(mixr PUBLIC stb)
 
-target_link_libraries(mixr PUBLIC asound)
+if (LINUX)
+    target_link_libraries(mixr PUBLIC asound)
+endif()
 
 set(WITH_OGG OFF CACHE BOOL "" FORCE)
 set(INSTALL_MANPAGES OFF CACHE BOOL "" FORCE)
