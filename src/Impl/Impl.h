@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <vector>
 #include <deque>
+#include <mutex>
 
 #include "mixr/Context.h"
 #include "mixr/Common.h"
@@ -70,6 +71,8 @@ namespace mixr {
         std::deque<size_t> _availableBuffers;
         std::deque<size_t> _availableSources;
 
+        std::mutex _mutex;
+
         void UpdateSource(Source* source);
 
     public:
@@ -87,7 +90,7 @@ namespace mixr {
         void SourceClearBuffers(size_t sourceId);
         void SourcePlay(size_t sourceId);
         void SourcePause(size_t sourceId);
-        void SourceStop(size_t sourceId);
+        void SourceStop(size_t sourceId, bool useMutex);
         void SourceSetSpeed(size_t sourceId, double speed);
         void SourceSetVolume(size_t sourceId, float volume);
         void SourceSetLooping(size_t sourceId, bool looping);

@@ -75,7 +75,7 @@ void mxSourcePause(MxContext *context, MxAudioSource source) {
 void mxSourceStop(MxContext *context, MxAudioSource source) {
     Impl* impl = (Impl*) context;
 
-    impl->SourceStop(source);
+    impl->SourceStop(source, true);
 }
 
 void mxSourceSetSpeed(MxContext *context, MxAudioSource source, double speed) {

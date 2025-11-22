@@ -82,7 +82,7 @@ namespace mixr {
     }
 
     void AudioSource::Stop() {
-        _impl->SourceStop(_id);
+        _impl->SourceStop(_id, true);
     }
 
     void AudioSource::SetBufferFinishedCallback(void (*callback)(void*), void* userData) {

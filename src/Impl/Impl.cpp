@@ -18,6 +18,8 @@ namespace mixr {
     }
 
     size_t Impl::CreateBuffer(uint8_t* data, size_t dataLength) {
+        //std::cout << "Create buffer" << std::endl;
+        std::lock_guard guard(_mutex);
         Buffer buffer {
            /* .Data = */ std::vector<uint8_t>(data, data + dataLength),
            /* DataLength= */ dataLength
@@ -38,6 +40,8 @@ namespace mixr {
     }
 
     void Impl::DestroyBuffer(size_t bufferId) {
+        //std::cout << "Destroy buffer" << std::endl;
+        std::lock_guard guard(_mutex);
         Buffer* buffer = &_buffers[bufferId];
 
         // Search to see if the buffer is contained in the source.
@@ -51,7 +55,7 @@ namespace mixr {
             auto loc = std::find(queuedBuffers->begin(), queuedBuffers->end(), bufferId);
             if (loc != queuedBuffers->end()) {
                 if (bufferId == queuedBuffers->front()) {
-                    SourceStop(i);
+                    SourceStop(i, false);
                 }
 
                 queuedBuffers->erase(std::remove(queuedBuffers->begin(), queuedBuffers->end(), bufferId), queuedBuffers->end());
@@ -64,6 +68,8 @@ namespace mixr {
     }
 
     size_t Impl::CreateSource(const SourceDescription& description) {
+        //std::cout << "Create source" << std::endl;
+        std::lock_guard guard(_mutex);
         AudioFormat format = description.Format;
 
         uint8_t byteAlign;
@@ -156,13 +162,15 @@ namespace mixr {
     }
 
     void Impl::DestroySource(size_t sourceId) {
+        //std::cout << "Destroy source" << std::endl;
+        std::lock_guard guard(_mutex);
         Source* source = &_sources[sourceId];
 
         // Simple hack, unregister the state changed callback to prevent SourceStop from calling it.
         source->StateChangedCallback = nullptr;
         source->BufferFinishedCallback = nullptr;
 
-        SourceStop(sourceId);
+        SourceStop(sourceId, false);
 
         source->QueuedBuffers = {};
         delete source->MixBuffer;
@@ -171,6 +179,8 @@ namespace mixr {
     }
 
     void Impl::UpdateBuffer(size_t bufferId, uint8_t* data, size_t dataLength) {
+        //std::cout << "Update buffer" << std::endl;
+        std::lock_guard guard(_mutex);
         Buffer* buffer = &_buffers[bufferId];
 
         // Resize the buffer if it is not big enough, but otherwise, don't.
@@ -184,6 +194,8 @@ namespace mixr {
     }
 
     void Impl::SourceSubmitBuffer(size_t sourceId, size_t bufferId) {
+        //std::cout << "Submit buffer" << std::endl;
+        std::lock_guard guard(_mutex);
         Source* source = &_sources[sourceId];
         source->QueuedBuffers.push_back(bufferId);
 
@@ -193,11 +205,14 @@ namespace mixr {
     }
 
     void Impl::SourceClearBuffers(size_t sourceId) {
-        SourceStop(sourceId);
+        //std::cout << "Clear buffers" << std::endl;
+        std::lock_guard guard(_mutex);
+        SourceStop(sourceId, false);
         _sources[sourceId].QueuedBuffers = {};
     }
 
     void Impl::SourcePlay(size_t sourceId) {
+        //std::cout << "Play" << std::endl;
         Source* source = &_sources[sourceId];
         SourceState state = SourceGetState(sourceId);
 
@@ -212,6 +227,7 @@ namespace mixr {
     }
 
     void Impl::SourcePause(size_t sourceId) {
+        //std::cout << "Pause" << std::endl;
         Source* source = &_sources[sourceId];
         SourceState state = SourceGetState(sourceId);
 
@@ -222,7 +238,11 @@ namespace mixr {
         }
     }
 
-    void Impl::SourceStop(size_t sourceId) {
+    void Impl::SourceStop(size_t sourceId, bool useMutex) {
+        //std::cout << "Stop" << std::endl;
+        if (useMutex)
+            std::lock_guard guard(_mutex);
+
         Source* source = &_sources[sourceId];
         SourceState state = SourceGetState(sourceId);
 
@@ -358,128 +378,158 @@ namespace mixr {
     }
 
     void Impl::MixToStereoF32Buffer(float* buffer, size_t bufferLength) {
-        for (int i = 0; i < bufferLength; i += 2) {
-            buffer[i + 0] = 0;
-            buffer[i + 1] = 0;
+        //std::cout << "Begin Mixing" << std::endl;
+        std::vector<Source*> finishedSources;
+        std::vector<size_t> stoppedSources;
+        {
+            std::lock_guard guard(_mutex);
+            for (int i = 0; i < bufferLength; i += 2) {
+                buffer[i + 0] = 0;
+                buffer[i + 1] = 0;
 
-            // TODO: Optimize this by placing all playing sources into a vector which gets enumerated over.
-            for (int s = 0; s < _sources.size(); s++) {
-                Source* source = &_sources[s];
+                // TODO: Optimize this by placing all playing sources into a vector which gets enumerated over.
+                for (int s = 0; s < _sources.size(); s++) {
+                    //std::cout << "Processing Source " << s << std::endl;
+                    Source* source = &_sources[s];
 
-                if (!source->Playing || source->MainVolume <= 0.01f)
-                    continue;
+                    //std::cout << "  Source: " << source << ", Playing: " << source->Playing << ", MainVolume: " << source->MainVolume << std::endl;
 
-                // If the source speed (the speed that the mixer actually plays at) is above 1, then aliasing is
-                // introduced. So, when the source speed is above 1, we instead sample at a multiple of the mixer
-                // sample rate. So if the source speed was 1.1, and the mixer was sampling at 48khz, then it would sample
-                // at 96khz instead.
-                // Then, at the end, we simply remove the samples that aren't needed. Doing it in this way removes aliasing.
-                // TODO: SampleRate * 3 sounds good? Instead of 2 -> 4, does 2 -> 3 -> 4 work?
-                double sourceSpeed = source->SpeedCorrection * source->Speed;
-                int sampleRateMultiplier = std::max((int) sourceSpeed, 1) << 1;
-                sourceSpeed /= sampleRateMultiplier;
+                    if (!source->Playing || source->MainVolume <= 0.01f)
+                        continue;
 
-                // TODO: This works but could be optimized more.
-                for (int c = 0; c < sampleRateMultiplier; c++) {
-                    Buffer* buf = &_buffers[source->QueuedBuffers.front()];
+                    //std::cout << "  Reached point 1" << std::endl;
 
-                    uint8_t* bufferData = buf->Data.data();
-                    AudioFormat* format = &source->Format;
+                    // If the source speed (the speed that the mixer actually plays at) is above 1, then aliasing is
+                    // introduced. So, when the source speed is above 1, we instead sample at a multiple of the mixer
+                    // sample rate. So if the source speed was 1.1, and the mixer was sampling at 48khz, then it would sample
+                    // at 96khz instead.
+                    // Then, at the end, we simply remove the samples that aren't needed. Doing it in this way removes aliasing.
+                    // TODO: SampleRate * 3 sounds good? Instead of 2 -> 4, does 2 -> 3 -> 4 work?
+                    double sourceSpeed = source->SpeedCorrection * source->Speed;
+                    int sampleRateMultiplier = std::max((int) sourceSpeed, 1) << 1;
+                    sourceSpeed /= sampleRateMultiplier;
 
-                    size_t bytePosition = source->Position * (source->ByteAlign + source->StereoAlign);
+                    // TODO: This works but could be optimized more.
+                    for (int c = 0; c < sampleRateMultiplier; c++) {
+                        Buffer* buf = &_buffers[source->QueuedBuffers.front()];
+                        //std::cout << "  Buffer: " << buf << ", DataLength: " << buf->DataLength << std::endl;
 
-                    float sampleL, sampleR;
+                        uint8_t* bufferData = buf->Data.data();
+                        AudioFormat* format = &source->Format;
 
-                    switch (source->Type) {
-                        case SourceType::PCM: {
-                            sampleL = GetSample(bufferData, bytePosition, format->DataType);
-                            sampleR = GetSample(bufferData, bytePosition + source->StereoAlign, format->DataType);
+                        //std::cout << "  BufferData: " << bufferData << ", format: " << format << std::endl;
 
-                            break;
+                        size_t bytePosition = source->Position * (source->ByteAlign + source->StereoAlign);
+
+                        float sampleL, sampleR;
+
+                        switch (source->Type) {
+                            case SourceType::PCM: {
+                                //std::cout << "  Get samples" << std::endl;
+                                sampleL = GetSample(bufferData, bytePosition, format->DataType);
+                                sampleR = GetSample(bufferData, bytePosition + source->StereoAlign, format->DataType);
+                                //std::cout << "  Got samples!" << std::endl;
+
+                                break;
+                            }
+
+                                // This makes me uncomfortable..
+                                // The fact that it works and *fast* annoys me because now I don't want to change it even though
+                                // it could really do with some threading and being less awful.
+                            case SourceType::ADPCM: {
+                                auto stereo = source->Format.Channels == 2;
+                                size_t chunkSize = source->ChunkSize;
+                                size_t dataSize = (chunkSize - (stereo ? 8 : 4)) * 4;
+
+                                size_t chunk = bytePosition / dataSize;
+
+                                if (chunk < source->NumChunks && chunk != source->LastChunk) {
+                                    source->LastChunk = chunk;
+                                    Utils::ADPCM::DecodeIMAChunk(buf->Data.data() + (chunk * chunkSize), chunkSize, source->MixBuffer, stereo);
+                                }
+
+                                size_t newBytePosition = bytePosition % dataSize;
+
+                                uint8_t* sBuf = source->MixBuffer;
+
+                                sampleL = (float) (int16_t) (sBuf[newBytePosition + 0] | sBuf[newBytePosition + 1] << 8) / (float) INT16_MAX;
+                                sampleR = (float) (int16_t) (sBuf[newBytePosition + 2] | sBuf[newBytePosition + 3] << 8) / (float) INT16_MAX;
+
+                                break;
+                            }
                         }
 
-                        // This makes me uncomfortable..
-                        // The fact that it works and *fast* annoys me because now I don't want to change it even though
-                        // it could really do with some threading and being less awful.
-                        case SourceType::ADPCM: {
-                            auto stereo = source->Format.Channels == 2;
-                            size_t chunkSize = source->ChunkSize;
-                            size_t dataSize = (chunkSize - (stereo ? 8 : 4)) * 4;
+                        if (c == 0) {
+                            float lastSampleL = source->LastSampleL;
+                            float lastSampleR = source->LastSampleR;
 
-                            size_t chunk = bytePosition / dataSize;
+                            float outSampleL = Lerp(lastSampleL, sampleL, (float) source->FinePosition) * source->VolumeL * source->MainVolume;
+                            float outSampleR = Lerp(lastSampleR, sampleR, (float) source->FinePosition) * source->VolumeR * source->MainVolume;
 
-                            if (chunk < source->NumChunks && chunk != source->LastChunk) {
-                                source->LastChunk = chunk;
-                                Utils::ADPCM::DecodeIMAChunk(buf->Data.data() + (chunk * chunkSize), chunkSize, source->MixBuffer, stereo);
-                            }
-
-                            size_t newBytePosition = bytePosition % dataSize;
-
-                            uint8_t* sBuf = source->MixBuffer;
-
-                            sampleL = (float) (int16_t) (sBuf[newBytePosition + 0] | sBuf[newBytePosition + 1] << 8) / (float) INT16_MAX;
-                            sampleR = (float) (int16_t) (sBuf[newBytePosition + 2] | sBuf[newBytePosition + 3] << 8) / (float) INT16_MAX;
-
-                            break;
+                            buffer[i + 0] += Clamp(outSampleL, -1.0f, 1.0f);
+                            buffer[i + 1] += Clamp(outSampleR, -1.0f, 1.0f);
                         }
-                    }
 
-                    if (c == 0) {
-                        float lastSampleL = source->LastSampleL;
-                        float lastSampleR = source->LastSampleR;
+                        source->FinePosition += sourceSpeed;
 
-                        float outSampleL = Lerp(lastSampleL, sampleL, (float) source->FinePosition) * source->VolumeL * source->MainVolume;
-                        float outSampleR = Lerp(lastSampleR, sampleR, (float) source->FinePosition) * source->VolumeR * source->MainVolume;
+                        int intPos = (int) source->FinePosition;
+                        source->Position += intPos;
+                        source->FinePosition -= intPos;
 
-                        buffer[i + 0] += Clamp(outSampleL, -1.0f, 1.0f);
-                        buffer[i + 1] += Clamp(outSampleR, -1.0f, 1.0f);
-                    }
+                        if (source->Position != source->LastPosition) {
+                            source->LastPosition = source->Position;
+                            source->LastSampleL = sampleL;
+                            source->LastSampleR = sampleR;
+                        }
 
-                    source->FinePosition += sourceSpeed;
+                        if (source->Position >= source->LengthInSamples) {
+                            //std::cout << "  Reached point 2" << std::endl;
+                            // Hmm. This doesn't seem ideal.
+                            // Right now the library relies on the queue having elements, since it gets the buffer by checking
+                            // the front of the queue. Perhaps the "current buffer" should be stored in an index instead.
+                            if (source->QueuedBuffers.size() > 1) {
+                                //std::cout << "  Reached point 3" << std::endl;
+                                finishedSources.push_back(source);
 
-                    int intPos = (int) source->FinePosition;
-                    source->Position += intPos;
-                    source->FinePosition -= intPos;
+                                //std::cout << "  Pop queue" << std::endl;
+                                source->QueuedBuffers.pop_front();
+                                source->Position = 0;
+                                //std::cout << "  Updating source" << std::endl;
+                                UpdateSource(source);
+                            } else if (source->Looping) {
+                                source->Position -= source->LengthInSamples;
+                            } else {
+                                //std::cout << "  Stopping source" << std::endl;
+                                source->Playing = false;
+                                stoppedSources.push_back(s);
 
-                    if (source->Position != source->LastPosition) {
-                        source->LastPosition = source->Position;
-                        source->LastSampleL = sampleL;
-                        source->LastSampleR = sampleR;
-                    }
-
-                    if (source->Position >= source->LengthInSamples) {
-                        // Hmm. This doesn't seem ideal.
-                        // Right now the library relies on the queue having elements, since it gets the buffer by checking
-                        // the front of the queue. Perhaps the "current buffer" should be stored in an index instead.
-                        if (source->QueuedBuffers.size() > 1) {
-                            if (source->BufferFinishedCallback) {
-                                source->BufferFinishedCallback(source->BufferFinishedUserData);
+                                break;
                             }
-
-                            source->QueuedBuffers.pop_front();
-                            source->Position = 0;
-                            UpdateSource(source);
-                        } else if (source->Looping) {
-                            source->Position -= source->LengthInSamples;
-                        } else {
-                            SourceStop(s);
-
-                            if (source->BufferFinishedCallback) {
-                                source->BufferFinishedCallback(source->BufferFinishedUserData);
-                            }
-
-                            break;
                         }
                     }
                 }
-            }
 
-            buffer[i + 0] = Clamp(buffer[i + 0] * _masterVolume, -1.0f, 1.0f);
-            buffer[i + 1] = Clamp(buffer[i + 1] * _masterVolume, -1.0f, 1.0f);
+                buffer[i + 0] = Clamp(buffer[i + 0] * _masterVolume, -1.0f, 1.0f);
+                buffer[i + 1] = Clamp(buffer[i + 1] * _masterVolume, -1.0f, 1.0f);
+            }
+            //std::cout << "Finish Mixing" << std::endl;
+        }
+
+        for (const auto source : finishedSources)
+        {
+            if (source->BufferFinishedCallback) {
+                source->BufferFinishedCallback(source->BufferFinishedUserData);
+            }
+        }
+
+        for (const auto source : stoppedSources)
+        {
+            SourceStop(source, true);
         }
     }
 
     void Impl::UpdateSource(Source* source) {
+        //std::cout << "Update source" << std::endl;
         auto dataLength = _buffers[source->QueuedBuffers.front()].DataLength;
         auto byteAlign = source->ByteAlign;
         auto channels = source->Format.Channels;
