@@ -354,6 +354,10 @@ namespace mixr {
         return (double) source->Position / (double) source->Format.SampleRate;
     }
 
+    float Impl::GetMasterVolume() {
+        return _masterVolume;
+    }
+
     void Impl::SetMasterVolume(float volume) {
         _masterVolume = volume;
     }

@@ -20,6 +20,10 @@ namespace mixr {
         return std::make_unique<AudioSource>(index, _impl.get());
     }
 
+    float Context::MasterVolume() const {
+        return _impl->GetMasterVolume();
+    }
+
     void Context::SetMasterVolume(float volume) {
         _impl->SetMasterVolume(volume);
     }

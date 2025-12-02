@@ -168,6 +168,11 @@ double mxSourceGetPositionSeconds(MxContext *context, MxAudioSource source) {
     return impl->SourceGetPositionSeconds(source);
 }
 
+float mxContextGetMasterVolume(MxContext *context) {
+    Impl* impl = (Impl*) context;
+    return impl->GetMasterVolume();
+}
+
 void mxContextSetMasterVolume(MxContext *context, float volume) {
     Impl* impl = (Impl*) context;
 

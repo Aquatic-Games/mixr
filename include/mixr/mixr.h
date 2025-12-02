@@ -94,6 +94,7 @@ extern "C" {
     MIXR_C_API size_t mxSourceGetPositionSamples(MxContext *context, MxAudioSource source);
     MIXR_C_API double mxSourceGetPositionSeconds(MxContext *context, MxAudioSource source);
 
+    MIXR_C_API float mxContextGetMasterVolume(MxContext *context);
     MIXR_C_API void mxContextSetMasterVolume(MxContext *context, float volume);
 
     MIXR_C_API void mxContextMixToStereoF32Buffer(MxContext *context, float *buffer, size_t length);

@@ -108,6 +108,7 @@ namespace mixr {
         size_t SourceGetPositionSamples(size_t sourceId);
         double SourceGetPositionSeconds(size_t sourceId);
 
+        float GetMasterVolume();
         void SetMasterVolume(float volume);
 
         void MixToStereoF32Buffer(float* buffer, size_t bufferLength);
