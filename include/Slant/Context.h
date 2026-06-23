@@ -12,6 +12,7 @@ extern "C" {
 
 typedef struct SlContext SlContext;
 
+// Contains various results.
 typedef enum
 {
     // Everything is okay.
@@ -21,16 +22,21 @@ typedef enum
     // If you get this error, open an issue!
     SL_RESULT_UNKNOWN_ERROR,
     
+    // An allocation failed. This can often mean the system is out of memory.
+    SL_RESULT_OUT_OF_MEMORY,
+    
     // A non-specific invalid value was provided, for example, if a null pointer was provided.
     SL_RESULT_INVALID_VALUE
 } SlResult;
 
+// Describes how a context should be created.
 typedef struct
 {
+    // The sampling rate, in hz. Must be greater than 0, otherwise SL_RESULT_INVALID_VALUE will be returned.
     uint32_t sampleRate;
 } SlContextInfo;
 
-SL_EXPORT SlResult slCreateContext(SlContextInfo *info, SlContext **context);
+SL_EXPORT SlResult slCreateContext(const SlContextInfo *info, SlContext **context);
 SL_EXPORT SlResult slDestroyContext(SlContext *context);
 
 #ifdef __cplusplus

@@ -10,3 +10,4 @@ file(GLOB SLANT_SRC CONFIGURE_DEPENDS
 )
 
 add_library(Slant SHARED ${SLANT_SRC})
+target_include_directories(Slant PUBLIC include/)
