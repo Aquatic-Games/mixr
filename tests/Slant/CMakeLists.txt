@@ -1,0 +1,10 @@
+message(STATUS "Searching for C tests")
+
+file(GLOB SLANT_C_TESTS CONFIGURE_DEPENDS *.c)
+foreach (file IN LISTS SLANT_C_TESTS)
+    get_filename_component(filename ${file} NAME_WE)
+    set(testname "Test_C_${filename}")
+    message(STATUS "${filename} -> ${testname}")
+    add_executable(${testname} ${file})
+    target_link_libraries(${testname} Slant)
+endforeach ()
