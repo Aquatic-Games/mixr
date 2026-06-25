@@ -28,7 +28,7 @@ typedef enum
     SL_RESULT_OUT_OF_MEMORY,
     
     // A non-specific invalid value was provided, for example, if a null pointer was provided.
-    SL_RESULT_INVALID_VALUE
+    SL_RESULT_INVALID_VALUE,
 } SlResult;
 
 // Describes how a context should be created.
@@ -47,7 +47,7 @@ SL_EXPORT SlResult slCreateContext(const SlContextInfo *info, SlContext **contex
 SL_EXPORT SlResult slDestroyContext(SlContext *context);
 
 SL_EXPORT SlResult slCreateBuffer(SlContext *context, const SlBufferInfo *info, SlBuffer *buffer);
-SL_EXPORT SlResult slDestroyBuffer(SlContext *context, SlBuffer buffer);
+//SL_EXPORT SlResult slDestroyBuffer(SlContext *context, SlBuffer buffer);
 
 #ifdef __cplusplus
 }

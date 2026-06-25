@@ -55,6 +55,7 @@ SlResult slDestroyContext(SlContext *context)
         return SL_RESULT_INVALID_VALUE;
     
     SlContextImpl *ctx = (SlContextImpl *) context;
+    free(ctx->buffers);
     free(ctx);
     
     return SL_RESULT_OK;
@@ -62,6 +63,9 @@ SlResult slDestroyContext(SlContext *context)
 
 SlResult slCreateBuffer(SlContext *context, const SlBufferInfo *info, SlBuffer *buffer)
 {
+    if (!context || !info)
+        return SL_RESULT_INVALID_VALUE;
+    
     SlContextImpl *ctx = (SlContextImpl *) context;
     
     SlBufferImpl bufferImpl = {
@@ -74,3 +78,12 @@ SlResult slCreateBuffer(SlContext *context, const SlBufferInfo *info, SlBuffer *
     *buffer = (SlBuffer) bufferID;
     return SL_RESULT_OK;
 }
+
+/*SlResult slDestroyBuffer(SlContext *context, SlBuffer buffer)
+{
+    if (!context)
+        return SL_RESULT_INVALID_VALUE;
+    
+    SlContextImpl *ctx = (SlContextImpl *) context;
+    
+}*/
