@@ -2,6 +2,7 @@
 #define SLANT_CONTEXT_H
 
 #include <stdint.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -11,6 +12,7 @@ extern "C" {
 #define SL_EXPORT
 
 typedef struct SlContext SlContext;
+typedef size_t SlBuffer;
 
 // Contains various results.
 typedef enum
@@ -36,8 +38,16 @@ typedef struct
     uint32_t sampleRate;
 } SlContextInfo;
 
+typedef struct
+{
+    size_t bufferSize;
+} SlBufferInfo;
+
 SL_EXPORT SlResult slCreateContext(const SlContextInfo *info, SlContext **context);
 SL_EXPORT SlResult slDestroyContext(SlContext *context);
+
+SL_EXPORT SlResult slCreateBuffer(SlContext *context, const SlBufferInfo *info, SlBuffer *buffer);
+SL_EXPORT SlResult slDestroyBuffer(SlContext *context, SlBuffer buffer);
 
 #ifdef __cplusplus
 }

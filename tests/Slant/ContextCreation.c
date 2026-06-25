@@ -3,7 +3,7 @@
 
 int main(int argc, char **argv)
 {
-    SlContextInfo contextInfo = {
+    const SlContextInfo contextInfo = {
         .sampleRate = 44100
     };
     
@@ -15,7 +15,7 @@ int main(int argc, char **argv)
         return 1;
     }
     
-    result = slDestroyContext(NULL);
+    result = slDestroyContext(context);
     if (result != SL_RESULT_OK)
     {
         printf("Context destruction failed: %d\n", result);
